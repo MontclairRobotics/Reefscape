@@ -23,6 +23,7 @@ import com.ctre.phoenix6.swerve.SwerveModuleConstantsFactory;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.VoltageUnit;
@@ -37,12 +38,18 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-import frc.robot.Constants.TunerConstants;
+import frc.robot.Constants.DriveConfig;
 import frc.robot.Constants.DriveConstants;
 
 public class Drivetrain extends SubsystemBase {
     
-    final SwerveDrivetrain swerveDrivetrain = TunerConstants.createSwerveDrivetrain();
+    final SwerveDrivetrain swerveDrivetrain = DriveConfig.createSwerveDrivetrain();    
+    public SlewRateLimiter forwardLimiter = new SlewRateLimiter(3); //TODO: actually set this
+    public SlewRateLimiter strafeLimiter = new SlewRateLimiter(3); //TODO: actually set this
+    public SlewRateLimiter rotationLimiter = new SlewRateLimiter(3); //TODO: actually set this
+
+    
+    
     // TalonFX driveFrontLeft = new TalonFX(-1);
     // TalonFX turnFrontLeft = new TalonFX(-1);
     // TalonFX driveFrontRight = new TalonFX(-1);
@@ -52,6 +59,10 @@ public class Drivetrain extends SubsystemBase {
     // TalonFX driveBackRight = new TalonFX(-1);
     // TalonFX turnBackRight = new TalonFX(-1);
 
+    public Drivetrain() {
+
+
+    }
 
     
     //implements SwerveDrivetrain.DeviceConstruct<T> in order to pass in our drive motor constructor into the
@@ -63,13 +74,13 @@ public class Drivetrain extends SubsystemBase {
         double yInput = RobotContainer.driverController.getLeftY();
         double rotInput = RobotContainer.driverController.getRightX();
 
-        double xVelocity = Math.pow(xInput, 3) * DriveConstants.MAX_SPEED;
-        double yVelocity = Math.pow(yInput, 3) * DriveConstants.MAX_SPEED;
-        double rotVelocity = Math.pow(rotInput,3) * DriveConstants.MAX_SPEED;
+        double xVelocity = forwardLimiter.calculate(Math.pow(xInput, 3) * DriveConstants.MAX_SPEED);
+        double yVelocity = strafeLimiter.calculate(Math.pow(yInput, 3) * DriveConstants.MAX_SPEED);
+        double rotVelocity = rotationLimiter.calculate(Math.pow(rotInput,3) * DriveConstants.MAX_SPEED);
 
         final SwerveRequest.FieldCentric fieldRequest = new SwerveRequest.FieldCentric()
-            .withDeadband(2) //TODO: set these
-            .withRotationalDeadband(3) 
+            //.withDeadband(2) //TODO: set these
+            //.withRotationalDeadband(3) 
             .withDriveRequestType(DriveRequestType.Velocity) //Velocity is closed-loop velocity control
             .withSteerRequestType(SteerRequestType.Position); //There's also motionMagicExpo-need to look more into that
         

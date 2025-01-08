@@ -32,6 +32,7 @@ import edu.wpi.first.units.measure.ImmutableMomentOfInertia;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.MomentOfInertia;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.motorcontrol.Talon;
 import frc.robot.Subsystems.Drivetrain;
 
 public class Constants {
@@ -41,7 +42,7 @@ public class Constants {
         public static final double MAX_SPEED = 4; //TODO: actually set this with units
 
     }
-    public class TunerConstants {
+    public class DriveConfig {
 
           //This is probably the PID constants creation thingy for STEER
     private static final Slot0Configs steerGains = new Slot0Configs()
@@ -75,14 +76,24 @@ public class Constants {
 
     // Initial configs for the drive and steer motors and the azimuth encoder; these cannot be null.
     // Some configs will be overwritten; check the `with*InitialConfigs()` API documentation.
-    private static final TalonFXConfiguration driveInitialConfigs = new TalonFXConfiguration();
+    private static final TalonFXConfiguration driveInitialConfigs = new TalonFXConfiguration()
+        .withCurrentLimits(
+            new CurrentLimitsConfigs()
+            
+            .withStatorCurrentLimit(60) //TODO: set correct value
+            .withStatorCurrentLimitEnable(false) //TODO: set correct value
+            .withSupplyCurrentLimit(60)  //TODO: set correct value
+            .withSupplyCurrentLimitEnable(false)  //TODO: set correct value
+        );
     private static final TalonFXConfiguration steerInitialConfigs = new TalonFXConfiguration()
         .withCurrentLimits(
             new CurrentLimitsConfigs()
                 // Swerve azimuth does not require much torque output, so we can set a relatively low
                 // stator current limit to help avoid brownouts without impacting performance.
-                .withStatorCurrentLimit(32) //ARBITRARY BALUE
-                .withStatorCurrentLimitEnable(true)
+                .withStatorCurrentLimit(60)  //TODO: set correct value
+                .withStatorCurrentLimitEnable(false)  
+                .withSupplyCurrentLimit(60)  //TODO: set correct value
+                .withSupplyCurrentLimitEnable(false)  //TODO: set correct value
         );
     private static final CANcoderConfiguration encoderInitialConfigs = new CANcoderConfiguration();
     // Configs for the Pigeon 2; leave this null to skip applying Pigeon 2 configs
@@ -217,15 +228,22 @@ public class Constants {
     public static final SwerveDrivetrain.DeviceConstructor<TalonFX> driveMotorConstructor = (int id, String canbus) -> {
         return new TalonFX(id, canbus);
     };
-    
+
     public static final SwerveDrivetrain.DeviceConstructor<TalonFX> steerMotorConstructor = driveMotorConstructor;
     public static final SwerveDrivetrain.DeviceConstructor<TalonFX> encoderConstructor = driveMotorConstructor; //TODO: Implement this correctly
 
     //method to create SwerveDrivetrain object
+    @SuppressWarnings({ "rawtypes", "unchecked" }) //random errors I don't think matter
     public static SwerveDrivetrain createSwerveDrivetrain(){
-        return new SwerveDrivetrain(driveMotorConstructor, steerMotorConstructor, encoderConstructor, TunerConstants.DrivetrainConstants, TunerConstants.SwerveModuleConstantsArray);
+        return new SwerveDrivetrain(
+            driveMotorConstructor, 
+            steerMotorConstructor, 
+            encoderConstructor, 
+            DriveConfig.DrivetrainConstants, 
+            DriveConfig.SwerveModuleConstantsArray
+            );
     }
-    }
+}
 
     
 }
