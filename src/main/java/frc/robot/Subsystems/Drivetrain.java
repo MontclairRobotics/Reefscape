@@ -42,6 +42,7 @@ import frc.robot.Constants.DriveConstants;
 
 public class Drivetrain extends SubsystemBase {
     
+    final SwerveDrivetrain swerveDrivetrain = TunerConstants.createSwerveDrivetrain();
     // TalonFX driveFrontLeft = new TalonFX(-1);
     // TalonFX turnFrontLeft = new TalonFX(-1);
     // TalonFX driveFrontRight = new TalonFX(-1);
@@ -50,7 +51,11 @@ public class Drivetrain extends SubsystemBase {
     // TalonFX turnBackLeft = new TalonFX(-1);
     // TalonFX driveBackRight = new TalonFX(-1);
     // TalonFX turnBackRight = new TalonFX(-1);
+
+
     
+    //implements SwerveDrivetrain.DeviceConstruct<T> in order to pass in our drive motor constructor into the
+    //constructor for SwerveDrivetrain
     
     public void drive() {
 
@@ -63,14 +68,12 @@ public class Drivetrain extends SubsystemBase {
         double rotVelocity = Math.pow(rotInput,3) * DriveConstants.MAX_SPEED;
 
         final SwerveRequest.FieldCentric fieldRequest = new SwerveRequest.FieldCentric()
-            .withDeadband(2) //not sure what these deadbands are for yet
+            .withDeadband(2) //TODO: set these
             .withRotationalDeadband(3) 
             .withDriveRequestType(DriveRequestType.Velocity) //Velocity is closed-loop velocity control
             .withSteerRequestType(SteerRequestType.Position); //There's also motionMagicExpo-need to look more into that
         
-        final SwerveDrivetrain swerveDrive; //TODO: Configure this
-
-        swerveDrive.setControl(
+        swerveDrivetrain.setControl(
             fieldRequest.withVelocityX(yVelocity)
             .withVelocityY(xVelocity)
             .withRotationalRate(rotVelocity)

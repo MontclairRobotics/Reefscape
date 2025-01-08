@@ -13,7 +13,9 @@ import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.Pigeon2Configuration;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
+import com.ctre.phoenix6.swerve.SwerveDrivetrain;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants.ClosedLoopOutputType;
@@ -30,11 +32,14 @@ import edu.wpi.first.units.measure.ImmutableMomentOfInertia;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.MomentOfInertia;
 import edu.wpi.first.units.measure.Voltage;
+import frc.robot.Subsystems.Drivetrain;
 
 public class Constants {
 
     public class DriveConstants {
+
         public static final double MAX_SPEED = 4; //TODO: actually set this with units
+
     }
     public class TunerConstants {
 
@@ -205,5 +210,23 @@ public class Constants {
             kBackRightSteerMotorId, kBackRightDriveMotorId, kBackRightEncoderId, kBackRightEncoderOffset,
             kBackRightXPos, kBackRightYPos, kInvertRightSide, kBackRightSteerMotorInverted, kBackRightEncoderInverted
         );
+
+    //array to hold the above Constants
+    public static final SwerveModuleConstants[] SwerveModuleConstantsArray = {FrontLeft, FrontRight, BackLeft, BackRight};
+
+    public static final SwerveDrivetrain.DeviceConstructor<TalonFX> driveMotorConstructor = (int id, String canbus) -> {
+        return new TalonFX(id, canbus);
+    };
+    
+    public static final SwerveDrivetrain.DeviceConstructor<TalonFX> steerMotorConstructor = driveMotorConstructor;
+    public static final SwerveDrivetrain.DeviceConstructor<TalonFX> encoderConstructor = driveMotorConstructor; //TODO: Implement this correctly
+
+    //method to create SwerveDrivetrain object
+    public static SwerveDrivetrain createSwerveDrivetrain(){
+        return new SwerveDrivetrain(driveMotorConstructor, steerMotorConstructor, encoderConstructor, TunerConstants.DrivetrainConstants, TunerConstants.SwerveModuleConstantsArray);
     }
+    }
+
+    
 }
+
