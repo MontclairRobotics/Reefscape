@@ -59,19 +59,22 @@ public class Drivetrain extends SubsystemBase {
      * ALWAYS CONVERT TO RADIANS BEFORE USING SWERVE REQUEST
      * 
      */
-    final SwerveDrivetrain swerveDrivetrain = DriveConfig.createSwerveDrivetrain();    
+    public final SwerveDrivetrain swerveDrivetrain = DriveConfig.createSwerveDrivetrain();    
     private SlewRateLimiter forwardLimiter = new SlewRateLimiter(3); //TODO: actually set this
     private SlewRateLimiter strafeLimiter = new SlewRateLimiter(3); //TODO: actually set this
     private SlewRateLimiter rotationLimiter = new SlewRateLimiter(3); //TODO: actually set this
     private PIDController thetaController = new PIDController(0,0 ,0 );
     private double odometryHeading;
-    private Pigeon2 gyro = new Pigeon2(DriveConfig.kPigeonId);
-    boolean isRobotAtAngleSetPoint; //for angle turning
-    boolean fieldRelative;
+    private Pigeon2 gyro = swerveDrivetrain.getPigeon2(); //they say not to use this like this, allegedly
+    //putting this here so we know how to get it
+    private boolean isRobotAtAngleSetPoint; //for angle turning
+    private boolean fieldRelative;
 
 
     public Drivetrain() {
         thetaController.setTolerance(1); //degrees
+        
+
     }
 
     /* RETURNS X VELOCITY FROM CONTROLLER 
@@ -225,7 +228,7 @@ public class Drivetrain extends SubsystemBase {
         fieldRelative = true;
     }
     public void zeroGyro(){
-        gyro.setYaw(0);
+        swerveDrivetrain.getPigeon2().setYaw(0);
     }
 
     /*
@@ -279,7 +282,7 @@ public class Drivetrain extends SubsystemBase {
     @Override
     public void periodic(){
         //Not sure if this is correct at all
-        odometryHeading = gyro.getYaw().getValueAsDouble();
+        odometryHeading = swerveDrivetrain.getPigeon2().getYaw().getValueAsDouble();
         isRobotAtAngleSetPoint = thetaController.atSetpoint();
         fieldRelative = !RobotContainer.driverController.L2().getAsBoolean();
     }

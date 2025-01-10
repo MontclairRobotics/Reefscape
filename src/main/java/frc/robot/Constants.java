@@ -243,8 +243,8 @@ public class Constants {
             driveMotorConstructor, 
             steerMotorConstructor, 
             encoderConstructor, 
-            DriveConfig.DrivetrainConstants, 
-            DriveConfig.SwerveModuleConstantsArray
+            DrivetrainConstants, 
+            SwerveModuleConstantsArray
             );
     }
 }

@@ -2,6 +2,10 @@ package frc.robot.Vision;
 
 import java.util.function.DoubleSupplier;
 
+import com.pathplanner.lib.config.RobotConfig;
+
+import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.networktables.NetworkTable;
@@ -9,6 +13,7 @@ import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.RobotContainer;
 
 public class Limelight extends SubsystemBase {
     
@@ -33,16 +38,27 @@ public class Limelight extends SubsystemBase {
 
     public static final double TARGET_DEBOUNCE_TIME = 0.2;
 
+    private static final double twoTagAngleVelocityTolerance = 720; //degress per second
+    private static final double oneTagAngleVelocityTolerance = 540;
+
+    private static final double twoTagRobotVelocityTolerance = 4; //meters per second
+    private static final double oneTagRobotVelocityTolerance = 3;
 
     /* INSTANCE VARIABLES */
-    int tagCount;
-    int[] validIDs = {}; //TODO: set these
-    NetworkTable Limetable = NetworkTableInstance.getDefault().getTable("limelight");
-    NetworkTableEntry ty = Limetable.getEntry("ty");
-    double tagID = Limetable.getEntry("tid").getDouble(-1);
+    private int tagCount;
+    private int[] validIDs = {}; //TODO: set these
+    private NetworkTable Limetable = NetworkTableInstance.getDefault().getTable("limelight");
+    private NetworkTableEntry ty = Limetable.getEntry("ty");
+    private double tagID = Limetable.getEntry("tid").getDouble(-1);
     private String cameraName;
     private Debouncer targetDebouncer = new Debouncer(TARGET_DEBOUNCE_TIME, DebounceType.kFalling);
+    private SwerveDrivePoseEstimator swerveDrivePoseEstimator = new SwerveDrivePoseEstimator(null, null, null, null);
+    private boolean shouldRejectUpdate;
+    private LimelightHelpers.PoseEstimate mt2;
     
+    private double angleVelocityTolerance;
+    private double robotVeloityTolerance;
+
     public Limelight(String cameraName){
         this.cameraName = cameraName;
         LimelightHelpers.SetFiducialIDFiltersOverride(cameraName, validIDs);
@@ -72,7 +88,45 @@ public class Limelight extends SubsystemBase {
         boolean hasMatch = (LimelightHelpers.getLimelightNTDouble(cameraName, "tv") == 1.0);
         return targetDebouncer.calculate(hasMatch);
         // return true;
+    }
+
+    public void poseEstimationMegatag2(){
+      LimelightHelpers.SetRobotOrientation(cameraName, swerveDrivePoseEstimator.getEstimatedPosition().getRotation().getDegrees(), 0, 0, 0, 0, 0);
+      mt2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(cameraName);
+      if(mt2.tagCount == 1){
+        //different velocity tolerances for different amount of tags
+        angleVelocityTolerance = oneTagAngleVelocityTolerance;
+        robotVeloityTolerance = oneTagRobotVelocityTolerance;
       }
+      if(mt2.tagCount > 1) {
+        //different velocity tolerances for different amount of tags
+        angleVelocityTolerance = twoTagAngleVelocityTolerance;
+        robotVeloityTolerance = twoTagRobotVelocityTolerance;
+      }
+      if(mt2.tagCount == 0) {
+        //rejects current measurement if there are no aprilTags
+        shouldRejectUpdate = true;
+      }
+      if(Math.abs(RobotContainer.drivetrain.swerveDrivetrain.getPigeon2().getAngularVelocityZWorld().getValueAsDouble()) > angleVelocityTolerance){ // if our angular velocity is greater than 720 degrees per second, ignore vision updates{
+        shouldRejectUpdate = true;
+      }
+
+      double vx = RobotContainer.drivetrain.swerveDrivetrain.getState().Speeds.vxMetersPerSecond;
+      double vy = RobotContainer.drivetrain.swerveDrivetrain.getState().Speeds.vyMetersPerSecond;
+      double magnitudeOfVelocity = Math.sqrt(vx * vx + vy * vy);
+
+      if(Math.abs(magnitudeOfVelocity) > robotVeloityTolerance){
+        shouldRejectUpdate = true;
+      }
+      if(!shouldRejectUpdate)
+      {
+        swerveDrivePoseEstimator.setVisionMeasurementStdDevs(VecBuilder.fill(.7,.7,9999999));
+        swerveDrivePoseEstimator.addVisionMeasurement(
+            mt2.pose,
+            mt2.timestampSeconds);
+      }
+    }
+
 
       public double getStraightDistanceToCoralStation() {
         double distance =
@@ -125,9 +179,8 @@ public class Limelight extends SubsystemBase {
         LimelightHelpers.takeSnapshot("","Limelight Snapshot");
     }
 
-
     public void periodic(){
         tagID = Limetable.getEntry("tid").getDouble(-1);
-
+        poseEstimationMegatag2();
     }
 }
