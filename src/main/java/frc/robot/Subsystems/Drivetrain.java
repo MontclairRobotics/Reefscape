@@ -2,6 +2,8 @@ package frc.robot.Subsystems;
 import frc.robot.RobotContainer;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 
+import java.util.function.DoubleSupplier;
+
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
@@ -24,6 +26,7 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.VoltageUnit;
@@ -85,10 +88,31 @@ public class Drivetrain extends SubsystemBase {
             .withSteerRequestType(SteerRequestType.Position); //There's also motionMagicExpo-need to look more into that
         
         swerveDrivetrain.setControl(
-            fieldRequest.withVelocityX(yVelocity)
+            fieldRequest
+            .withVelocityX(yVelocity)
             .withVelocityY(xVelocity)
             .withRotationalRate(rotVelocity)
         );
+    }
+
+    public void drive(ChassisSpeeds chassisSpeeds){
+        //TODO: I think this is necessary for PathPlanner
+    }
+
+    public void aimAssistHorizontal(double strafeError){
+        //TODO:
+    }
+
+    public void alignToAngleRobotRelative(double angle){
+
+    }
+    
+    public void alignToAngleFieldRelative(double angle){
+
+    }
+
+    public void alignToAngleRobotRelativeContinuos(DoubleSupplier angle){
+        
     }
 
     public Command driveJoystickInput(){
