@@ -1,7 +1,10 @@
-public class Leds {
-    AddresableLED my_led = new AddressableLED(LED_PORT);
+package frc.robot.Subsystems;
+import edu.wpi.first.wpilibj.AddressableLED;
 
-    public void Leds() {
+public class LEDS {
+    AddressableLED my_led = new AddressableLED(0);
+
+    public void LEDS() {
         
 
     }

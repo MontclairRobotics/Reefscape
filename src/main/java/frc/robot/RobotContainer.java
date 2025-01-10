@@ -8,16 +8,18 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import frc.robot.Subsystems.Drivetrain;
+import frc.robot.Subsystems.Elevator;
 
 public class RobotContainer {
 
   //Controllers
   public static CommandPS5Controller driverController = new CommandPS5Controller(0);
-  public CommandPS5Controller operatorController = new CommandPS5Controller(1);
-  public CommandPS5Controller testingController = new CommandPS5Controller(2);
+  public static CommandPS5Controller operatorController = new CommandPS5Controller(1);
+  public static CommandPS5Controller testingController = new CommandPS5Controller(2);
 
   //Subsystems
-  public Drivetrain drivetrain = new Drivetrain();
+  public static Drivetrain drivetrain = new Drivetrain();
+  public static Elevator elevator = new Elevator();
 
   public RobotContainer() {
     configureBindings();
@@ -25,7 +27,9 @@ public class RobotContainer {
   }
 
   private void configureBindings() {
-    drivetrain.setDefaultCommand(drivetrain.driveJoystickInput());
+
+    drivetrain.setDefaultCommand(drivetrain.driveJoystickInputCommand());
+
   }
 
   public Command getAutonomousCommand() {

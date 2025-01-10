@@ -43,6 +43,7 @@ public class Constants {
     public class DriveConstants {
 
         public static final double MAX_SPEED = 4; //TODO: actually set this with units
+        public static final double MAX_ROT_SPEED = Math.PI*2;
 
     }
     public class DriveConfig {
@@ -121,7 +122,7 @@ public class Constants {
     private static final boolean kInvertLeftSide = false;
     private static final boolean kInvertRightSide = true;
 
-    private static final int kPigeonId = 1;
+    public static final int kPigeonId = 1;
 
     // These are only used for simulation
     private static final MomentOfInertia kSteerInertia = MomentOfInertia.ofBaseUnits(1, KilogramSquareMeters); //TODO: set correct value

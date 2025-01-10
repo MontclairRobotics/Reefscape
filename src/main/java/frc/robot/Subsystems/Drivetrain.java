@@ -2,6 +2,7 @@ package frc.robot.Subsystems;
 import frc.robot.RobotContainer;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 
+import java.time.chrono.IsoChronology;
 import java.util.function.DoubleSupplier;
 
 import com.ctre.phoenix6.CANBus;
@@ -10,6 +11,7 @@ import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.Pigeon2Configuration;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.hardware.Pigeon2;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain;
@@ -26,6 +28,7 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.util.Units;
@@ -36,6 +39,7 @@ import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.MomentOfInertia;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -46,76 +50,237 @@ import frc.robot.Constants.DriveConstants;
 
 public class Drivetrain extends SubsystemBase {
     
+    /* NOTE
+     * 
+     * ODOMETRY AND SETTING FIELD/ROBOT RELATIVE ANGLES ARE HANDLED IN DEGREES
+     * DEGREES!!!!
+     * 
+     * HOWEVER, CTRE swerve library CALCULATES THINGS IN RADIANS PER SECOND
+     * ALWAYS CONVERT TO RADIANS BEFORE USING SWERVE REQUEST
+     * 
+     */
     final SwerveDrivetrain swerveDrivetrain = DriveConfig.createSwerveDrivetrain();    
-    public SlewRateLimiter forwardLimiter = new SlewRateLimiter(3); //TODO: actually set this
-    public SlewRateLimiter strafeLimiter = new SlewRateLimiter(3); //TODO: actually set this
-    public SlewRateLimiter rotationLimiter = new SlewRateLimiter(3); //TODO: actually set this
+    private SlewRateLimiter forwardLimiter = new SlewRateLimiter(3); //TODO: actually set this
+    private SlewRateLimiter strafeLimiter = new SlewRateLimiter(3); //TODO: actually set this
+    private SlewRateLimiter rotationLimiter = new SlewRateLimiter(3); //TODO: actually set this
+    private PIDController thetaController = new PIDController(0,0 ,0 );
+    private double odometryHeading;
+    private Pigeon2 gyro = new Pigeon2(DriveConfig.kPigeonId);
+    boolean isRobotAtAngleSetPoint; //for angle turning
+    boolean fieldRelative;
 
-    
-    
-    // TalonFX driveFrontLeft = new TalonFX(-1);
-    // TalonFX turnFrontLeft = new TalonFX(-1);
-    // TalonFX driveFrontRight = new TalonFX(-1);
-    // TalonFX turnFrontRight = new TalonFX(-1);
-    // TalonFX driveBackLeft = new TalonFX(-1);
-    // TalonFX turnBackLeft = new TalonFX(-1);
-    // TalonFX driveBackRight = new TalonFX(-1);
-    // TalonFX turnBackRight = new TalonFX(-1);
 
     public Drivetrain() {
-
-
+        thetaController.setTolerance(1); //degrees
     }
 
-    
-    //implements SwerveDrivetrain.DeviceConstruct<T> in order to pass in our drive motor constructor into the
-    //constructor for SwerveDrivetrain
-    
-    public void drive() {
-
+    /* RETURNS X VELOCITY FROM CONTROLLER 
+     * 
+    */
+    public double getVelocityXFromController(){
         double xInput = RobotContainer.driverController.getLeftX();
+        return forwardLimiter.calculate(Math.pow(xInput, 3) * DriveConstants.MAX_SPEED);
+    }
+
+    /* RETURNS Y VELOCITY FROM CONTROLLER 
+     * 
+    */
+    public double getVelocityYFromController(){
         double yInput = RobotContainer.driverController.getLeftY();
+        return strafeLimiter.calculate(Math.pow(yInput, 3) * DriveConstants.MAX_SPEED);
+    }
+
+    /* DEFAULT DRIVE METHOD
+     * 
+     * 
+     */
+    public void drive() {
         double rotInput = RobotContainer.driverController.getRightX();
+        double rotVelocity = rotationLimiter.calculate(Math.pow(rotInput,3) * DriveConstants.MAX_ROT_SPEED);
+        drive(getVelocityYFromController(), getVelocityXFromController(), rotVelocity, fieldRelative); //drives using supposed velocities, rot velocity, and field relative boolean
+    }
 
-        double xVelocity = forwardLimiter.calculate(Math.pow(xInput, 3) * DriveConstants.MAX_SPEED);
-        double yVelocity = strafeLimiter.calculate(Math.pow(yInput, 3) * DriveConstants.MAX_SPEED);
-        double rotVelocity = rotationLimiter.calculate(Math.pow(rotInput,3) * DriveConstants.MAX_SPEED);
+    /* DRIVES GIVEN ROBOT RELATIVE CHASSIS SPEEDS, FOR PATHPLANNER 
+     * 
+     * 
+    */
+    public void drive(ChassisSpeeds chassisSpeeds){
+        //robot relative chassis speeds
+        SwerveRequest.ApplyRobotSpeeds request = new SwerveRequest.ApplyRobotSpeeds()
+        .withDriveRequestType(DriveRequestType.Velocity)
+        .withSteerRequestType(SteerRequestType.Position)
+        .withSpeeds(chassisSpeeds);
 
-        final SwerveRequest.FieldCentric fieldRequest = new SwerveRequest.FieldCentric()
-            //.withDeadband(2) //TODO: set these
-            //.withRotationalDeadband(3) 
-            .withDriveRequestType(DriveRequestType.Velocity) //Velocity is closed-loop velocity control
-            .withSteerRequestType(SteerRequestType.Position); //There's also motionMagicExpo-need to look more into that
+        swerveDrivetrain.setControl(request);
+    }
+
+    //rotation in radians per second
+    /* DRIVES USING CLOSED LOOP VELOCITY CONTROL 
+     * 
+     * 
+     * 
+    */
+    public void drive(double velocityX, double velocityY, double rotationalVelocity, boolean fieldRelative){
+        if(fieldRelative){
+            SwerveRequest.FieldCentric driveRequest = new SwerveRequest.FieldCentric() 
+                //.withDeadband(2) //TODO: set these
+                //.withRotationalDeadband(3) 
+                .withDriveRequestType(DriveRequestType.Velocity) //Velocity is closed-loop velocity control
+                .withSteerRequestType(SteerRequestType.Position); 
         
-        swerveDrivetrain.setControl(
-            fieldRequest
-            .withVelocityX(yVelocity)
-            .withVelocityY(xVelocity)
-            .withRotationalRate(rotVelocity)
+            swerveDrivetrain.setControl(
+                driveRequest
+                .withVelocityX(velocityX)
+                .withVelocityY(velocityY)
+                .withRotationalRate(rotationalVelocity)
+            );
+        } else {
+            //Creates robot relative swerve request
+            SwerveRequest.RobotCentric driveRequest = new SwerveRequest.RobotCentric()
+                //.withDeadband(2) //TODO: set these
+                //.withRotationalDeadband(3) 
+                .withDriveRequestType(DriveRequestType.Velocity) //Velocity is closed-loop velocity control
+                .withSteerRequestType(SteerRequestType.Position); 
+
+            //sets the control for the drivetrain
+            swerveDrivetrain.setControl(
+                driveRequest
+                .withVelocityX(velocityX)
+                .withVelocityY(velocityY)
+                .withRotationalRate(rotationalVelocity)
+            );
+
+        }
+    }
+
+    /* WRAPS THE ANGLE FROM -180 TO 180 DEGREES 
+     * 
+    */
+    public static double wrapAngle(double angle) {
+        angle = (angle + 180) % 360; // Step 1 and 2
+        if (angle < 0) {
+            angle += 360; // Make sure it's positive
+        }
+        return angle - 180; // Step 3
+      }
+
+    public void aimAssistHorizontal(double strafeError){
+        //TODO: do we want this (not with KICK ASS ODOMETRY)
+    }
+
+    /* ROBOT RELATIVE SETPOINT METHOD 
+     * 
+    */
+  public void setRobotRelativeAngle(double angDeg){
+    double wrappedSetPoint = wrapAngle(odometryHeading + angDeg);
+    thetaController.setSetpoint(wrappedSetPoint);
+  }
+
+   /* ALIGN TO ANGLE ROBOT RELATIVE 
+    * 
+   */
+  public void alignToAngleRobotRelative(boolean lockDrive) {
+    //creates a blank translation to pass in to the drive function so the robot doesn't move
+    Translation2d translation = new Translation2d(0, 0);
+    //calculates the input for the drive function (NO IDEA IF I SHOULD MULTIPLY THIS BY SOMETHING)
+    //inputs field relative angle (set point is also converted to field relative)
+    double response = thetaController.calculate(odometryHeading) * Math.PI / 180;
+
+    if(lockDrive) drive(0,0,response, false);
+    else drive(getVelocityYFromController(), getVelocityXFromController(), response, false);
+    }
+
+
+    /* SETS ANGLE SETPOINT FOR FIELD RELATIVE TURNING
+     * 
+     */
+    public void setFieldRelativeAngle(double angDeg){
+        double wrappedAngle = wrapAngle(angDeg);
+        thetaController.setSetpoint(wrappedAngle);
+    }
+
+    /* ALIGNS TO ANGLE FIELD RELATIVE 
+     * 
+     */
+    public void alignToAngleFieldRelative(boolean lockDrive){
+        //Response must be in Radians per second for the .drive method.
+        double response = thetaController.calculate(odometryHeading) * Math.PI/180;
+        if(lockDrive) drive(0,0, response, true);
+        //swapped because pos X means forward
+        else drive(getVelocityYFromController(), getVelocityXFromController(), response, true);
+    }
+
+    /* ALIGNS TO ANGLE ROBOT RELATIVE WITH CHANGING SETPOINT
+     * 
+     */
+    public void alignToAngleRobotRelativeContinuos(DoubleSupplier angDeg, boolean lockDrive){
+        setRobotRelativeAngle(angDeg.getAsDouble());
+        alignToAngleRobotRelative(lockDrive);
+    }
+
+    public void toRobotRelative(){
+        fieldRelative = false;
+    }
+    public void toFieldRelative(){
+        fieldRelative = true;
+    }
+    public void zeroGyro(){
+        gyro.setYaw(0);
+    }
+
+    /*
+     * default drive command
+     */
+    public Command driveJoystickInputCommand(){
+        return Commands.run(() -> drive(), this);
+    }
+
+     /* zeros the gyro */
+     public Command zeroGyroCommand() {
+        return Commands.runOnce(() -> zeroGyro(), RobotContainer.drivetrain);
+    } 
+    
+    /* turns boolean to robot relative */
+    public Command toRobotRelativeCommand() {
+        return Commands.runOnce(() -> toRobotRelative(), RobotContainer.drivetrain);
+      }
+
+    /* turns boolean to field relative */
+    public Command toFieldRelativeCommand (){
+        return Commands.runOnce(() -> toFieldRelative(), RobotContainer.drivetrain);
+    }
+
+    /* aligns to angle robot relative */
+    public Command alignToAngleRobotRelativeCommand(double angDeg, boolean lockDrive) {
+        return Commands.sequence(
+            Commands.runOnce(() -> setRobotRelativeAngle(angDeg), RobotContainer.drivetrain),
+            Commands.run(() -> alignToAngleRobotRelative(lockDrive), RobotContainer.drivetrain)
+                .until(() -> isRobotAtAngleSetPoint)
         );
     }
 
-    public void drive(ChassisSpeeds chassisSpeeds){
-        //TODO: I think this is necessary for PathPlanner
-    }
-
-    public void aimAssistHorizontal(double strafeError){
-        //TODO:
-    }
-
-    public void alignToAngleRobotRelative(double angle){
-
+    /* aligns to angle robot relative but angle can change
+     * 
+     */
+    public Command alignToAngleRobotRelativeContinuosCommand(DoubleSupplier angDeg, boolean lockDrive){
+        return Commands.run(() -> alignToAngleRobotRelativeContinuos(angDeg, lockDrive), this)
+            .until(() -> isRobotAtAngleSetPoint);
     }
     
-    public void alignToAngleFieldRelative(double angle){
-
+    /* aligns to angle field relative! */
+    public Command alignToAngleFieldRelative(double angle, boolean lockDrive){
+        return Commands.sequence(
+            Commands.runOnce(() -> setFieldRelativeAngle(angle), RobotContainer.drivetrain),
+            Commands.run(() -> alignToAngleFieldRelative(lockDrive))
+                .until(() -> isRobotAtAngleSetPoint)
+        );
     }
 
-    public void alignToAngleRobotRelativeContinuos(DoubleSupplier angle){
-        
-    }
-
-    public Command driveJoystickInput(){
-        return Commands.run(() -> drive(), this);
+    @Override
+    public void periodic(){
+        //Not sure if this is correct at all
+        odometryHeading = gyro.getYaw().getValueAsDouble();
+        isRobotAtAngleSetPoint = thetaController.atSetpoint();
+        fieldRelative = !RobotContainer.driverController.L2().getAsBoolean();
     }
 }

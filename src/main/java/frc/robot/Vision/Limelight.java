@@ -2,16 +2,17 @@ package frc.robot.Vision;
 
 import java.util.function.DoubleSupplier;
 
+import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Limelight extends SubsystemBase {
     
-    private String cameraName;
-
-    public static final String llname = "";
+    /* CONSTANTS */
     public static final double limelightOffsetAngleVertical = 20; //TODO: set this
     public static final double limelightMountHeight = .1; //TODO: set this
     public static final double coralStationTagHeightMeters = 1.35255; //make sure these two are correct
@@ -30,14 +31,25 @@ public class Limelight extends SubsystemBase {
     public static final int[] coralStationIDsBlue = {12,13};
     public static final int[] coralStationIDs = {1,2,12,13};
 
-    //TODO: This is how off we need to go left or right to have our grabber be aligned
+    public static final double TARGET_DEBOUNCE_TIME = 0.2;
 
+
+    /* INSTANCE VARIABLES */
     int tagCount;
+    int[] validIDs = {}; //TODO: set these
     NetworkTable Limetable = NetworkTableInstance.getDefault().getTable("limelight");
     NetworkTableEntry ty = Limetable.getEntry("ty");
-
     double tagID = Limetable.getEntry("tid").getDouble(-1);
-
+    private String cameraName;
+    private Debouncer targetDebouncer = new Debouncer(TARGET_DEBOUNCE_TIME, DebounceType.kFalling);
+    
+    public Limelight(String cameraName){
+        this.cameraName = cameraName;
+        LimelightHelpers.SetFiducialIDFiltersOverride(cameraName, validIDs);
+    }
+   
+    
+    //might not be needed
     public static boolean isCorrectID(int[] IDs, double ID){
         for(int n: IDs){
             if(n == ID) return true;
@@ -45,20 +57,58 @@ public class Limelight extends SubsystemBase {
         return false;
     }
 
-    public static double getTX(){
-        return LimelightHelpers.getLimelightNTDouble(llname, "tx");
+    //from last years robot
+    public double getTimestampSeconds() {
+    double latency =
+        (LimelightHelpers.getLimelightNTDouble(cameraName, "cl")
+                + LimelightHelpers.getLimelightNTDouble(cameraName, "tl"))
+            / 1000.0;
+
+    return Timer.getFPGATimestamp() - latency;
+    }
+
+    //from last years robot as well
+    public boolean hasValidTarget() {
+        boolean hasMatch = (LimelightHelpers.getLimelightNTDouble(cameraName, "tv") == 1.0);
+        return targetDebouncer.calculate(hasMatch);
+        // return true;
+      }
+
+      public double getStraightDistanceToCoralStation() {
+        double distance =
+            (coralStationTagHeightMeters - limelightMountHeight)
+                / Math.tan(
+                    (Math.PI / 180.0)
+                        * (limelightOffsetAngleVertical + getTY()));
+    
+        return distance;
+      }
+
+      public double getStraightDistanceToReef() {
+        double distance =
+            (reefTagHeightMeters - limelightMountHeight)
+                / Math.tan(
+                    (Math.PI / 180.0)
+                        * (limelightOffsetAngleVertical + getTY()));
+    
+        return distance;
+      }
+
+  
+    public double getTX(){
+        return LimelightHelpers.getLimelightNTDouble(cameraName, "tx");
     } 
-    public static double getTY() {
-        return LimelightHelpers.getLimelightNTDouble(llname, "ty");
+    public double getTY() {
+        return LimelightHelpers.getLimelightNTDouble(cameraName, "ty");
     } 
-    public static DoubleSupplier tySupplier(){
+    public DoubleSupplier tySupplier(){
         return () -> getTY();
     }
-    public static DoubleSupplier txSupplier(){
+    public DoubleSupplier txSupplier(){
         return () -> getTX();
     }
     public double getStraightDistanceToTag(){
-        if(isTargetInView()) return goalHeightReef/(Math.tan(Math.toRadians(getTY()+limelightOffsetAngleVertical)));
+        if(hasValidTarget()) return goalHeightReef/(Math.tan(Math.toRadians(getTY()+limelightOffsetAngleVertical)));
         return 0;
     }
     public double getStrafeDistanceToReef(){
@@ -68,16 +118,13 @@ public class Limelight extends SubsystemBase {
         return 0;
     }
     public double getBotPose(){
-        return LimelightHelpers.getLimelightNTDouble(llname, "botpose");
+        return LimelightHelpers.getLimelightNTDouble(cameraName, "botpose");
     }  
-    public static void takeSnapshot() {
+
+    public void takeSnapshot() {
         LimelightHelpers.takeSnapshot("","Limelight Snapshot");
     }
-    public boolean isTargetInView(){
-        LimelightHelpers.PoseEstimate limelightMeasurement = LimelightHelpers.getBotPoseEstimate(llname, "botpose", false);
-        if(limelightMeasurement.tagCount > 0) return true;
-        return false;
-    }
+
 
     public void periodic(){
         tagID = Limetable.getEntry("tid").getDouble(-1);
