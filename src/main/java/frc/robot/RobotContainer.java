@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import frc.robot.Subsystems.Drivetrain;
 import frc.robot.Subsystems.Elevator;
+import frc.robot.Vision.Limelight;
 
 public class RobotContainer {
 
@@ -20,6 +21,10 @@ public class RobotContainer {
   //Subsystems
   public static Drivetrain drivetrain = new Drivetrain();
   public static Elevator elevator = new Elevator();
+  public static Limelight limelight = new Limelight("Camera");
+
+  //Alliance
+  public static boolean isBlueAlliance;
 
   public RobotContainer() {
     configureBindings();

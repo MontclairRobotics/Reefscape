@@ -1,8 +1,12 @@
 package frc.robot.Subsystems;
+import frc.robot.Robot;
 import frc.robot.RobotContainer;
+import frc.robot.Vision.Limelight;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 
 import java.time.chrono.IsoChronology;
+import java.util.Arrays;
+import java.util.List;
 import java.util.function.DoubleSupplier;
 
 import com.ctre.phoenix6.CANBus;
@@ -25,9 +29,17 @@ import com.ctre.phoenix6.swerve.SwerveModuleConstants.SteerFeedbackType;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants.SteerMotorArrangement;
 import com.ctre.phoenix6.swerve.SwerveModuleConstantsFactory;
 import com.ctre.phoenix6.swerve.SwerveRequest;
+import com.pathplanner.lib.path.GoalEndState;
+import com.pathplanner.lib.path.PathConstraints;
+import com.pathplanner.lib.path.PathPlannerPath;
+import com.pathplanner.lib.path.PathPoint;
+import com.pathplanner.lib.path.RotationTarget;
+import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
@@ -41,6 +53,7 @@ import edu.wpi.first.units.measure.MomentOfInertia;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -167,10 +180,83 @@ public class Drivetrain extends SubsystemBase {
         return angle - 180; // Step 3
       }
 
-    public void aimAssistHorizontal(double strafeError){
-        //TODO: do we want this (not with KICK ASS ODOMETRY)
+    public Pose2d getPose2dToPathFindTo(){
+        if(RobotContainer.isBlueAlliance){
+            switch(RobotContainer.limelight.tagID){
+                case 12:
+                    return new Pose2d(new Translation2d(1.091, 1.060), new Rotation2d(Math.toRadians(-127.000)));
+                case 13:
+                    return new Pose2d(new Translation2d(1.091, 7.000), new Rotation2d(Math.toRadians(127.000)));
+                case 17:
+                    return new Pose2d(new Translation2d(3.680, 2.600), new Rotation2d(Math.toRadians(60.000)));
+                case 18: 
+                    return new Pose2d(new Translation2d(2.870, 4.030), new Rotation2d(Math.toRadians(0.000)));
+                case 19:
+                    return new Pose2d(new Translation2d(3.670, 5.450), new Rotation2d(Math.toRadians(-60.000)));
+                case 20:
+                    return new Pose2d(new Translation2d(5.320, 5.450), new Rotation2d(Math.toRadians(-120.000)));
+                case 21: 
+                    return new Pose2d(new Translation2d(6.130, 4.030), new Rotation2d(Math.toRadians(180.000)));
+                case 22: 
+                    return new Pose2d(new Translation2d(5.320, 2.600), new Rotation2d(Math.toRadians(120.000)));
+            }
+            return null;
+        } else {
+
+            //TODO: add these poses
+            switch(RobotContainer.limelight.tagID){
+                case 1:
+                    return new Pose2d(new Translation2d(), new Rotation2d());
+                case 2:
+                    return new Pose2d(new Translation2d(), new Rotation2d());
+                case 6:
+                    return new Pose2d(new Translation2d(), new Rotation2d());
+                case 7: 
+                    return new Pose2d(new Translation2d(), new Rotation2d());
+                case 8:
+                    return new Pose2d(new Translation2d(), new Rotation2d());
+                case 9:
+                    return new Pose2d(new Translation2d(), new Rotation2d());
+                case 10: 
+                    return new Pose2d(new Translation2d(), new Rotation2d());
+                case 11: 
+                    return new Pose2d(new Translation2d(), new Rotation2d());
+            }
+            return null;
+        }
     }
 
+    public PathPlannerPath generatePathToAprilTagLocation(){
+        Pose2d finalPose = getPose2dToPathFindTo();
+        if(finalPose != null) {
+            Pose2d currentPose = RobotContainer.limelight.getCurrentOdometryPose2d();
+            List<PathPoint> pathList = Arrays.asList(
+                new PathPoint(
+                    currentPose.getTranslation(), 
+                    new RotationTarget(
+                        odometryHeading, 
+                        new Rotation2d(Math.toRadians(odometryHeading))
+                    )
+                ), 
+                new PathPoint(
+                    finalPose.getTranslation(), 
+                    new RotationTarget(
+                        odometryHeading, 
+                        finalPose.getRotation()
+                    )
+                )
+            );
+            GoalEndState goalEndState = new GoalEndState(0, finalPose.getRotation());
+            //TODO: set these path constraints
+            PathConstraints pathConstraints = new PathConstraints(null, null, null, null);
+            return PathPlannerPath.fromPathPoints(pathList, pathConstraints, goalEndState);
+        }    
+        else return new PathPlannerPath(null, null, null, null);
+    }
+
+    public void followPathToAprilTagLocation(){
+        //TODO: follow the path generated by generatePathToAprilTagLocation
+    }
     /* ROBOT RELATIVE SETPOINT METHOD 
      * 
     */
@@ -285,5 +371,7 @@ public class Drivetrain extends SubsystemBase {
         odometryHeading = swerveDrivetrain.getPigeon2().getYaw().getValueAsDouble();
         isRobotAtAngleSetPoint = thetaController.atSetpoint();
         fieldRelative = !RobotContainer.driverController.L2().getAsBoolean();
+
+        RobotContainer.isBlueAlliance = DriverStation.getAlliance().get() == Alliance.Red? false: true;
     }
 }

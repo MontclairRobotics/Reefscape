@@ -8,6 +8,7 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -49,7 +50,7 @@ public class Limelight extends SubsystemBase {
     private int[] validIDs = {}; //TODO: set these
     private NetworkTable Limetable = NetworkTableInstance.getDefault().getTable("limelight");
     private NetworkTableEntry ty = Limetable.getEntry("ty");
-    private double tagID = Limetable.getEntry("tid").getDouble(-1);
+    public int tagID = (int) Limetable.getEntry("tid").getDouble(-1);
     private String cameraName;
     private Debouncer targetDebouncer = new Debouncer(TARGET_DEBOUNCE_TIME, DebounceType.kFalling);
     private SwerveDrivePoseEstimator swerveDrivePoseEstimator = new SwerveDrivePoseEstimator(null, null, null, null);
@@ -62,6 +63,10 @@ public class Limelight extends SubsystemBase {
     public Limelight(String cameraName){
         this.cameraName = cameraName;
         LimelightHelpers.SetFiducialIDFiltersOverride(cameraName, validIDs);
+    }
+
+    public Pose2d getCurrentOdometryPose2d(){
+        return swerveDrivePoseEstimator.getEstimatedPosition();
     }
    
     
@@ -180,7 +185,7 @@ public class Limelight extends SubsystemBase {
     }
 
     public void periodic(){
-        tagID = Limetable.getEntry("tid").getDouble(-1);
+        tagID = (int) Limetable.getEntry("tid").getDouble(-1);
         poseEstimationMegatag2();
     }
 }
