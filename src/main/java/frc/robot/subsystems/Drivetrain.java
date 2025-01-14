@@ -93,7 +93,7 @@ public class Drivetrain extends SubsystemBase {
         drive(getVelocityYFromController(), getVelocityXFromController(), rotVelocity, fieldRelative); //drives using supposed velocities, rot velocity, and field relative boolean
     }
 
-    public void drive(ChassisSpeeds speeds)
+    // public void drive(ChassisSpeeds speeds)
 
     /* DRIVES GIVEN ROBOT RELATIVE CHASSIS SPEEDS, FOR PATHPLANNER 
      * 

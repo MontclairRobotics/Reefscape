@@ -44,7 +44,7 @@ public class GoToPoseCommand extends Command {
         double ySpeed = yController.calculate(speeds.vyMetersPerSecond);
         double omegaSpeed = thetaController.calculate(speeds.omegaRadiansPerSecond);
 
-        RobotContainer.drivetrain.swerveDrive.setControl(new SwerveRequest.FieldCentric())
+        RobotContainer.drivetrain.swerveDrive.setControl(new SwerveRequest.FieldCentric());
         
         
     }
