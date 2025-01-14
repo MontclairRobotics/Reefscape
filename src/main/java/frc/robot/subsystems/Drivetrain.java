@@ -8,10 +8,15 @@ import java.util.function.Supplier;
 
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.mechanisms.swerve.LegacySwerveRequest.SwerveDriveBrake;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveModule.SteerRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.config.PIDConstants;
+import com.pathplanner.lib.config.RobotConfig;
+import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.path.GoalEndState;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
@@ -45,10 +50,10 @@ public class Drivetrain extends SubsystemBase {
      * 
      */
     public final SwerveDrivetrain<TalonFX, TalonFX, CANcoder> swerveDrive = DriveConfig.createSwerveDrivetrain();    
-    private SlewRateLimiter forwardLimiter = new SlewRateLimiter(3); //TODO: actually set this
-    private SlewRateLimiter strafeLimiter = new SlewRateLimiter(3); //TODO: actually set this
-    private SlewRateLimiter rotationLimiter = new SlewRateLimiter(3); //TODO: actually set this
-    private PIDController thetaController = new PIDController(0,0 ,0 );
+    private SlewRateLimiter forwardLimiter = new SlewRateLimiter(DriveConstants.SIDE_ACCEL); //TODO: actually set this
+    private SlewRateLimiter strafeLimiter = new SlewRateLimiter(DriveConstants.SIDE_ACCEL); //TODO: actually set this
+    private SlewRateLimiter rotationLimiter = new SlewRateLimiter(DriveConstants.ROT_ACCEL); //TODO: actually set this
+    public PIDController thetaController = new PIDController(0,0 ,0 );
     private Rotation2d odometryHeading;
     // private Pigeon2 gyro = swerveDrive.getPigeon2(); //they say not to use this like this, allegedly
     //putting this here so we know how to get it
@@ -57,8 +62,8 @@ public class Drivetrain extends SubsystemBase {
 
 
     public Drivetrain() {
-        thetaController.setTolerance(1); //degrees
-        
+        thetaController.setTolerance(1 * Math.PI / 180); //degrees converted to radians
+        configurePathplanner();
 
     }
 
@@ -87,6 +92,8 @@ public class Drivetrain extends SubsystemBase {
         double rotVelocity = rotationLimiter.calculate(Math.pow(rotInput,3) * DriveConstants.MAX_ROT_SPEED);
         drive(getVelocityYFromController(), getVelocityXFromController(), rotVelocity, fieldRelative); //drives using supposed velocities, rot velocity, and field relative boolean
     }
+
+    // public void drive(ChassisSpeeds speeds)
 
     /* DRIVES GIVEN ROBOT RELATIVE CHASSIS SPEEDS, FOR PATHPLANNER 
      * 
@@ -196,6 +203,35 @@ public class Drivetrain extends SubsystemBase {
                     return new Pose2d(new Translation2d(), new Rotation2d());
             }
             return null;
+        }
+    }
+
+    private void configurePathplanner() {
+        try {
+            var config = RobotConfig.fromGUISettings();
+            AutoBuilder.configure(
+                () -> swerveDrive.getState().Pose,   // Supplier of current robot pose
+                swerveDrive::resetPose,         // Consumer for seeding pose against auto
+                () -> swerveDrive.getState().Speeds, // Supplier of current robot speeds
+                // Consumer of ChassisSpeeds and feedforwards to drive the robot
+                (speeds, feedforwards) -> swerveDrive.setControl(
+                    new SwerveRequest.ApplyRobotSpeeds().withSpeeds(speeds)
+                        .withWheelForceFeedforwardsX(feedforwards.robotRelativeForcesXNewtons())
+                        .withWheelForceFeedforwardsY(feedforwards.robotRelativeForcesYNewtons())
+                ),
+                new PPHolonomicDriveController(
+                    // PID constants for translation
+                    new PIDConstants(10, 0, 0),
+                    // PID constants for rotation
+                    new PIDConstants(7, 0, 0)
+                ),
+                config,
+                // Assume the path needs to be flipped for Red vs Blue, this is normally the case
+                () -> DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red,
+                this // Subsystem for requirements
+            );
+        } catch (Exception ex) {
+            DriverStation.reportError("Failed to load PathPlanner config and configure AutoBuilder", ex.getStackTrace());
         }
     }
 
