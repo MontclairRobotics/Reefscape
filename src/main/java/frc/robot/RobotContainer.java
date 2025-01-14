@@ -7,9 +7,9 @@ package frc.robot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
-import frc.robot.Subsystems.Drivetrain;
-import frc.robot.Subsystems.Elevator;
-import frc.robot.Vision.Limelight;
+import frc.robot.subsystems.Drivetrain;
+import frc.robot.subsystems.Elevator;
+import frc.robot.vision.Limelight;
 
 public class RobotContainer {
 

@@ -1,40 +1,22 @@
-package frc.robot.Subsystems;
-import frc.robot.Robot;
+package frc.robot.subsystems;
 import frc.robot.RobotContainer;
-import frc.robot.Vision.Limelight;
-import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 
-import java.time.chrono.IsoChronology;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 
-import com.ctre.phoenix6.CANBus;
-import com.ctre.phoenix6.configs.CANcoderConfiguration;
-import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
-import com.ctre.phoenix6.configs.Pigeon2Configuration;
-import com.ctre.phoenix6.configs.Slot0Configs;
-import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.hardware.Pigeon2;
+import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain;
-import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveModule.SteerRequestType;
-import com.ctre.phoenix6.swerve.SwerveModuleConstants;
-import com.ctre.phoenix6.swerve.SwerveModuleConstants.ClosedLoopOutputType;
-import com.ctre.phoenix6.swerve.SwerveModuleConstants.DriveMotorArrangement;
-import com.ctre.phoenix6.swerve.SwerveModuleConstants.SteerFeedbackType;
-import com.ctre.phoenix6.swerve.SwerveModuleConstants.SteerMotorArrangement;
-import com.ctre.phoenix6.swerve.SwerveModuleConstantsFactory;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.path.GoalEndState;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.path.PathPoint;
 import com.pathplanner.lib.path.RotationTarget;
-import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
@@ -42,17 +24,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.units.VoltageUnit;
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.Current;
-import edu.wpi.first.units.measure.Distance;
-import edu.wpi.first.units.measure.LinearVelocity;
-import edu.wpi.first.units.measure.MomentOfInertia;
-import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -72,13 +44,13 @@ public class Drivetrain extends SubsystemBase {
      * ALWAYS CONVERT TO RADIANS BEFORE USING SWERVE REQUEST
      * 
      */
-    public final SwerveDrivetrain swerveDrivetrain = DriveConfig.createSwerveDrivetrain();    
+    public final SwerveDrivetrain<TalonFX, TalonFX, CANcoder> swerveDrive = DriveConfig.createSwerveDrivetrain();    
     private SlewRateLimiter forwardLimiter = new SlewRateLimiter(3); //TODO: actually set this
     private SlewRateLimiter strafeLimiter = new SlewRateLimiter(3); //TODO: actually set this
     private SlewRateLimiter rotationLimiter = new SlewRateLimiter(3); //TODO: actually set this
     private PIDController thetaController = new PIDController(0,0 ,0 );
-    private double odometryHeading;
-    private Pigeon2 gyro = swerveDrivetrain.getPigeon2(); //they say not to use this like this, allegedly
+    private Rotation2d odometryHeading;
+    // private Pigeon2 gyro = swerveDrive.getPigeon2(); //they say not to use this like this, allegedly
     //putting this here so we know how to get it
     private boolean isRobotAtAngleSetPoint; //for angle turning
     private boolean fieldRelative;
@@ -127,7 +99,7 @@ public class Drivetrain extends SubsystemBase {
         .withSteerRequestType(SteerRequestType.Position)
         .withSpeeds(chassisSpeeds);
 
-        swerveDrivetrain.setControl(request);
+        swerveDrive.setControl(request);
     }
 
     //rotation in radians per second
@@ -144,7 +116,7 @@ public class Drivetrain extends SubsystemBase {
                 .withDriveRequestType(DriveRequestType.Velocity) //Velocity is closed-loop velocity control
                 .withSteerRequestType(SteerRequestType.Position); 
         
-            swerveDrivetrain.setControl(
+            swerveDrive.setControl(
                 driveRequest
                 .withVelocityX(velocityX)
                 .withVelocityY(velocityY)
@@ -159,7 +131,7 @@ public class Drivetrain extends SubsystemBase {
                 .withSteerRequestType(SteerRequestType.Position); 
 
             //sets the control for the drivetrain
-            swerveDrivetrain.setControl(
+            swerveDrive.setControl(
                 driveRequest
                 .withVelocityX(velocityX)
                 .withVelocityY(velocityY)
@@ -169,20 +141,21 @@ public class Drivetrain extends SubsystemBase {
         }
     }
 
-    /* WRAPS THE ANGLE FROM -180 TO 180 DEGREES 
-     * 
+    /** 
+     * WRAPS THE ANGLE FROM -180 TO 180 DEGREES 
     */
-    public static double wrapAngle(double angle) {
+    public static Rotation2d wrapAngle(Rotation2d ang) {
+        double angle = ang.getDegrees();
         angle = (angle + 180) % 360; // Step 1 and 2
         if (angle < 0) {
             angle += 360; // Make sure it's positive
         }
-        return angle - 180; // Step 3
+        return Rotation2d.fromDegrees(angle - 180); // Step 3
       }
 
-    public Pose2d getPose2dToPathFindTo(){
+    public Pose2d getPoseToPathFindTo(){
         if(RobotContainer.isBlueAlliance){
-            switch(RobotContainer.limelight.tagID){
+            switch(RobotContainer.limelight.getTagID()){
                 case 12:
                     return new Pose2d(new Translation2d(1.091, 1.060), new Rotation2d(Math.toRadians(-127.000)));
                 case 13:
@@ -204,7 +177,7 @@ public class Drivetrain extends SubsystemBase {
         } else {
 
             //TODO: add these poses
-            switch(RobotContainer.limelight.tagID){
+            switch(RobotContainer.limelight.getTagID()){
                 case 1:
                     return new Pose2d(new Translation2d(), new Rotation2d());
                 case 2:
@@ -226,33 +199,33 @@ public class Drivetrain extends SubsystemBase {
         }
     }
 
-    public PathPlannerPath generatePathToAprilTagLocation(){
-        Pose2d finalPose = getPose2dToPathFindTo();
-        if(finalPose != null) {
-            Pose2d currentPose = RobotContainer.limelight.getCurrentOdometryPose2d();
-            List<PathPoint> pathList = Arrays.asList(
-                new PathPoint(
-                    currentPose.getTranslation(), 
-                    new RotationTarget(
-                        odometryHeading, 
-                        new Rotation2d(Math.toRadians(odometryHeading))
-                    )
-                ), 
-                new PathPoint(
-                    finalPose.getTranslation(), 
-                    new RotationTarget(
-                        odometryHeading, 
-                        finalPose.getRotation()
-                    )
-                )
-            );
-            GoalEndState goalEndState = new GoalEndState(0, finalPose.getRotation());
-            //TODO: set these path constraints
-            PathConstraints pathConstraints = new PathConstraints(null, null, null, null);
-            return PathPlannerPath.fromPathPoints(pathList, pathConstraints, goalEndState);
-        }    
-        else return new PathPlannerPath(null, null, null, null);
-    }
+    // public PathPlannerPath generatePathToAprilTagLocation(){
+    //     Pose2d finalPose = getPoseToPathFindTo();
+    //     if(finalPose != null) {
+    //         Pose2d currentPose = RobotContainer.limelight.getCurrentOdometryPose2d();
+    //         List<PathPoint> pathList = Arrays.asList(
+    //             new PathPoint(
+    //                 currentPose.getTranslation(), 
+    //                 new RotationTarget(
+    //                     odometryHeading, 
+    //                     new Rotation2d(Math.toRadians(odometryHeading))
+    //                 )
+    //             ), 
+    //             new PathPoint(
+    //                 finalPose.getTranslation(), 
+    //                 new RotationTarget(
+    //                     odometryHeading, 
+    //                     finalPose.getRotation()
+    //                 )
+    //             )
+    //         );
+    //         GoalEndState goalEndState = new GoalEndState(0, finalPose.getRotation());
+    //         //TODO: set these path constraints
+    //         PathConstraints pathConstraints = new PathConstraints(null, null, null, null);
+    //         return PathPlannerPath.fromPathPoints(pathList, pathConstraints, goalEndState);
+    //     }    
+    //     else return new PathPlannerPath(null, null, null, null);
+    // }
 
     public void followPathToAprilTagLocation(){
         //TODO: follow the path generated by generatePathToAprilTagLocation
@@ -260,8 +233,8 @@ public class Drivetrain extends SubsystemBase {
     /* ROBOT RELATIVE SETPOINT METHOD 
      * 
     */
-  public void setRobotRelativeAngle(double angDeg){
-    double wrappedSetPoint = wrapAngle(odometryHeading + angDeg);
+  public void setRobotRelativeAngle(Rotation2d angDeg){
+    double wrappedSetPoint = wrapAngle(odometryHeading.plus(angDeg)).getRadians();
     thetaController.setSetpoint(wrappedSetPoint);
   }
 
@@ -269,22 +242,20 @@ public class Drivetrain extends SubsystemBase {
     * 
    */
   public void alignToAngleRobotRelative(boolean lockDrive) {
-    //creates a blank translation to pass in to the drive function so the robot doesn't move
-    Translation2d translation = new Translation2d(0, 0);
-    //calculates the input for the drive function (NO IDEA IF I SHOULD MULTIPLY THIS BY SOMETHING)
-    //inputs field relative angle (set point is also converted to field relative)
-    double response = thetaController.calculate(odometryHeading) * Math.PI / 180;
+        //calculates the input for the drive function (NO IDEA IF I SHOULD MULTIPLY THIS BY SOMETHING)
+        //inputs field relative angle (set point is also converted to field relative)
+        double response = thetaController.calculate(odometryHeading.getRadians()) * Math.PI / 180;
 
-    if(lockDrive) drive(0,0,response, false);
-    else drive(getVelocityYFromController(), getVelocityXFromController(), response, false);
+        if(lockDrive) drive(0,0,response, false);
+        else drive(getVelocityYFromController(), getVelocityXFromController(), response, false);
     }
 
 
     /* SETS ANGLE SETPOINT FOR FIELD RELATIVE TURNING
      * 
      */
-    public void setFieldRelativeAngle(double angDeg){
-        double wrappedAngle = wrapAngle(angDeg);
+    public void setFieldRelativeAngle(Rotation2d angle){
+        double wrappedAngle = wrapAngle(angle).getRadians();
         thetaController.setSetpoint(wrappedAngle);
     }
 
@@ -293,7 +264,7 @@ public class Drivetrain extends SubsystemBase {
      */
     public void alignToAngleFieldRelative(boolean lockDrive){
         //Response must be in Radians per second for the .drive method.
-        double response = thetaController.calculate(odometryHeading) * Math.PI/180;
+        double response = thetaController.calculate(odometryHeading.getRadians());
         if(lockDrive) drive(0,0, response, true);
         //swapped because pos X means forward
         else drive(getVelocityYFromController(), getVelocityXFromController(), response, true);
@@ -302,8 +273,8 @@ public class Drivetrain extends SubsystemBase {
     /* ALIGNS TO ANGLE ROBOT RELATIVE WITH CHANGING SETPOINT
      * 
      */
-    public void alignToAngleRobotRelativeContinuos(DoubleSupplier angDeg, boolean lockDrive){
-        setRobotRelativeAngle(angDeg.getAsDouble());
+    public void alignToAngleRobotRelativeContinuous(Supplier<Rotation2d> angleSup, boolean lockDrive){
+        setRobotRelativeAngle(angleSup.get());
         alignToAngleRobotRelative(lockDrive);
     }
 
@@ -314,7 +285,7 @@ public class Drivetrain extends SubsystemBase {
         fieldRelative = true;
     }
     public void zeroGyro(){
-        swerveDrivetrain.getPigeon2().setYaw(0);
+        swerveDrive.getPigeon2().setYaw(0);
     }
 
     /*
@@ -340,9 +311,9 @@ public class Drivetrain extends SubsystemBase {
     }
 
     /* aligns to angle robot relative */
-    public Command alignToAngleRobotRelativeCommand(double angDeg, boolean lockDrive) {
+    public Command alignToAngleRobotRelativeCommand(Rotation2d angle, boolean lockDrive) {
         return Commands.sequence(
-            Commands.runOnce(() -> setRobotRelativeAngle(angDeg), RobotContainer.drivetrain),
+            Commands.runOnce(() -> setRobotRelativeAngle(angle), RobotContainer.drivetrain),
             Commands.run(() -> alignToAngleRobotRelative(lockDrive), RobotContainer.drivetrain)
                 .until(() -> isRobotAtAngleSetPoint)
         );
@@ -351,27 +322,37 @@ public class Drivetrain extends SubsystemBase {
     /* aligns to angle robot relative but angle can change
      * 
      */
-    public Command alignToAngleRobotRelativeContinuosCommand(DoubleSupplier angDeg, boolean lockDrive){
-        return Commands.run(() -> alignToAngleRobotRelativeContinuos(angDeg, lockDrive), this)
+    public Command alignToAngleRobotRelativeContinuousCommand(Supplier<Rotation2d> angle, boolean lockDrive){
+        return Commands.run(() -> alignToAngleRobotRelativeContinuous(angle, lockDrive), this)
             .until(() -> isRobotAtAngleSetPoint);
     }
     
     /* aligns to angle field relative! */
-    public Command alignToAngleFieldRelative(double angle, boolean lockDrive){
+    public Command alignToAngleFieldRelative(Rotation2d angle, boolean lockDrive){
         return Commands.sequence(
             Commands.runOnce(() -> setFieldRelativeAngle(angle), RobotContainer.drivetrain),
-            Commands.run(() -> alignToAngleFieldRelative(lockDrive))
+            Commands.run(() -> alignToAngleFieldRelative(lockDrive), this)
                 .until(() -> isRobotAtAngleSetPoint)
         );
+    }
+
+    public Rotation2d getWrappedHeading() {
+        return wrapAngle(odometryHeading);
+    }
+
+    public Pose2d getRobotPose() {
+        return swerveDrive.getState().Pose;
+    }
+
+    public ChassisSpeeds getCurrentSpeeds() {
+        return swerveDrive.getState().Speeds;
     }
 
     @Override
     public void periodic(){
         //Not sure if this is correct at all
-        odometryHeading = swerveDrivetrain.getPigeon2().getYaw().getValueAsDouble();
+        odometryHeading = swerveDrive.getState().Pose.getRotation();
         isRobotAtAngleSetPoint = thetaController.atSetpoint();
         fieldRelative = !RobotContainer.driverController.L2().getAsBoolean();
-
-        RobotContainer.isBlueAlliance = DriverStation.getAlliance().get() == Alliance.Red? false: true;
     }
 }
