@@ -244,7 +244,7 @@ public class Drivetrain extends SubsystemBase {
   public void alignToAngleRobotRelative(boolean lockDrive) {
         //calculates the input for the drive function (NO IDEA IF I SHOULD MULTIPLY THIS BY SOMETHING)
         //inputs field relative angle (set point is also converted to field relative)
-        double response = thetaController.calculate(odometryHeading.getRadians());
+        double response = thetaController.calculate(odometryHeading.getRadians()) * Math.PI / 180;
 
         if(lockDrive) drive(0,0,response, false);
         else drive(getVelocityYFromController(), getVelocityXFromController(), response, false);
