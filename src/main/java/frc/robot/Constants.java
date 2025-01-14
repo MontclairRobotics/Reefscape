@@ -49,6 +49,9 @@ public class Constants {
 
         public static final double MAX_SPEED = 4; //TODO: actually set this with units
         public static final double MAX_ROT_SPEED = Math.PI*2;
+        public static final double FORWARD_ACCEL = 3; // m / s^2
+        public static final double SIDE_ACCEL = 3; //m / s^2
+        public static final double ROT_ACCEL = 2; // radians / s^2
 
     }
     public class DriveConfig {
