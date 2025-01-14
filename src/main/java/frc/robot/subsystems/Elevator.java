@@ -12,28 +12,42 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.ElevatorConstants;
 
 public class Elevator extends SubsystemBase { 
+    TalonFX leftElevatorTalonFX;
+    TalonFX rightElevatorTalonFX;
+    CANcoder elevCANcoder;
+    PIDController pidController;
+public Elevator(){
     TalonFX leftElevatorTalonFX = new TalonFX(0,"bus");
     TalonFX rightElevatorTalonFX = new TalonFX(0, "bus");
-    PIDController pidController = new PIDController(5, 5, 5);
     CANcoder elevCANcoder = new CANcoder(0, "bus");
-    
-    ElevatorFeedforward feedforward = new ElevatorFeedforward(1,1,1,1);
+    PIDController pidController = new PIDController(3,4,1);
+}
+    ElevatorFeedforward feedforward = new ElevatorFeedforward(2,0,4,8);
     
     DigitalInput bottomLimit = new DigitalInput(0);
     DigitalInput topLimit = new DigitalInput(0);
     
+    public boolean isAtBottom() {
+        return bottomLimit.get(); 
+    }
+    public boolean isAtTop() {
+        return topLimit.get(); 
+    }
 
-    public void elevatorUp(){ // UP
+    public void elevatorUp() {
         rightElevatorTalonFX.set(ElevatorConstants.ELEVATOR_SPEED);
         leftElevatorTalonFX.set(ElevatorConstants.ELEVATOR_SPEED);
     }
-    public void elevatorDown(){ // DOWN
+    public void elevatorDown() { 
         leftElevatorTalonFX.set(-ElevatorConstants.ELEVATOR_SPEED);
         rightElevatorTalonFX.set(-ElevatorConstants.ELEVATOR_SPEED);   
     }
-    public void ElevatorStop(){ //STOP
+    public void ElevatorStop() {
         leftElevatorTalonFX.set(0);
         rightElevatorTalonFX.set(0);
     }
-
+    // public boolean isInPosition() {
+    //     return 
+        
+    // }
 }
