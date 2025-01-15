@@ -14,10 +14,6 @@ import frc.robot.RobotContainer;
 public class Elevator extends SubsystemBase {
     //Constents
     private final double ENCODER_ROTATIONS_TO_METERS_RATIO = 0.5; //TODO: FIND THIS
-    private final double HEIGHT_L1 = 3; //Meters
-    private final double HEIGHT_L2 = 4; //TODO: FIND THESE OUT (easy)
-    private final double HEIGHT_L3 = 5;
-    private final double HEIGHT_L4 = 6;
     //Motor Controllers/Encoders
     private TalonFX leftTalonFX;
     private TalonFX rightTalonFX;
@@ -30,9 +26,9 @@ public class Elevator extends SubsystemBase {
     private DigitalInput topLimit;
 
     public Elevator() {
-        leftTalonFX = new TalonFX(0, "rio");
-        rightTalonFX = new TalonFX(0, "rio");
-        canCoder = new CANcoder(0, "rio");
+        leftTalonFX = new TalonFX(-1, "rio");
+        rightTalonFX = new TalonFX(-1, "rio");
+        canCoder = new CANcoder(-1, "rio");
 
         pidController = new PIDController(0, 0, 0);
         elevatorFeedforward = new ElevatorFeedforward(0, 0, 0, 0); //TODO: Turn
@@ -62,29 +58,15 @@ public class Elevator extends SubsystemBase {
     }
 
     public void stop() {
-        leftTalonFX.setVoltage(elevatorFeedforward.calculate(0));
-        rightTalonFX.setVoltage(elevatorFeedforward.calculate(0));
+        leftTalonFX.setVoltage(0);
+        rightTalonFX.setVoltage(0);
     
     }
     //To Positions
-    public void goToPositionL1() {
-        leftTalonFX.setVoltage(pidController.calculate(canCoder.getPosition().getValueAsDouble() / ENCODER_ROTATIONS_TO_METERS_RATIO, HEIGHT_L1) + elevatorFeedforward.calculate(0));
-        rightTalonFX.setVoltage(pidController.calculate(canCoder.getPosition().getValueAsDouble() / ENCODER_ROTATIONS_TO_METERS_RATIO, HEIGHT_L1) + elevatorFeedforward.calculate(0));
-    }
-
-    public void goToPositionL2() {
-        leftTalonFX.setVoltage(pidController.calculate(canCoder.getPosition().getValueAsDouble() / ENCODER_ROTATIONS_TO_METERS_RATIO, HEIGHT_L2) + elevatorFeedforward.calculate(0));
-        rightTalonFX.setVoltage(pidController.calculate(canCoder.getPosition().getValueAsDouble() / ENCODER_ROTATIONS_TO_METERS_RATIO, HEIGHT_L2) + elevatorFeedforward.calculate(0));
-    }
-
-    public void goToPositionL3() {
-        leftTalonFX.setVoltage(pidController.calculate(canCoder.getPosition().getValueAsDouble() / ENCODER_ROTATIONS_TO_METERS_RATIO, HEIGHT_L3) + elevatorFeedforward.calculate(0));
-        rightTalonFX.setVoltage(pidController.calculate(canCoder.getPosition().getValueAsDouble() / ENCODER_ROTATIONS_TO_METERS_RATIO, HEIGHT_L3) + elevatorFeedforward.calculate(0));
-    }
-
-    public void goToPositionL4() {
-        leftTalonFX.setVoltage(pidController.calculate(canCoder.getPosition().getValueAsDouble() / ENCODER_ROTATIONS_TO_METERS_RATIO, HEIGHT_L4) + elevatorFeedforward.calculate(0));
-        rightTalonFX.setVoltage(pidController.calculate(canCoder.getPosition().getValueAsDouble() / ENCODER_ROTATIONS_TO_METERS_RATIO, HEIGHT_L4) + elevatorFeedforward.calculate(0));
+    public void setHeight(double height) {
+        double rotations = height * ENCODER_ROTATIONS_TO_METERS_RATIO;
+        leftTalonFX.setVoltage(pidController.calculate(canCoder.getPosition().getValueAsDouble(), rotations) + elevatorFeedforward.calculate(0));
+        rightTalonFX.setVoltage(pidController.calculate(canCoder.getPosition().getValueAsDouble(), rotations) + elevatorFeedforward.calculate(0));
     }
 
     //Commands
@@ -96,19 +78,7 @@ public class Elevator extends SubsystemBase {
         return Commands.runOnce( ()-> stop());
     }
 
-    public Command goToPositionL1Command() { //This is run not run once is that right?
-        return Commands.run(()-> goToPositionL1());
-    }
-
-    public Command goToPositionL2Command() {
-        return Commands.run(()-> goToPositionL2());
-    }
-
-    public Command goToPositionL3Command() {
-        return Commands.run(()-> goToPositionL3());
-    }
-
-    public Command goToPositionL4Command() {
-        return Commands.run(()-> goToPositionL4());
+    public Command setHeightCommand(double height) {
+        return Commands.runOnce(()-> setHeight(height));
     }
 }
