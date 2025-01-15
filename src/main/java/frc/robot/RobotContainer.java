@@ -36,7 +36,7 @@ public class RobotContainer {
   private void configureBindings() {
 
     drivetrain.setDefaultCommand(drivetrain.driveJoystickInputCommand());
-
+    elevator.setDefaultCommand(elevator.joystickControlCommand());
   }
 
   public Command getAutonomousCommand() {
