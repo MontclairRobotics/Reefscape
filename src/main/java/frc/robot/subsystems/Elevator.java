@@ -6,14 +6,19 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
-import frc.robot.Constants.ElevatorConstants;
 
 public class Elevator extends SubsystemBase {
     //Constents
-    private final double encoderRotationsToMetersRatio = 0.5;
-    private final double heightL1 = 3; //Meters
+    private final double ENCODER_ROTATIONS_TO_METERS_RATIO = 0.5;
+    private final double HEIGHT_L1 = 3; //Meters
+    private final double HEIGHT_L2 = 4;
+    private final double HEIGHT_L3 = 5;
+    private final double HEIGHT_L4 = 6;
+    private final double ELEVATOR_SPEED = 2; //m/s
     //Motor Controllers/Encoders
     private TalonFX leftTalonFX;
     private TalonFX rightTalonFX;
@@ -40,17 +45,17 @@ public class Elevator extends SubsystemBase {
     public boolean isAtBottom() {
         return bottomLimit.get(); 
     }
+
     public boolean isAtTop() {
         return topLimit.get(); 
     }
-
-    //Manual Controll
+    //Manual Controll TODO: THIS IS TOTTALLY WRONG BUT WE HAVE TO DECIDE IF WE WANT JOYSTICKS OR BUTTONS TO DO RIGHT
     public void up(CommandPS5Controller OperatorController) {
         if (isAtTop()) {
             stop();
         } else {
-            leftTalonFX.setVoltage(OperatorController.getLeftY() * ElevatorConstants.ELEVATOR_SPEED + elevatorFeedforward.calculate(0));
-            rightTalonFX.setVoltage(OperatorController.getLeftY() * ElevatorConstants.ELEVATOR_SPEED + elevatorFeedforward.calculate(0));
+            leftTalonFX.setVoltage(OperatorController.getLeftY() * ELEVATOR_SPEED + elevatorFeedforward.calculate(0));
+            rightTalonFX.setVoltage(OperatorController.getLeftY() * ELEVATOR_SPEED + elevatorFeedforward.calculate(0));
         }
     }
 
@@ -58,8 +63,8 @@ public class Elevator extends SubsystemBase {
         if (isAtBottom()) {
             stop();
         } else {
-        leftTalonFX.setVoltage(OperatorController.getLeftY() * -ElevatorConstants.ELEVATOR_SPEED + elevatorFeedforward.calculate(0));
-        rightTalonFX.setVoltage(OperatorController.getLeftY() * -ElevatorConstants.ELEVATOR_SPEED + elevatorFeedforward.calculate(0));
+        leftTalonFX.setVoltage(OperatorController.getLeftY() * -ELEVATOR_SPEED + elevatorFeedforward.calculate(0));
+        rightTalonFX.setVoltage(OperatorController.getLeftY() * -ELEVATOR_SPEED + elevatorFeedforward.calculate(0));
         }
     }
 
@@ -68,22 +73,53 @@ public class Elevator extends SubsystemBase {
         rightTalonFX.setVoltage(elevatorFeedforward.calculate(0));
     
     }
-
-    public void goToPositionL1(CommandPS5Controller OperatorController) {
-        leftTalonFX.setVoltage(pidController.calculate(canCoder.getPosition().getValueAsDouble() / encoderRotationsToMetersRatio, heightL1) + elevatorFeedforward.calculate(0));
-        rightTalonFX.setVoltage(pidController.calculate(canCoder.getPosition().getValueAsDouble() / encoderRotationsToMetersRatio, heightL1) + elevatorFeedforward.calculate(0));
-
+    //To Positions
+    public void goToPositionL1() {
+        leftTalonFX.setVoltage(pidController.calculate(canCoder.getPosition().getValueAsDouble() / ENCODER_ROTATIONS_TO_METERS_RATIO, HEIGHT_L1) + elevatorFeedforward.calculate(0));
+        rightTalonFX.setVoltage(pidController.calculate(canCoder.getPosition().getValueAsDouble() / ENCODER_ROTATIONS_TO_METERS_RATIO, HEIGHT_L1) + elevatorFeedforward.calculate(0));
     }
 
     public void goToPositionL2() {
-        
+        leftTalonFX.setVoltage(pidController.calculate(canCoder.getPosition().getValueAsDouble() / ENCODER_ROTATIONS_TO_METERS_RATIO, HEIGHT_L2) + elevatorFeedforward.calculate(0));
+        rightTalonFX.setVoltage(pidController.calculate(canCoder.getPosition().getValueAsDouble() / ENCODER_ROTATIONS_TO_METERS_RATIO, HEIGHT_L2) + elevatorFeedforward.calculate(0));
     }
 
     public void goToPositionL3() {
-        
+        leftTalonFX.setVoltage(pidController.calculate(canCoder.getPosition().getValueAsDouble() / ENCODER_ROTATIONS_TO_METERS_RATIO, HEIGHT_L3) + elevatorFeedforward.calculate(0));
+        rightTalonFX.setVoltage(pidController.calculate(canCoder.getPosition().getValueAsDouble() / ENCODER_ROTATIONS_TO_METERS_RATIO, HEIGHT_L3) + elevatorFeedforward.calculate(0));
     }
 
     public void goToPositionL4() {
-        
+        leftTalonFX.setVoltage(pidController.calculate(canCoder.getPosition().getValueAsDouble() / ENCODER_ROTATIONS_TO_METERS_RATIO, HEIGHT_L4) + elevatorFeedforward.calculate(0));
+        rightTalonFX.setVoltage(pidController.calculate(canCoder.getPosition().getValueAsDouble() / ENCODER_ROTATIONS_TO_METERS_RATIO, HEIGHT_L4) + elevatorFeedforward.calculate(0));
+    }
+
+    //Commands
+    public Command upCommand(CommandPS5Controller OperatorController) {
+        return Commands.runOnce( ()-> up(OperatorController));
+    }
+
+    public Command downCommand(CommandPS5Controller OperatorController) {
+        return Commands.runOnce( ()-> down(OperatorController));
+    }
+
+    public Command stopCommand() {
+        return Commands.runOnce( ()-> stop());
+    }
+
+    public Command goToPositionL1Command() { //This is run not run once is that right?
+        return Commands.run(()-> goToPositionL1());
+    }
+
+    public Command goToPositionL2Command() {
+        return Commands.run(()-> goToPositionL2());
+    }
+
+    public Command goToPositionL3Command() {
+        return Commands.run(()-> goToPositionL3());
+    }
+
+    public Command goToPositionL4Command() {
+        return Commands.run(()-> goToPositionL4());
     }
 }

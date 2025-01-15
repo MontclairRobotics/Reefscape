@@ -41,10 +41,6 @@ import edu.wpi.first.wpilibj.motorcontrol.Talon;
 import frc.robot.subsystems.Drivetrain;
 
 public class Constants {
-    public class ElevatorConstants{
-        public static final double ELEVATOR_SPEED = 0; 
-    }
-    
     public class DriveConstants {
 
         public static final double MAX_SPEED = 4; //TODO: actually set this with units
