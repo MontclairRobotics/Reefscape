@@ -9,16 +9,15 @@ import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
+import frc.robot.RobotContainer;
 
 public class Elevator extends SubsystemBase {
     //Constents
-    private final double ENCODER_ROTATIONS_TO_METERS_RATIO = 0.5;
+    private final double ENCODER_ROTATIONS_TO_METERS_RATIO = 0.5; //TODO: FIND THIS
     private final double HEIGHT_L1 = 3; //Meters
-    private final double HEIGHT_L2 = 4;
+    private final double HEIGHT_L2 = 4; //TODO: FIND THESE OUT (easy)
     private final double HEIGHT_L3 = 5;
     private final double HEIGHT_L4 = 6;
-    private final double ELEVATOR_SPEED = 2; //m/s
     //Motor Controllers/Encoders
     private TalonFX leftTalonFX;
     private TalonFX rightTalonFX;
@@ -36,9 +35,9 @@ public class Elevator extends SubsystemBase {
         canCoder = new CANcoder(0, "rio");
 
         pidController = new PIDController(0, 0, 0);
-        elevatorFeedforward = new ElevatorFeedforward(0, 0, 0, 0);
+        elevatorFeedforward = new ElevatorFeedforward(0, 0, 0, 0); //TODO: Turn
 
-        bottomLimit = new DigitalInput(-1);
+        bottomLimit = new DigitalInput(-1); //TODO: get
         topLimit = new DigitalInput(-1);
     }
         
@@ -49,22 +48,16 @@ public class Elevator extends SubsystemBase {
     public boolean isAtTop() {
         return topLimit.get(); 
     }
-    //Manual Controll TODO: THIS IS TOTTALLY WRONG BUT WE HAVE TO DECIDE IF WE WANT JOYSTICKS OR BUTTONS TO DO RIGHT
-    public void up(CommandPS5Controller OperatorController) {
-        if (isAtTop()) {
+    //Manual Controll
+    public void joystickControl() {
+        double voltage = RobotContainer.operatorController.getLeftY() * 12 + elevatorFeedforward.calculate(0); //Multiplying by max voltage (12)
+        if (isAtTop() && voltage > 0) { 
+            stop();
+        } else if (isAtBottom() && voltage < 0) {
             stop();
         } else {
-            leftTalonFX.setVoltage(OperatorController.getLeftY() * ELEVATOR_SPEED + elevatorFeedforward.calculate(0));
-            rightTalonFX.setVoltage(OperatorController.getLeftY() * ELEVATOR_SPEED + elevatorFeedforward.calculate(0));
-        }
-    }
-
-    public void down(CommandPS5Controller OperatorController) { 
-        if (isAtBottom()) {
-            stop();
-        } else {
-        leftTalonFX.setVoltage(OperatorController.getLeftY() * -ELEVATOR_SPEED + elevatorFeedforward.calculate(0));
-        rightTalonFX.setVoltage(OperatorController.getLeftY() * -ELEVATOR_SPEED + elevatorFeedforward.calculate(0));
+            leftTalonFX.setVoltage(voltage);
+            rightTalonFX.setVoltage(voltage);
         }
     }
 
@@ -95,12 +88,8 @@ public class Elevator extends SubsystemBase {
     }
 
     //Commands
-    public Command upCommand(CommandPS5Controller OperatorController) {
-        return Commands.runOnce( ()-> up(OperatorController));
-    }
-
-    public Command downCommand(CommandPS5Controller OperatorController) {
-        return Commands.runOnce( ()-> down(OperatorController));
+    public Command joystickControlCommand() {
+        return Commands.runOnce( ()-> joystickControl());
     }
 
     public Command stopCommand() {
