@@ -12,4 +12,11 @@ public class Auto {
     public void buildAutoCommand() {
         //TODO:
     }
+    
+    public void parseAutoString(String str) {
+        for(int i = 0; i < str.length()-1; i++) {
+            // if(str.charAt(i) 
+        }
+    }
+
 }
