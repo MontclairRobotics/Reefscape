@@ -3,45 +3,61 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 7.12,
-        "y": 4.76
+        "x": 5.296621621621621,
+        "y": 5.092229729729729
       },
       "prevControl": null,
       "nextControl": {
-        "x": 6.940483744082403,
-        "y": 4.476675696117614
+        "x": 5.514858728355139,
+        "y": 4.866864587329195
       },
       "isLocked": false,
-      "linkedName": "S2"
+      "linkedName": "C"
     },
     {
       "anchor": {
-        "x": 5.355912162162161,
-        "y": 5.25
+        "x": 4.7037162162162165,
+        "y": 5.66537162162162
       },
       "prevControl": {
-        "x": 5.6050050145198425,
-        "y": 5.179386394929795
+        "x": 4.9320171517538585,
+        "y": 5.563495800973945
       },
       "nextControl": {
-        "x": 5.086914445061407,
-        "y": 5.326256297121139
+        "x": 3.95796047292591,
+        "y": 5.998153781149349
       },
       "isLocked": false,
       "linkedName": null
     },
     {
       "anchor": {
-        "x": 5.0,
-        "y": 5.25
+        "x": 2.134459459459459,
+        "y": 6.762246621621621
       },
       "prevControl": {
-        "x": 5.2499959104158025,
-        "y": 5.248570043576192
+        "x": 3.516994908406543,
+        "y": 6.273700663406966
+      },
+      "nextControl": {
+        "x": 1.8987435851434937,
+        "y": 6.845541438960157
+      },
+      "isLocked": false,
+      "linkedName": null
+    },
+    {
+      "anchor": {
+        "x": 0.67,
+        "y": 6.65
+      },
+      "prevControl": {
+        "x": 0.4239613813424721,
+        "y": 6.605671700584215
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "C'"
+      "linkedName": "1"
     }
   ],
   "rotationTargets": [],
@@ -58,13 +74,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": -119.99999999999999
+    "rotation": 127.00000000000001
   },
   "reversed": false,
   "folder": null,
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 180.0
+    "rotation": -119.99999999999999
   },
   "useDefaultConstraints": true
 }

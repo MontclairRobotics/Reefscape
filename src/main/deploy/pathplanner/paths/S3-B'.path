@@ -3,45 +3,61 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 7.12,
-        "y": 4.76
+        "x": 7.119715909090909,
+        "y": 4.049928977272727
       },
       "prevControl": null,
       "nextControl": {
-        "x": 6.940483744082403,
-        "y": 4.476675696117614
+        "x": 5.888183778333708,
+        "y": 4.313940390244805
       },
       "isLocked": false,
-      "linkedName": "S2"
+      "linkedName": "S3"
     },
     {
       "anchor": {
-        "x": 5.355912162162161,
-        "y": 5.25
+        "x": 5.76106418918919,
+        "y": 5.09
       },
       "prevControl": {
-        "x": 5.6050050145198425,
-        "y": 5.179386394929795
+        "x": 6.550020517911277,
+        "y": 4.537990216294454
       },
       "nextControl": {
-        "x": 5.086914445061407,
-        "y": 5.326256297121139
+        "x": 5.143343067211086,
+        "y": 5.522201492680584
       },
       "isLocked": false,
       "linkedName": null
     },
     {
       "anchor": {
-        "x": 5.0,
-        "y": 5.25
+        "x": 4.427027027027027,
+        "y": 5.635726351351351
       },
       "prevControl": {
-        "x": 5.2499959104158025,
-        "y": 5.248570043576192
+        "x": 4.731097244988685,
+        "y": 5.674875354131577
+      },
+      "nextControl": {
+        "x": 4.179073683354872,
+        "y": 5.603802389163079
+      },
+      "isLocked": false,
+      "linkedName": null
+    },
+    {
+      "anchor": {
+        "x": 3.69,
+        "y": 5.09
+      },
+      "prevControl": {
+        "x": 3.898111929904837,
+        "y": 5.228525898774504
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "C'"
+      "linkedName": "B'"
     }
   ],
   "rotationTargets": [],
@@ -58,13 +74,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": -119.99999999999999
+    "rotation": -59.99999999999999
   },
   "reversed": false,
   "folder": null,
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 180.0
+    "rotation": -179.4068437837512
   },
   "useDefaultConstraints": true
 }
