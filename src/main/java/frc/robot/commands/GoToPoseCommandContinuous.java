@@ -1,5 +1,7 @@
 package frc.robot.commands;
 
+import java.util.function.Supplier;
+
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.math.controller.ProfiledPIDController;
@@ -10,35 +12,31 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.DriveConfig;
-import frc.robot.RobotContainer;
 import frc.robot.subsystems.Drivetrain;
+import frc.robot.RobotContainer;
 
-public class GoToPoseCommand extends Command {
+public class GoToPoseCommandContinuous extends Command {
 
     private ProfiledPIDController xController;
     private ProfiledPIDController yController;
     private ProfiledPIDController thetaController;
 
-    private Pose2d targetPose;
+    private Supplier<Pose2d> poseSupplier;
     
-    @Override
-    public void initialize() {
-        xController.setGoal(targetPose.getX());
-        yController.setGoal(targetPose.getY());
-        thetaController.setGoal(targetPose.getRotation().getRadians());
-    }
-
-    public GoToPoseCommand(Pose2d pose) {
+    public GoToPoseCommandContinuous(Supplier<Pose2d> pose) {
         addRequirements(RobotContainer.drivetrain);
         xController = new ProfiledPIDController(5, 0, 0, new TrapezoidProfile.Constraints(DriveConfig.kSpeedAt12Volts.in(Units.MetersPerSecond), Drivetrain.FORWARD_ACCEL));
         yController = new ProfiledPIDController(5, 0, 0, new TrapezoidProfile.Constraints(DriveConfig.kSpeedAt12Volts.in(Units.MetersPerSecond), Drivetrain.SIDE_ACCEL));
         thetaController = new ProfiledPIDController(RobotContainer.drivetrain.thetaController.getP(), RobotContainer.drivetrain.thetaController.getI(), RobotContainer.drivetrain.thetaController.getD(), new TrapezoidProfile.Constraints(Drivetrain.MAX_ROT_SPEED, Drivetrain.ROT_ACCEL));
         thetaController.enableContinuousInput(-180, 180);
-        targetPose = pose;
+        poseSupplier = pose;
     }
 
     @Override
     public void execute() {
+        xController.setGoal(poseSupplier.get().getX());
+        yController.setGoal(poseSupplier.get().getY());
+        thetaController.setGoal(poseSupplier.get().getRotation().getRadians());
         ChassisSpeeds speeds = RobotContainer.drivetrain.getCurrentSpeeds();
         double xSpeed = xController.calculate(speeds.vxMetersPerSecond);
         double ySpeed = yController.calculate(speeds.vyMetersPerSecond);
