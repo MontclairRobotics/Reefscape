@@ -35,35 +35,48 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-import frc.robot.Constants.DriveConfig;
-import frc.robot.Constants.DriveConstants;
+import frc.robot.DriveConfig;
 
 public class Drivetrain extends SubsystemBase {
-    
-    /* NOTE
+
+    /*
      * 
-     * ODOMETRY AND SETTING FIELD/ROBOT RELATIVE ANGLES ARE HANDLED IN DEGREES
-     * DEGREES!!!!
-     * 
-     * HOWEVER, CTRE swerve library CALCULATES THINGS IN RADIANS PER SECOND
-     * ALWAYS CONVERT TO RADIANS BEFORE USING SWERVE REQUEST
+     * CONSTANTS
      * 
      */
+
+    public static final double MAX_SPEED = 4; //TODO: actually set this with units
+    public static final double MAX_ROT_SPEED = Math.PI*2;
+    public static final double FORWARD_ACCEL = 3; // m / s^2
+    public static final double SIDE_ACCEL = 3; //m / s^2
+    public static final double ROT_ACCEL = 2; // radians / s^2
+    
+    /* Swerve Drive Object */
     public final SwerveDrivetrain<TalonFX, TalonFX, CANcoder> swerveDrive = DriveConfig.createSwerveDrivetrain();    
-    private SlewRateLimiter forwardLimiter = new SlewRateLimiter(DriveConstants.SIDE_ACCEL); //TODO: actually set this
-    private SlewRateLimiter strafeLimiter = new SlewRateLimiter(DriveConstants.SIDE_ACCEL); //TODO: actually set this
-    private SlewRateLimiter rotationLimiter = new SlewRateLimiter(DriveConstants.ROT_ACCEL); //TODO: actually set this
+   
+    /* Acceleration limiters for our drivetrain */
+    private SlewRateLimiter forwardLimiter = new SlewRateLimiter(FORWARD_ACCEL); //TODO: actually set this
+    private SlewRateLimiter strafeLimiter = new SlewRateLimiter(SIDE_ACCEL); //TODO: actually set this
+    private SlewRateLimiter rotationLimiter = new SlewRateLimiter(ROT_ACCEL); //TODO: actually set this
+    
+    /* Heading PID Controller for things like automatic alignment buttons */
     public PIDController thetaController = new PIDController(0,0 ,0 );
+    
+    /* variable to store our heading  */
     private Rotation2d odometryHeading;
     // private Pigeon2 gyro = swerveDrive.getPigeon2(); //they say not to use this like this, allegedly
     //putting this here so we know how to get it
     private boolean isRobotAtAngleSetPoint; //for angle turning
     private boolean fieldRelative;
 
+    //TODO: Set these values
+    public static final PathConstraints DEFAULT_CONSTRAINTS = new PathConstraints(null, null, null, null);
+
 
     public Drivetrain() {
+
         thetaController.setTolerance(1 * Math.PI / 180); //degrees converted to radians
-        configurePathplanner();
+        configurePathPlanner();
 
     }
 
@@ -72,7 +85,7 @@ public class Drivetrain extends SubsystemBase {
     */
     public double getVelocityXFromController(){
         double xInput = RobotContainer.driverController.getLeftX();
-        return forwardLimiter.calculate(Math.pow(xInput, 3) * DriveConstants.MAX_SPEED);
+        return forwardLimiter.calculate(Math.pow(xInput, 3) * MAX_SPEED);
     }
 
     /* RETURNS Y VELOCITY FROM CONTROLLER 
@@ -80,7 +93,7 @@ public class Drivetrain extends SubsystemBase {
     */
     public double getVelocityYFromController(){
         double yInput = RobotContainer.driverController.getLeftY();
-        return strafeLimiter.calculate(Math.pow(yInput, 3) * DriveConstants.MAX_SPEED);
+        return strafeLimiter.calculate(Math.pow(yInput, 3) * MAX_SPEED);
     }
 
     /* DEFAULT DRIVE METHOD
@@ -89,7 +102,7 @@ public class Drivetrain extends SubsystemBase {
      */
     public void drive() {
         double rotInput = RobotContainer.driverController.getRightX();
-        double rotVelocity = rotationLimiter.calculate(Math.pow(rotInput,3) * DriveConstants.MAX_ROT_SPEED);
+        double rotVelocity = rotationLimiter.calculate(Math.pow(rotInput,3) * MAX_ROT_SPEED);
         drive(getVelocityYFromController(), getVelocityXFromController(), rotVelocity, fieldRelative); //drives using supposed velocities, rot velocity, and field relative boolean
     }
 
@@ -109,7 +122,6 @@ public class Drivetrain extends SubsystemBase {
         swerveDrive.setControl(request);
     }
 
-    //rotation in radians per second
     /* DRIVES USING CLOSED LOOP VELOCITY CONTROL 
      * 
      * 
@@ -160,8 +172,8 @@ public class Drivetrain extends SubsystemBase {
         return Rotation2d.fromDegrees(angle - 180); // Step 3
       }
 
+    
     public Pose2d getPoseToPathFindTo(){
-        if(RobotContainer.isBlueAlliance){
             switch(RobotContainer.limelight.getTagID()){
                 case 12:
                     return new Pose2d(new Translation2d(1.091, 1.060), new Rotation2d(Math.toRadians(-127.000)));
@@ -179,12 +191,8 @@ public class Drivetrain extends SubsystemBase {
                     return new Pose2d(new Translation2d(6.130, 4.030), new Rotation2d(Math.toRadians(180.000)));
                 case 22: 
                     return new Pose2d(new Translation2d(5.320, 2.600), new Rotation2d(Math.toRadians(120.000)));
-            }
-            return null;
-        } else {
-
-            //TODO: add these poses
-            switch(RobotContainer.limelight.getTagID()){
+         
+                
                 case 1:
                     return new Pose2d(new Translation2d(), new Rotation2d());
                 case 2:
@@ -201,12 +209,13 @@ public class Drivetrain extends SubsystemBase {
                     return new Pose2d(new Translation2d(), new Rotation2d());
                 case 11: 
                     return new Pose2d(new Translation2d(), new Rotation2d());
-            }
-            return null;
+            
+            
         }
+        return null;
     }
 
-    private void configurePathplanner() {
+    private void configurePathPlanner() {
         try {
             var config = RobotConfig.fromGUISettings();
             AutoBuilder.configure(
@@ -263,8 +272,8 @@ public class Drivetrain extends SubsystemBase {
     //     else return new PathPlannerPath(null, null, null, null);
     // }
 
-    public void followPathToAprilTagLocation(){
-        //TODO: follow the path generated by generatePathToAprilTagLocation
+    public Command followPathToAprilTagLocation(){
+        return AutoBuilder.pathfindToPose(getPoseToPathFindTo(), DEFAULT_CONSTRAINTS);
     }
     /* ROBOT RELATIVE SETPOINT METHOD 
      * 

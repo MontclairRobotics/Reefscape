@@ -9,9 +9,9 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.Constants.DriveConfig;
-import frc.robot.Constants.DriveConstants;
+import frc.robot.DriveConfig;
 import frc.robot.RobotContainer;
+import frc.robot.subsystems.Drivetrain;
 
 public class GoToPoseCommand extends Command {
 
@@ -28,11 +28,11 @@ public class GoToPoseCommand extends Command {
         thetaController.setGoal(targetPose.getRotation().getRadians());
     }
 
-    public GoToPoseCommand(Pose2d targePose) {
+    public GoToPoseCommand(Pose2d targetPose) {
         addRequirements(RobotContainer.drivetrain);
-        xController = new ProfiledPIDController(5, 0, 0, new TrapezoidProfile.Constraints(DriveConfig.kSpeedAt12Volts.in(Units.MetersPerSecond), DriveConstants.FORWARD_ACCEL));
-        yController = new ProfiledPIDController(5, 0, 0, new TrapezoidProfile.Constraints(DriveConfig.kSpeedAt12Volts.in(Units.MetersPerSecond), DriveConstants.SIDE_ACCEL));
-        thetaController = new ProfiledPIDController(RobotContainer.drivetrain.thetaController.getP(), RobotContainer.drivetrain.thetaController.getI(), RobotContainer.drivetrain.thetaController.getD(), new TrapezoidProfile.Constraints(DriveConstants.MAX_ROT_SPEED, DriveConstants.ROT_ACCEL));
+        xController = new ProfiledPIDController(5, 0, 0, new TrapezoidProfile.Constraints(DriveConfig.kSpeedAt12Volts.in(Units.MetersPerSecond), Drivetrain.FORWARD_ACCEL));
+        yController = new ProfiledPIDController(5, 0, 0, new TrapezoidProfile.Constraints(DriveConfig.kSpeedAt12Volts.in(Units.MetersPerSecond), Drivetrain.SIDE_ACCEL));
+        thetaController = new ProfiledPIDController(RobotContainer.drivetrain.thetaController.getP(), RobotContainer.drivetrain.thetaController.getI(), RobotContainer.drivetrain.thetaController.getD(), new TrapezoidProfile.Constraints(Drivetrain.MAX_ROT_SPEED, Drivetrain.ROT_ACCEL));
         thetaController.enableContinuousInput(-180, 180);
         this.targetPose = targetPose;
     }
