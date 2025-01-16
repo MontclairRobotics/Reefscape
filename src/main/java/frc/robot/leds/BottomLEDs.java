@@ -56,7 +56,9 @@ public class BottomLEDs extends SubsystemBase{
 
 
     }
-
+    public void progressBar(){
+        LEDPattern progess = LEDPattern.progressMaskLayer(() -> Elevator.getHeight() / Elevator.getMaxHeight());;
+    }
     public void robotPeriodic() {
         playPatternCommand(m_scrollingRainbow);
         led.setData(ledBuffer);
