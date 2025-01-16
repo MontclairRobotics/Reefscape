@@ -18,40 +18,38 @@ public class Elevator extends SubsystemBase {
     //Motor Controllers/Encoders
     private TalonFX leftTalonFX;
     private TalonFX rightTalonFX;
-    private static CANcoder canCoder;
         
-        private PIDController pidController;
-        private ElevatorFeedforward elevatorFeedforward;
-        //Limit Switches
-        private DigitalInput bottomLimit;
-        private DigitalInput topLimit;
-    
-        public Elevator() {
-            leftTalonFX = new TalonFX(-1, "rio");
-            rightTalonFX = new TalonFX(-1, "rio");
-            canCoder = new CANcoder(-1, "rio");
-    
-            pidController = new PIDController(0, 0, 0);
-            elevatorFeedforward = new ElevatorFeedforward(0, 0, 0, 0); //TODO: Turn
-    
-            bottomLimit = new DigitalInput(-1); //TODO: get
-            topLimit = new DigitalInput(-1);
-        }
-            
-        public boolean isAtBottom() {
-            return bottomLimit.get(); 
-        }
-    
-        public static double getMaxHeight(){
-            return ELEVATOR_MAX_HEIGHT;
-        }
-        public static double getHeight(){ // TODO: this
-            return canCoder.getPosition().getValueAsDouble();
-        }
+    private PIDController pidController;
+    private ElevatorFeedforward elevatorFeedforward;
+    //Limit Switches
+    private DigitalInput bottomLimit;
+    private DigitalInput topLimit;
+
+    public Elevator() {
+        leftTalonFX = new TalonFX(-1, "rio");
+        rightTalonFX = new TalonFX(-1, "rio");
+
+        pidController = new PIDController(0, 0, 0);
+        elevatorFeedforward = new ElevatorFeedforward(0, 0, 0, 0); //TODO: Turn
+
+        bottomLimit = new DigitalInput(-1); //TODO: get
+        topLimit = new DigitalInput(-1);
+    }
+        
+    public boolean isAtBottom() {
+        return bottomLimit.get(); 
+    }
+
+    public static double getMaxHeight(){
+        return ELEVATOR_MAX_HEIGHT;
+    }
+    public double getHeight(){ // TODO: this
+        return leftTalonFX.getPosition().getValueAsDouble();
+    }
     public boolean isAtTop() {
         return topLimit.get(); 
     }
-    //Manual Controll
+    //Manual Control
     public void joystickControl() {
         double voltage = RobotContainer.operatorController.getLeftY() * 12 + elevatorFeedforward.calculate(0); //Multiplying by max voltage (12)
         if (isAtTop() && voltage > 0) { 
@@ -72,13 +70,13 @@ public class Elevator extends SubsystemBase {
     //To Positions
     public void setHeight(double height) {
         double rotations = height * ENCODER_ROTATIONS_TO_METERS_RATIO;
-        leftTalonFX.setVoltage(pidController.calculate(canCoder.getPosition().getValueAsDouble(), rotations) + elevatorFeedforward.calculate(0));
-        rightTalonFX.setVoltage(pidController.calculate(canCoder.getPosition().getValueAsDouble(), rotations) + elevatorFeedforward.calculate(0));
+        leftTalonFX.setVoltage(pidController.calculate(leftTalonFX.getPosition().getValueAsDouble(), rotations) + elevatorFeedforward.calculate(0));
+        rightTalonFX.setVoltage(pidController.calculate(rightTalonFX.getPosition().getValueAsDouble(), rotations) + elevatorFeedforward.calculate(0));
     }
 
     //Commands
     public Command joystickControlCommand() {
-        return Commands.runOnce( ()-> joystickControl());
+        return Commands.run( ()-> joystickControl());
     }
 
     public Command stopCommand() {
@@ -86,6 +84,6 @@ public class Elevator extends SubsystemBase {
     }
 
     public Command setHeightCommand(double height) {
-        return Commands.runOnce(()-> setHeight(height));
+        return Commands.run(()-> setHeight(height));
     }
 }

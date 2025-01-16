@@ -18,6 +18,7 @@ public class BottomLEDs extends SubsystemBase{
   private final LEDPattern m_rainbow = LEDPattern.rainbow(255, 128);
 
   private static final Distance kLedSpacing = Units.Meters.of(1 / 120.0);
+  private static Elevator elevator = new Elevator();
   
   private final LEDPattern m_scrollingRainbow =
     m_rainbow.scrollAtAbsoluteSpeed(Units.MetersPerSecond.of(1), kLedSpacing);
@@ -50,7 +51,7 @@ public class BottomLEDs extends SubsystemBase{
             m_rainbow.scrollAtAbsoluteSpeed(Units.MetersPerSecond.of(1), kLedSpacing);
     }
     public void progressBar(){
-        LEDPattern pattern = LEDPattern.progressMaskLayer(() -> Elevator.getHeight() / Elevator.getMaxHeight());;
+        LEDPattern pattern = LEDPattern.progressMaskLayer(() -> elevator.getHeight() / Elevator.getMaxHeight());;
     }
     public void robotPeriodic() {
         playPatternCommand(m_scrollingRainbow);
