@@ -62,7 +62,7 @@ public class Auto {
         for(int i=2; i<autoString.length(); i+=3){ //Loops every 3 
 
             /* Creates strings to store each part of the 3 character interval */
-            String first = autoString.substring(i,i+1);
+            String first = autoString.substring(i, i + 1);
             String second = i<autoString.length()-1 ? autoString.substring(i+1,i+2) : null;
             String third = i<autoString.length()-2 ? autoString.substring(i+2,i+3) : null;
 
@@ -72,12 +72,12 @@ public class Auto {
                 setFeedback("Character " + (i+1) + " is not a scoring location, when it should be!");
             }
             /* Checks if the coral level we want to score at is valid */
-            if(!coralLevels.contains(second) && second != null) {
+            if(second != null && !coralLevels.contains(second)) {
                 isAutoValid = false;
                 setFeedback("Character " + (i+2) + " is not a valid coral level to score at, when it should be!");
             }
             /* Checks if the pickup location we want to score at is valid */
-            if(!pickupLocations.contains(third) && third != null) {
+            if(third != null && !pickupLocations.contains(third)) {
                 isAutoValid = false;
                 setFeedback("Character " + (i+3) + " is not a valid pickup location, when it should be!");
             }
@@ -86,7 +86,7 @@ public class Auto {
 
         return isAutoValid;  
 
-        }
+    }
         
     
     public Command getAutoCommand() {
