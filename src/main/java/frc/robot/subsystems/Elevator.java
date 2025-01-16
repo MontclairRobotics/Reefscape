@@ -75,7 +75,7 @@ public class Elevator extends SubsystemBase {
     }
 
     public Command stopCommand() {
-        return Commands.runOnce( ()-> stop());
+        return Commands.runOnce(()-> stop());
     }
 
     public Command setHeightCommand(double height) {
