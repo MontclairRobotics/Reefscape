@@ -14,7 +14,7 @@ import frc.robot.RobotContainer;
 public class Elevator extends SubsystemBase {
     //Constants
     private final double ENCODER_ROTATIONS_TO_METERS_RATIO = 0.5; //TODO: FIND THIS
-    static final double ELEVATOR_MAX_HEIGHT = 2.0; //IN METERS
+    public static final double ELEVATOR_MAX_HEIGHT = 2.0; //IN METERS
     //Motor Controllers/Encoders
     private TalonFX leftTalonFX;
     private TalonFX rightTalonFX;
@@ -40,9 +40,6 @@ public class Elevator extends SubsystemBase {
         return bottomLimit.get(); 
     }
 
-    public static double getMaxHeight(){
-        return ELEVATOR_MAX_HEIGHT;
-    }
     public double getHeight(){ // TODO: this
         return leftTalonFX.getPosition().getValueAsDouble();
     }
