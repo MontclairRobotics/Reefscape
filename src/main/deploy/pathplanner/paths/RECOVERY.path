@@ -204,7 +204,7 @@
         "y": 3.6444321038898404
       },
       "isLocked": false,
-      "linkedName": "A'"
+      "linkedName": "a"
     },
     {
       "anchor": {
@@ -236,7 +236,7 @@
         "y": 4.7511678350519935
       },
       "isLocked": false,
-      "linkedName": "B'"
+      "linkedName": "b"
     },
     {
       "anchor": {
@@ -268,7 +268,7 @@
         "y": 4.975270610565268
       },
       "isLocked": false,
-      "linkedName": "C'"
+      "linkedName": "c"
     },
     {
       "anchor": {
@@ -300,7 +300,7 @@
         "y": 3.900921037981961
       },
       "isLocked": false,
-      "linkedName": "D'"
+      "linkedName": "d"
     },
     {
       "anchor": {
@@ -332,7 +332,7 @@
         "y": 2.6301794519925843
       },
       "isLocked": false,
-      "linkedName": "E'"
+      "linkedName": "e"
     },
     {
       "anchor": {
@@ -361,7 +361,7 @@
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "F'"
+      "linkedName": "f"
     }
   ],
   "rotationTargets": [
