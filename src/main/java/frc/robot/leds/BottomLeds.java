@@ -5,9 +5,12 @@ import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
 import edu.wpi.first.wpilibj.AddressableLEDBufferView;
 import edu.wpi.first.wpilibj.LEDPattern;
+import edu.wpi.first.wpilibj.util.Color;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.subsystems.Elevator;
 
-public class BottomLeds extends SubsystemBase{
+public class BottomLEDS extends SubsystemBase{
     
     public static final int kPORT = -1;
     public static final int kLENGTH = -1;
@@ -17,19 +20,18 @@ public class BottomLeds extends SubsystemBase{
   private static final Distance kLedSpacing = Units.Meters.of(1 / 120.0);
   
   private final LEDPattern m_scrollingRainbow =
-      m_rainbow.scrollAtAbsoluteSpeed(Units.MetersPerSecond.of(1), kLedSpacing);
+    m_rainbow.scrollAtAbsoluteSpeed(Units.MetersPerSecond.of(1), kLedSpacing);
     AddressableLED led;
     AddressableLEDBuffer ledBuffer;
 
-
-    public BottomLeds() {
+    public BottomLEDS() {
 
         led = new AddressableLED(kPORT);
         ledBuffer = new AddressableLEDBuffer(kLENGTH);
         led.setData(ledBuffer);
         led.start();
 
-
+        setDefaultCommand(playPatternCommand(LEDPattern.solid(Color.kBlack)).withName("Off"));
     }
     AddressableLEDBufferView m_left = ledBuffer.createView(0, 59);
 
@@ -39,22 +41,22 @@ public class BottomLeds extends SubsystemBase{
     // physical LED strip on the robot.
     AddressableLEDBufferView m_right = ledBuffer.createView(60, 119).reversed();
     
-    public void playPattern(LEDPattern pattern){
+    public void rainbowPattern(LEDPattern pattern){
         pattern.applyTo(ledBuffer);
         led.setData(ledBuffer);
-
-    final LEDPattern m_rainbow = LEDPattern.rainbow(255, 128);
-
-    final Distance kLedSpacing = Units.Meters.of(1 / 120.0);
-
-    final LEDPattern m_scrollingRainbow =
-        m_rainbow.scrollAtAbsoluteSpeed(Units.MetersPerSecond.of(1), kLedSpacing);
+        final LEDPattern m_rainbow = LEDPattern.rainbow(255, 128);
+        final Distance kLedSpacing = Units.Meters.of(1 / 120.0);
+        final LEDPattern scrollingRainbow =
+            m_rainbow.scrollAtAbsoluteSpeed(Units.MetersPerSecond.of(1), kLedSpacing);
     }
-
+    public void progressBar(){
+        LEDPattern pattern = LEDPattern.progressMaskLayer(() -> Elevator.getHeight() / Elevator.getMaxHeight());;
+    }
     public void robotPeriodic() {
-        // Update the buffer with the rainbow animation
-        m_scrollingRainbow.applyTo(ledBuffer);
-        // Set the LEDs
+        playPatternCommand(m_scrollingRainbow);
         led.setData(ledBuffer);
+    }
+    public Command playPatternCommand(LEDPattern pattern){
+        return run(()-> pattern.applyTo(ledBuffer));
     }
 }

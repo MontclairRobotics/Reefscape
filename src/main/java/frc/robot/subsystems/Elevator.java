@@ -12,35 +12,42 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.RobotContainer;
 
 public class Elevator extends SubsystemBase {
-    //Constents
+    //Constants
     private final double ENCODER_ROTATIONS_TO_METERS_RATIO = 0.5; //TODO: FIND THIS
+    static final double ELEVATOR_MAX_HEIGHT = 2.0; //IN METERS
     //Motor Controllers/Encoders
     private TalonFX leftTalonFX;
     private TalonFX rightTalonFX;
-    private CANcoder canCoder;
-    
-    private PIDController pidController;
-    private ElevatorFeedforward elevatorFeedforward;
-    //Limit Switches
-    private DigitalInput bottomLimit;
-    private DigitalInput topLimit;
-
-    public Elevator() {
-        leftTalonFX = new TalonFX(-1, "rio");
-        rightTalonFX = new TalonFX(-1, "rio");
-        canCoder = new CANcoder(-1, "rio");
-
-        pidController = new PIDController(0, 0, 0);
-        elevatorFeedforward = new ElevatorFeedforward(0, 0, 0, 0); //TODO: Turn
-
-        bottomLimit = new DigitalInput(-1); //TODO: get
-        topLimit = new DigitalInput(-1);
-    }
+    private static CANcoder canCoder;
         
-    public boolean isAtBottom() {
-        return bottomLimit.get(); 
-    }
-
+        private PIDController pidController;
+        private ElevatorFeedforward elevatorFeedforward;
+        //Limit Switches
+        private DigitalInput bottomLimit;
+        private DigitalInput topLimit;
+    
+        public Elevator() {
+            leftTalonFX = new TalonFX(-1, "rio");
+            rightTalonFX = new TalonFX(-1, "rio");
+            canCoder = new CANcoder(-1, "rio");
+    
+            pidController = new PIDController(0, 0, 0);
+            elevatorFeedforward = new ElevatorFeedforward(0, 0, 0, 0); //TODO: Turn
+    
+            bottomLimit = new DigitalInput(-1); //TODO: get
+            topLimit = new DigitalInput(-1);
+        }
+            
+        public boolean isAtBottom() {
+            return bottomLimit.get(); 
+        }
+    
+        public static double getMaxHeight(){
+            return ELEVATOR_MAX_HEIGHT;
+        }
+        public static double getHeight(){ // TODO: this
+            return canCoder.getPosition().getValueAsDouble();
+        }
     public boolean isAtTop() {
         return topLimit.get(); 
     }
