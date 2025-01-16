@@ -13,6 +13,7 @@ import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Elevator;
 import frc.robot.vision.Limelight;
 
+
 public class RobotContainer {
 
   //Controllers
@@ -37,6 +38,11 @@ public class RobotContainer {
 
     drivetrain.setDefaultCommand(drivetrain.driveJoystickInputCommand());
     elevator.setDefaultCommand(elevator.joystickControlCommand());
+
+    operatorController.triangle().onTrue(elevator.setHeightCommand(.33)); //L1
+    operatorController.circle().onTrue(elevator.setHeightCommand(.81)); //L2
+    operatorController.cross().onTrue(elevator.setHeightCommand(1.21)); //L3
+    operatorController.square().onTrue(elevator.setHeightCommand(1.83)); //4
   }
 
   public Command getAutonomousCommand() {

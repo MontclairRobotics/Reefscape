@@ -7,19 +7,31 @@
         {
           "type": "path",
           "data": {
-            "pathName": "S3-D'"
+            "pathName": "S4-E"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "D'-6"
+            "pathName": "E-6"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "6-D"
+            "pathName": "6-F"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "F-6"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "6-f"
           }
         }
       ]
