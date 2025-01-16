@@ -1,6 +1,5 @@
 package frc.robot.subsystems;
 
-import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 
 import edu.wpi.first.math.controller.ElevatorFeedforward;
@@ -41,7 +40,7 @@ public class Elevator extends SubsystemBase {
     }
 
     public double getHeight(){ // TODO: this
-        return leftTalonFX.getPosition().getValueAsDouble();
+        return leftTalonFX.getPosition().getValueAsDouble()*ENCODER_ROTATIONS_TO_METERS_RATIO;
     }
     public boolean isAtTop() {
         return topLimit.get(); 

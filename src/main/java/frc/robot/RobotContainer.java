@@ -9,6 +9,7 @@ import java.lang.annotation.ElementType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
+import frc.robot.leds.BottomLEDs;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Elevator;
 import frc.robot.vision.Limelight;
@@ -25,6 +26,7 @@ public class RobotContainer {
   public static Drivetrain drivetrain = new Drivetrain();
   public static Elevator elevator = new Elevator();
   public static Limelight limelight = new Limelight("Camera");
+  public static BottomLEDs leds = new BottomLEDs();
 
   //Alliance
   public static boolean isBlueAlliance;
