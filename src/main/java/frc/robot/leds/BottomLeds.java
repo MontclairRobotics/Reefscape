@@ -10,7 +10,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.Elevator;
 
-public class BottomLEDS extends SubsystemBase{
+public class BottomLEDs extends SubsystemBase{
     
     public static final int kPORT = -1;
     public static final int kLENGTH = -1;
@@ -24,7 +24,7 @@ public class BottomLEDS extends SubsystemBase{
     AddressableLED led;
     AddressableLEDBuffer ledBuffer;
 
-    public BottomLEDS() {
+    public BottomLEDs() {
 
         led = new AddressableLED(kPORT);
         ledBuffer = new AddressableLEDBuffer(kLENGTH);
