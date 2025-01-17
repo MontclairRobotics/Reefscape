@@ -1,5 +1,6 @@
 package frc.robot.subsystems;
 import frc.robot.RobotContainer;
+import frc.robot.util.DriveConfig;
 
 import java.util.Arrays;
 import java.util.List;
@@ -34,8 +35,6 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-
-import frc.robot.DriveConfig;
 
 public class Drivetrain extends SubsystemBase {
 

@@ -10,6 +10,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import frc.robot.util.CoralScoringLevel;
 
 public class Auto {
 
@@ -37,7 +38,7 @@ public class Auto {
         Arrays.asList("S1","S2","S3","S4","S5")
     );
     private ArrayList<String> scoringLocations = new ArrayList<String>(
-        Arrays.asList("A","A'","B","B'","C","C'","D","D'","E","E'","F","F'")
+        Arrays.asList("A","a","B","b","C","c","D","d","E","e","F","f")
     );
     private ArrayList<String> pickupLocations = new ArrayList<String>(
         Arrays.asList("1","2","3","4","5","6")
@@ -103,24 +104,40 @@ public class Auto {
             String second = i<autoString.length()-1 ? autoString.substring(i+1,i+2) : null; //scoring location
             String third = i<autoString.length()-2 ? autoString.substring(i+2,i+3) : null; //coral level
             String fourth = i<autoString.length()-3? autoString.substring(i+3,i+4) : null; //next pickup location
+            
             Command pathcmd;
-            try{
-                // Load the path you want to follow using its name in the GUI
-                PathPlannerPath path = PathPlannerPath.fromPathFile(first + "-" + second);
+            String pathName;
 
+            /* adds command to from pickup location to scoring location */
+            try {
+                // Load the path you want to follow using its name in the GUI
+                pathName = i == 1? "S" + first + "-" + second : first + "-" + second; //makes sure it accounts for starting path having an "S"
+                PathPlannerPath path = PathPlannerPath.fromPathFile(pathName);
                 // Create a path following command using AutoBuilder. This will also trigger event markers.
                 pathcmd = AutoBuilder.followPath(path);
             } catch (Exception e) {
                 DriverStation.reportError("Big oops: " + e.getMessage(), e.getStackTrace());
                 pathcmd = Commands.none();
             }
-            /* adds command to from pickup location to scoring location */
             autonomousCommand.addCommands(pathcmd);
-            /* adds scoring command */
+
+            /* ADDS SCORING COMMAND */
             autonomousCommand.addCommands(Commands.runOnce(() -> {})); //change this to score whatever level you want to score
+
             /* adds command form scoring location to next pickup location */
-            autonomousCommand.addCommands(pathCommand(second + "-" + fourth));
-            /* adds an intaking command */
+            try {
+                // Load the path you want to follow using its name in the GUI
+                pathName = second + "-" + fourth;
+                PathPlannerPath path = PathPlannerPath.fromPathFile(pathName);
+                // Create a path following command using AutoBuilder. This will also trigger event markers.
+                pathcmd = AutoBuilder.followPath(path);
+            } catch (Exception e) {
+                DriverStation.reportError("Big oops: " + e.getMessage(), e.getStackTrace());
+                pathcmd = Commands.none();
+            }
+            autonomousCommand.addCommands(pathcmd);
+
+            /* ADDS AN INTAKING COMMAND */
             autonomousCommand.addCommands(Commands.runOnce(() -> {})); //change this to intaking command
 
         }
@@ -128,10 +145,5 @@ public class Auto {
         return autonomousCommand;
     }
     
-    public void parseAutoString(String str) {
-        for(int i = 0; i < str.length()-1; i++) {
-        
-        }
-    }
 
 }
