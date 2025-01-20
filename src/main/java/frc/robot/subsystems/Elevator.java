@@ -2,6 +2,7 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix6.hardware.TalonFX;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.networktables.BooleanPublisher;
@@ -102,13 +103,9 @@ public class Elevator extends SubsystemBase {
 
     // To Positions
     public void setHeight(double height) {
-        if (height > ELEVATOR_MAX_HEIGHT) { //TODO: REVIEW 
-            height = ELEVATOR_MAX_HEIGHT;
-        } else if (height < 0) {
-            height = 0;
-        }
-
+        height = MathUtil.clamp(height, 0, ELEVATOR_MAX_HEIGHT);
         double rotations = height * ENCODER_ROTATIONS_TO_METERS_RATIO; //Converts meters to rotations
+        
         leftTalonFX.setVoltage(pidController.calculate(leftTalonFX.getPosition().getValueAsDouble(), rotations)
                 + elevatorFeedforward.calculate(0));
         rightTalonFX.setVoltage(pidController.calculate(rightTalonFX.getPosition().getValueAsDouble(), rotations)
@@ -137,5 +134,15 @@ public class Elevator extends SubsystemBase {
             topLimitPub.set(false);
             bottomLimitPub.set(bottomLimit.get());
         }
+        //Set encoders based on if the elevator is at the top of the bottom
+        if (isAtTop()) { //TODO: Figure out if I'm doing this correctly
+            leftTalonFX.setPosition(ELEVATOR_MAX_HEIGHT * ENCODER_ROTATIONS_TO_METERS_RATIO);
+            rightTalonFX.setPosition(ELEVATOR_MAX_HEIGHT * ENCODER_ROTATIONS_TO_METERS_RATIO);
+        }
+        if (isAtBottom()) {
+            leftTalonFX.setPosition(0);
+            rightTalonFX.setPosition(0);
+        }
+    
     }
 }
