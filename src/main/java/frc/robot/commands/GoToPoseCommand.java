@@ -20,7 +20,7 @@ public class GoToPoseCommand extends Command {
     private ProfiledPIDController thetaController;
 
     private Pose2d targetPose;
-    
+
     @Override
     public void initialize() {
         xController.setGoal(targetPose.getX());
@@ -30,9 +30,13 @@ public class GoToPoseCommand extends Command {
 
     public GoToPoseCommand(Pose2d pose) {
         addRequirements(RobotContainer.drivetrain);
-        xController = new ProfiledPIDController(5, 0, 0, new TrapezoidProfile.Constraints(DriveConfig.kSpeedAt12Volts.in(Units.MetersPerSecond), Drivetrain.FORWARD_ACCEL));
-        yController = new ProfiledPIDController(5, 0, 0, new TrapezoidProfile.Constraints(DriveConfig.kSpeedAt12Volts.in(Units.MetersPerSecond), Drivetrain.SIDE_ACCEL));
-        thetaController = new ProfiledPIDController(RobotContainer.drivetrain.thetaController.getP(), RobotContainer.drivetrain.thetaController.getI(), RobotContainer.drivetrain.thetaController.getD(), new TrapezoidProfile.Constraints(Drivetrain.MAX_ROT_SPEED, Drivetrain.ROT_ACCEL));
+        xController = new ProfiledPIDController(5, 0, 0, new TrapezoidProfile.Constraints(
+                DriveConfig.kSpeedAt12Volts.in(Units.MetersPerSecond), Drivetrain.FORWARD_ACCEL));
+        yController = new ProfiledPIDController(5, 0, 0, new TrapezoidProfile.Constraints(
+                DriveConfig.kSpeedAt12Volts.in(Units.MetersPerSecond), Drivetrain.SIDE_ACCEL));
+        thetaController = new ProfiledPIDController(RobotContainer.drivetrain.thetaController.getP(),
+                RobotContainer.drivetrain.thetaController.getI(), RobotContainer.drivetrain.thetaController.getD(),
+                new TrapezoidProfile.Constraints(Drivetrain.MAX_ROT_SPEED, Drivetrain.ROT_ACCEL));
         thetaController.enableContinuousInput(-180, 180);
         targetPose = pose;
     }
@@ -44,21 +48,21 @@ public class GoToPoseCommand extends Command {
         double ySpeed = yController.calculate(speeds.vyMetersPerSecond);
         double omegaSpeed = thetaController.calculate(speeds.omegaRadiansPerSecond);
 
-        RobotContainer.drivetrain.drive(xSpeed, ySpeed, omegaSpeed, true);        
-        
+        RobotContainer.drivetrain.drive(xSpeed, ySpeed, omegaSpeed, true);
+
     }
 
     @Override
     public void end(boolean interrupted) {
-        //Needed?
+        // Needed?
         RobotContainer.drivetrain.drive(0, 0, 0, true);
 
     }
 
     @Override
     public boolean isFinished() {
-        //.atSetpoint?
+        // .atSetpoint?
         return xController.atGoal() && yController.atGoal() && thetaController.atGoal();
     }
-    
+
 }

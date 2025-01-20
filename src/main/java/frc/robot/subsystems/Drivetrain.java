@@ -69,7 +69,7 @@ public class Drivetrain extends SubsystemBase {
     private boolean fieldRelative;
 
     //TODO: Set these values
-    public static final PathConstraints DEFAULT_CONSTRAINTS = new PathConstraints(null, null, null, null);
+    public static final PathConstraints DEFAULT_CONSTRAINTS = new PathConstraints(MAX_SPEED, FORWARD_ACCEL, MAX_ROT_SPEED, ROT_ACCEL);
 
 
     public Drivetrain() {

@@ -6,10 +6,14 @@ package frc.robot;
 
 import java.lang.annotation.ElementType;
 
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import frc.robot.leds.BottomLEDs;
+import frc.robot.subsystems.Auto;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Elevator;
 import frc.robot.vision.Limelight;
@@ -22,16 +26,21 @@ public class RobotContainer {
   public static CommandPS5Controller operatorController = new CommandPS5Controller(1);
   public static CommandPS5Controller testingController = new CommandPS5Controller(2);
 
+  public static final boolean debugMode = true;
+
   //Subsystems
   public static Drivetrain drivetrain = new Drivetrain();
   public static Elevator elevator = new Elevator();
   public static Limelight limelight = new Limelight("Camera");
-  public static BottomLEDs leds = new BottomLEDs();
+  public static BottomLEDs LEDs = new BottomLEDs();
+
+  public static Auto auto = new Auto();
 
   //Alliance
   public static boolean isBlueAlliance;
 
   public RobotContainer() {
+    DriverStation.silenceJoystickConnectionWarning(true);
     configureBindings();
 
   }
@@ -40,6 +49,7 @@ public class RobotContainer {
 
     drivetrain.setDefaultCommand(drivetrain.driveJoystickInputCommand());
     elevator.setDefaultCommand(elevator.joystickControlCommand());
+    LEDs.setDefaultCommand(LEDs.playPatternCommand(BottomLEDs.m_scrollingRainbow));
 
     operatorController.triangle().onTrue(elevator.setHeightCommand(.33)); //L1
     operatorController.circle().onTrue(elevator.setHeightCommand(.81)); //L2
@@ -48,6 +58,6 @@ public class RobotContainer {
   }
 
   public Command getAutonomousCommand() {
-    return Commands.print("No autonomous command configured");
+    return auto.getAutoCommand();
   }
 }
