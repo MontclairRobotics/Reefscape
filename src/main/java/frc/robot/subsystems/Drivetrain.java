@@ -173,7 +173,7 @@ public class Drivetrain extends SubsystemBase {
         return Rotation2d.fromDegrees(angle - 180); // Step 3
       }
 
-    
+    //TODO: input correct poses
     public Pose2d getPoseToPathFindTo(){
             switch(RobotContainer.limelight.getTagID()){
                 case 12:
@@ -192,8 +192,6 @@ public class Drivetrain extends SubsystemBase {
                     return new Pose2d(new Translation2d(6.130, 4.030), new Rotation2d(Math.toRadians(180.000)));
                 case 22: 
                     return new Pose2d(new Translation2d(5.320, 2.600), new Rotation2d(Math.toRadians(120.000)));
-         
-                
                 case 1:
                     return new Pose2d(new Translation2d(), new Rotation2d());
                 case 2:
@@ -210,8 +208,6 @@ public class Drivetrain extends SubsystemBase {
                     return new Pose2d(new Translation2d(), new Rotation2d());
                 case 11: 
                     return new Pose2d(new Translation2d(), new Rotation2d());
-            
-            
         }
         return null;
     }
@@ -276,6 +272,7 @@ public class Drivetrain extends SubsystemBase {
     public Command followPathToAprilTagLocation(){
         return AutoBuilder.pathfindToPose(getPoseToPathFindTo(), DEFAULT_CONSTRAINTS);
     }
+
     /* ROBOT RELATIVE SETPOINT METHOD 
      * 
     */
@@ -374,7 +371,7 @@ public class Drivetrain extends SubsystemBase {
     }
     
     /* aligns to angle field relative! */
-    public Command alignToAngleFieldRelative(Rotation2d angle, boolean lockDrive){
+    public Command alignToAngleFieldRelativeCommand(Rotation2d angle, boolean lockDrive){
         return Commands.sequence(
             Commands.runOnce(() -> setFieldRelativeAngle(angle), RobotContainer.drivetrain),
             Commands.run(() -> alignToAngleFieldRelative(lockDrive), this)

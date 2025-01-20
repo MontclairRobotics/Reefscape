@@ -17,19 +17,24 @@ import frc.robot.RobotContainer;
 import frc.robot.util.LimitSwitch;
 
 public class Elevator extends SubsystemBase {
+    
     // Constants
     private final double ENCODER_ROTATIONS_TO_METERS_RATIO = 0.5; // TODO: FIND THIS
     public static final double ELEVATOR_MAX_HEIGHT = 2.0; // IN METERS
+    
     // Motor Controllers/Encoders
     private TalonFX leftTalonFX;
     private TalonFX rightTalonFX;
 
+    // PID/FeedForward controllers
     private PIDController pidController;
     private ElevatorFeedforward elevatorFeedforward;
+    
     // Limit Switches
     private LimitSwitch bottomLimit;
     private LimitSwitch topLimit;
 
+    // Logging to NT
     DoublePublisher heightPub;
     DoublePublisher leftHeightPub;
     DoublePublisher rightHeightPub;
@@ -38,6 +43,7 @@ public class Elevator extends SubsystemBase {
     BooleanPublisher bottomLimitPub;
 
     public Elevator() {
+
         NetworkTableInstance inst = NetworkTableInstance.getDefault();
         NetworkTable debug = inst.getTable("Debug");
 
@@ -75,10 +81,10 @@ public class Elevator extends SubsystemBase {
 
     // Manual Control
     public void joystickControl() {
-        double voltage = RobotContainer.operatorController.getLeftY() * 12 + elevatorFeedforward.calculate(0); // Multiplying
-                                                                                                               // by max
-                                                                                                               // voltage
-                                                                                                               // (12)
+        double voltage = RobotContainer.operatorController.getLeftY() * 12 + elevatorFeedforward.calculate(0); 
+        // Multiplying by Max Voltage (12)
+                                                                                                       
+        //TODO: possibly add rate limiter so we don't crash into the max height at full speed                            
         if (isAtTop() && voltage > 0) {
             stop();
         } else if (isAtBottom() && voltage < 0) {
@@ -96,6 +102,7 @@ public class Elevator extends SubsystemBase {
 
     // To Positions
     public void setHeight(double height) {
+        //TODO: add safeties!!! (make sure it doesn't try to set a height bigger than the max height or lower than the min height, etc)
         double rotations = height * ENCODER_ROTATIONS_TO_METERS_RATIO;
         leftTalonFX.setVoltage(pidController.calculate(leftTalonFX.getPosition().getValueAsDouble(), rotations)
                 + elevatorFeedforward.calculate(0));
