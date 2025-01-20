@@ -102,8 +102,13 @@ public class Elevator extends SubsystemBase {
 
     // To Positions
     public void setHeight(double height) {
-        //TODO: add safeties!!! (make sure it doesn't try to set a height bigger than the max height or lower than the min height, etc)
-        double rotations = height * ENCODER_ROTATIONS_TO_METERS_RATIO;
+        if (height > ELEVATOR_MAX_HEIGHT) { //TODO: REVIEW 
+            height = ELEVATOR_MAX_HEIGHT;
+        } else if (height < 0) {
+            height = 0;
+        }
+
+        double rotations = height * ENCODER_ROTATIONS_TO_METERS_RATIO; //Converts meters to rotations
         leftTalonFX.setVoltage(pidController.calculate(leftTalonFX.getPosition().getValueAsDouble(), rotations)
                 + elevatorFeedforward.calculate(0));
         rightTalonFX.setVoltage(pidController.calculate(rightTalonFX.getPosition().getValueAsDouble(), rotations)
