@@ -9,13 +9,14 @@ import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.wpilibj.DigitalInput;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.RobotContainer;
+import frc.robot.util.Elastic;
 import frc.robot.util.LimitSwitch;
+import frc.robot.util.Elastic.Notification;
+import frc.robot.util.Elastic.Notification.NotificationLevel;
 
 public class Elevator extends SubsystemBase {
     
@@ -73,7 +74,15 @@ public class Elevator extends SubsystemBase {
     }
 
     public double getHeight() { // TODO: maybe average this with the other encoder? see if necessary
-        return leftTalonFX.getPosition().getValueAsDouble() * ENCODER_ROTATIONS_TO_METERS_RATIO;
+        double leftHeight = leftTalonFX.getPosition().getValueAsDouble() * ENCODER_ROTATIONS_TO_METERS_RATIO;
+        double rightHeight = rightTalonFX.getPosition().getValueAsDouble() * ENCODER_ROTATIONS_TO_METERS_RATIO;
+
+        if (Math.abs(leftHeight-rightHeight) < 0.2) {
+            Notification heightWarrning = new Notification(NotificationLevel.WARNING, "Elevator Height Mismatch", "The two elevator encoders give different values :(", 5000);
+            Elastic.sendNotification(heightWarrning);
+        }
+        return (leftHeight + rightHeight) / 2;
+        
     }
 
     public boolean isAtTop() {
@@ -103,6 +112,14 @@ public class Elevator extends SubsystemBase {
 
     // To Positions
     public void setHeight(double height) {
+        if (height > ELEVATOR_MAX_HEIGHT) {
+            Notification heightWarrning = new Notification(NotificationLevel.WARNING, "Setting the elevator height outside of range", "Somebody is messing up the button setting in robot container by setting the height to higher the range", 5000);
+            Elastic.sendNotification(heightWarrning);
+        }
+        if (height > 0) {
+            Notification heightWarrning = new Notification(NotificationLevel.WARNING, "Setting the elevator height outside of range", "Somebody is messing up the button setting in robot container by setting the height to lower than 0 (who is doing this???! WTF??)", 5000);
+            Elastic.sendNotification(heightWarrning);
+        }
         height = MathUtil.clamp(height, 0, ELEVATOR_MAX_HEIGHT);
         double rotations = height * ENCODER_ROTATIONS_TO_METERS_RATIO; //Converts meters to rotations
         
