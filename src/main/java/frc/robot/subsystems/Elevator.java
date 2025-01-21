@@ -19,11 +19,11 @@ import frc.robot.util.Elastic.Notification;
 import frc.robot.util.Elastic.Notification.NotificationLevel;
 
 public class Elevator extends SubsystemBase {
-    
+
     // Constants
     private final double ENCODER_ROTATIONS_TO_METERS_RATIO = 0.5; // TODO: FIND THIS
     public static final double ELEVATOR_MAX_HEIGHT = 2.0; // IN METERS
-    
+
     // Motor Controllers/Encoders
     private TalonFX leftTalonFX;
     private TalonFX rightTalonFX;
@@ -31,7 +31,7 @@ public class Elevator extends SubsystemBase {
     // PID/FeedForward controllers
     private PIDController pidController;
     private ElevatorFeedforward elevatorFeedforward;
-    
+
     // Limit Switches
     private LimitSwitch bottomLimit;
     private LimitSwitch topLimit;
@@ -62,27 +62,26 @@ public class Elevator extends SubsystemBase {
         rightTalonFX = new TalonFX(11, "rio");
 
         pidController = new PIDController(0, 0, 0);
-        elevatorFeedforward = new ElevatorFeedforward(0, 0, 0, 0); // TODO: Turn
+        elevatorFeedforward = new ElevatorFeedforward(0, 0, 0, 0); // TODO: Tune
 
         bottomLimit = new LimitSwitch(-1, false); // TODO: get port
         topLimit = new LimitSwitch(-1, false);
-
     }
 
     public boolean isAtBottom() {
         return bottomLimit.get();
     }
 
-    public double getHeight() { // TODO: maybe average this with the other encoder? see if necessary
+    public double getHeight() {
         double leftHeight = leftTalonFX.getPosition().getValueAsDouble() * ENCODER_ROTATIONS_TO_METERS_RATIO;
         double rightHeight = rightTalonFX.getPosition().getValueAsDouble() * ENCODER_ROTATIONS_TO_METERS_RATIO;
 
-        if (Math.abs(leftHeight-rightHeight) < 0.2) {
-            Notification heightWarrning = new Notification(NotificationLevel.WARNING, "Elevator Height Mismatch", "The two elevator encoders give different values :(", 5000);
-            Elastic.sendNotification(heightWarrning);
+        if (Math.abs(leftHeight - rightHeight) < 0.2) {
+            Elastic.sendNotification(new Notification(
+                    NotificationLevel.WARNING, "Elevator Height Mismatch",
+                    "The two elevator encoders give different values :(", 5000));
         }
         return (leftHeight + rightHeight) / 2;
-        
     }
 
     public boolean isAtTop() {
@@ -91,10 +90,11 @@ public class Elevator extends SubsystemBase {
 
     // Manual Control
     public void joystickControl() {
-        double voltage = RobotContainer.operatorController.getLeftY() * 12 + elevatorFeedforward.calculate(0); 
+        double voltage = RobotContainer.operatorController.getLeftY() * 12 + elevatorFeedforward.calculate(0);
         // Multiplying by Max Voltage (12)
-                                                                                                       
-        //TODO: possibly add rate limiter so we don't crash into the max height at full speed                            
+
+        // TODO: possibly add rate limiter so we don't crash into the max height at full
+        // speed
         if (isAtTop() && voltage > 0) {
             stop();
         } else if (isAtBottom() && voltage < 0) {
@@ -113,16 +113,20 @@ public class Elevator extends SubsystemBase {
     // To Positions
     public void setHeight(double height) {
         if (height > ELEVATOR_MAX_HEIGHT) {
-            Notification heightWarrning = new Notification(NotificationLevel.WARNING, "Setting the elevator height outside of range", "Somebody is messing up the button setting in robot container by setting the height to higher the range", 5000);
-            Elastic.sendNotification(heightWarrning);
+            Elastic.sendNotification(new Notification(
+                    NotificationLevel.WARNING, "Setting the elevator height outside of range",
+                    "Somebody is messing up the button setting in robot container by setting the height to higher the range",
+                    5000));
         }
         if (height > 0) {
-            Notification heightWarrning = new Notification(NotificationLevel.WARNING, "Setting the elevator height outside of range", "Somebody is messing up the button setting in robot container by setting the height to lower than 0 (who is doing this???! WTF??)", 5000);
-            Elastic.sendNotification(heightWarrning);
+            Elastic.sendNotification(new Notification(
+                    NotificationLevel.WARNING, "Setting the elevator height outside of range",
+                    "Somebody is messing up the button setting in robot container by setting the height to lower than 0 (who is doing this???! WTF??)",
+                    5000));
         }
         height = MathUtil.clamp(height, 0, ELEVATOR_MAX_HEIGHT);
-        double rotations = height * ENCODER_ROTATIONS_TO_METERS_RATIO; //Converts meters to rotations
-        
+        double rotations = height / ENCODER_ROTATIONS_TO_METERS_RATIO; // Converts meters to rotations
+
         leftTalonFX.setVoltage(pidController.calculate(leftTalonFX.getPosition().getValueAsDouble(), rotations)
                 + elevatorFeedforward.calculate(0));
         rightTalonFX.setVoltage(pidController.calculate(rightTalonFX.getPosition().getValueAsDouble(), rotations)
@@ -151,8 +155,8 @@ public class Elevator extends SubsystemBase {
             topLimitPub.set(false);
             bottomLimitPub.set(bottomLimit.get());
         }
-        //Set encoders based on if the elevator is at the top of the bottom
-        if (isAtTop()) { //TODO: Figure out if I'm doing this correctly
+        // Set encoders based on if the elevator is at the top of the bottom
+        if (isAtTop()) {
             leftTalonFX.setPosition(ELEVATOR_MAX_HEIGHT * ENCODER_ROTATIONS_TO_METERS_RATIO);
             rightTalonFX.setPosition(ELEVATOR_MAX_HEIGHT * ENCODER_ROTATIONS_TO_METERS_RATIO);
         }
@@ -160,6 +164,5 @@ public class Elevator extends SubsystemBase {
             leftTalonFX.setPosition(0);
             rightTalonFX.setPosition(0);
         }
-    
     }
 }
