@@ -19,60 +19,60 @@ import frc.robot.util.LimitSwitch;
 public class Elevator extends SubsystemBase {
     
     // Constants
-    private final double ENCODER_ROTATIONS_TO_METERS_RATIO = 0.5; // TODO: FIND THIS
-    public static final double ELEVATOR_MAX_HEIGHT = 2.0; // IN METERS
-    
-    // Motor Controllers/Encoders
-    private TalonFX leftTalonFX;
-    private TalonFX rightTalonFX;
-
-    // PID/FeedForward controllers
-    private PIDController pidController;
-    private ElevatorFeedforward elevatorFeedforward;
-    
-    // Limit Switches
-    private LimitSwitch bottomLimit;
-    private LimitSwitch topLimit;
-
-    // Logging to NT
-    DoublePublisher heightPub;
-    DoublePublisher leftHeightPub;
-    DoublePublisher rightHeightPub;
-
-    BooleanPublisher topLimitPub;
-    BooleanPublisher bottomLimitPub;
-
-    public Elevator() {
-
-        NetworkTableInstance inst = NetworkTableInstance.getDefault();
-        NetworkTable debug = inst.getTable("Debug");
-
-        heightPub = debug.getDoubleTopic("Elevator Height").publish();
-
-        if (RobotContainer.debugMode) {
-            leftHeightPub = debug.getDoubleTopic("Elevator Left Height").publish();
-            rightHeightPub = debug.getDoubleTopic("Elevator Right Height").publish();
-            topLimitPub = debug.getBooleanTopic("Elevator Top Limit").publish();
-            bottomLimitPub = debug.getBooleanTopic("Elevator Bottom Limit").publish();
-        }
-
-        leftTalonFX = new TalonFX(10, "rio");
-        rightTalonFX = new TalonFX(11, "rio");
-
-        pidController = new PIDController(0, 0, 0);
-        elevatorFeedforward = new ElevatorFeedforward(0, 0, 0, 0); // TODO: Turn
-
-        bottomLimit = new LimitSwitch(-1, false); // TODO: get port
-        topLimit = new LimitSwitch(-1, false);
-
-    }
-
-    public boolean isAtBottom() {
-        return bottomLimit.get();
-    }
-
-    public double getHeight() { // TODO: maybe average this with the other encoder? see if necessary
-        return leftTalonFX.getPosition().getValueAsDouble() * ENCODER_ROTATIONS_TO_METERS_RATIO;
+    private final static double ENCODER_ROTATIONS_TO_METERS_RATIO = 0.5; // TODO: FIND THIS
+        public static final double ELEVATOR_MAX_HEIGHT = 2.0; // IN METERS
+        
+        // Motor Controllers/Encoders
+        private static TalonFX leftTalonFX;
+            private TalonFX rightTalonFX;
+        
+            // PID/FeedForward controllers
+            private PIDController pidController;
+            private ElevatorFeedforward elevatorFeedforward;
+            
+            // Limit Switches
+            private LimitSwitch bottomLimit;
+            private LimitSwitch topLimit;
+        
+            // Logging to NT
+            DoublePublisher heightPub;
+            DoublePublisher leftHeightPub;
+            DoublePublisher rightHeightPub;
+        
+            BooleanPublisher topLimitPub;
+            BooleanPublisher bottomLimitPub;
+        
+            public Elevator() {
+        
+                NetworkTableInstance inst = NetworkTableInstance.getDefault();
+                NetworkTable debug = inst.getTable("Debug");
+        
+                heightPub = debug.getDoubleTopic("Elevator Height").publish();
+        
+                if (RobotContainer.debugMode) {
+                    leftHeightPub = debug.getDoubleTopic("Elevator Left Height").publish();
+                    rightHeightPub = debug.getDoubleTopic("Elevator Right Height").publish();
+                    topLimitPub = debug.getBooleanTopic("Elevator Top Limit").publish();
+                    bottomLimitPub = debug.getBooleanTopic("Elevator Bottom Limit").publish();
+                }
+        
+                leftTalonFX = new TalonFX(10, "rio");
+                rightTalonFX = new TalonFX(11, "rio");
+        
+                pidController = new PIDController(0, 0, 0);
+                elevatorFeedforward = new ElevatorFeedforward(0, 0, 0, 0); // TODO: Turn
+        
+                bottomLimit = new LimitSwitch(-1, false); // TODO: get port
+                topLimit = new LimitSwitch(-1, false);
+        
+            }
+        
+            public boolean isAtBottom() {
+                return bottomLimit.get();
+            }
+        
+            public static double getHeight() { // TODO: maybe average this with the other encoder? see if necessary
+                return leftTalonFX.getPosition().getValueAsDouble() * ENCODER_ROTATIONS_TO_METERS_RATIO;
     }
 
     public boolean isAtTop() {
