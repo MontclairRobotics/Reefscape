@@ -15,12 +15,6 @@ import frc.robot.subsystems.Elevator;
 public class BottomLEDs extends LEDs{
 
     public BottomLEDs() {
-        led = new AddressableLED(PORT);
-        led.setLength(LENGTH);
-        ledBuffer = new AddressableLEDBuffer(LENGTH);
-        led.start();
-
-    public BottomLEDs() {
         super();
 
     }

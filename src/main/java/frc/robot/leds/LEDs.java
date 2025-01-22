@@ -46,9 +46,9 @@ public class LEDs extends SubsystemBase{
         pattern.applyTo(ledBuffer);
         led.setData(ledBuffer);
     }
-    
+
     public static Command runPattern(LEDPattern pattern){
-        return Commands.run(() -> pattern.applyTo(ledBuffer));
+        return Commands.run(() -> pattern.applyTo(ledBuffer), RobotContainer.BottomLEDs);
     }
 
     public void periodic(){
