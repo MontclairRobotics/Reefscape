@@ -1,12 +1,9 @@
 package frc.robot.leds;
-
-import java.util.Map;
-
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Distance;
-import edu.wpi.first.wpilibj.AddressableLED;
-import edu.wpi.first.wpilibj.AddressableLEDBuffer;
-import edu.wpi.first.wpilibj.AddressableLEDBufferView;
+import edu.wpi.first.wpilibj.LEDPattern;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj.LEDPattern;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -15,22 +12,10 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.Elevator;
 
-public class BottomLEDs extends SubsystemBase {
-    public static final int PORT = 9;
-    public static final int LENGTH = 100;
-    private static final LEDPattern m_rainbow = LEDPattern.rainbow(255, 128);
-    private static final Distance kLedSpacing = Units.Meters.of(1 / 100.0);
-    // TODO make private?
-    public static final LEDPattern m_scrollingRainbow = m_rainbow.scrollAtAbsoluteSpeed(Units.MetersPerSecond.of(1),
-            kLedSpacing);
-    AddressableLED led;
-    AddressableLEDBuffer ledBuffer;
+public class BottomLEDs extends LEDs{
 
     public BottomLEDs() {
-        led = new AddressableLED(PORT);
-        led.setLength(LENGTH);
-        ledBuffer = new AddressableLEDBuffer(LENGTH);
-        led.start();
+        super();
 
     }
 
