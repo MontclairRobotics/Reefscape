@@ -42,9 +42,8 @@ import frc.robot.util.Elastic.Notification.NotificationLevel;
 
 public class Auto extends SubsystemBase {
 
-    private String autoString = "";
     private String prevAutoString = "";
-    private ArrayList<PathPlannerTrajectory> pathList = new ArrayList<PathPlannerTrajectory>();
+    private ArrayList<PathPlannerPath> pathList = new ArrayList<PathPlannerPath>();
 
     private Command autoCmd = Commands.none();
 
@@ -82,7 +81,7 @@ public class Auto extends SubsystemBase {
     private ArrayList<String> coralLevels = new ArrayList<String>(
             Arrays.asList("1", "2", "3", "4"));
 
-    public boolean isAutoStringValid() {
+    public boolean isAutoStringValid(String autoString) {
 
         if (autoString.length() < 2) {
             setFeedback("Not long enough!", NotificationLevel.ERROR);
@@ -131,35 +130,15 @@ public class Auto extends SubsystemBase {
 
     public void drawPaths() { // TODO rotate for red alliance?
         for (int i = 0; i < pathList.size(); i++) {
-            System.out.println("PathList size: " + pathList.size());
-            System.out.println("Loop Index: " + i);
-            PathPlannerTrajectory ppTraj = pathList.get(i);
-
-            ArrayList<Pose2d> poseList = new ArrayList<Pose2d>(pathList.size());
-
-            for (PathPlannerTrajectoryState state : ppTraj.getStates()) {
-                poseList.add(state.pose);
-                System.out.println(state.pose);
-            }
-
-            // TODO might need to do this using states to account for different constraints
-            // at different points.
-            // I'm not sure if it matters since theoretically Pathplanner has already done
-            // the math?
-            try {
-            System.out.println("Length: " + poseList.size());
-                Trajectory traj = TrajectoryGenerator.generateTrajectory(poseList,
-                        new TrajectoryConfig(Drivetrain.MAX_SPEED, Drivetrain.FORWARD_ACCEL));
-                field.getObject("obj" + i).setTrajectory(traj);
-            } catch (Exception e) {
-                setFeedback("Had to skip drawing trajectory", NotificationLevel.WARNING);
-            }
+            PathPlannerPath path = pathList.get(i);
+            Trajectory traj = TrajectoryGenerator.generateTrajectory(path.getPathPoses(), new TrajectoryConfig(Drivetrain.MAX_SPEED, Drivetrain.FORWARD_ACCEL));
+            field.getObject("obj" + i).setTrajectory(traj);
 
         }
     }
 
-    public Command buildAutoCommand() {
-        if (!isAutoStringValid()) {
+    public Command buildAutoCommand(String autoString) {
+        if (!isAutoStringValid(autoString)) {
             return Commands.none();
             // Possibly make this return just a simple path so we get the leave bonus
         }
@@ -203,12 +182,7 @@ public class Auto extends SubsystemBase {
 
                     // TODO needs to be .generateTrajectory()? maybe only if the ideal one doesn't
                     // exist?
-                    Optional<PathPlannerTrajectory> ppTraj = path.getIdealTrajectory(RobotConfig.fromGUISettings());
-                    if (ppTraj.isPresent()) {
-                        pathList.add(ppTraj.get());
-                    } else {
-                        setFeedback("Trajectory for " + pathName + " not present!", NotificationLevel.ERROR);
-                    }
+                    pathList.add(path);
                 } catch (Exception e) {
                     DriverStation.reportError("Big oops: " + e.getMessage(), e.getStackTrace());
                     setFeedback("Path " + pathName + " not found!", NotificationLevel.ERROR);
@@ -232,12 +206,7 @@ public class Auto extends SubsystemBase {
 
                     // TODO needs to be .generateTrajectory()? maybe only if the ideal one doesn't
                     // exist?
-                    Optional<PathPlannerTrajectory> ppTraj = path.getIdealTrajectory(RobotConfig.fromGUISettings());
-                    if (ppTraj.isPresent()) {
-                        pathList.add(ppTraj.get());
-                    } else {
-                        System.out.println("TRAJECTORY NOT PRESENT _____________________________-");
-                    }
+                    pathList.add(path);
                 } catch (Exception e) {
                     DriverStation.reportError("Big oops: " + e.getMessage(), e.getStackTrace());
                     setFeedback("Path " + pathName + " not found!", NotificationLevel.ERROR);
@@ -268,10 +237,10 @@ public class Auto extends SubsystemBase {
         return autoCommand;
     }
 
-    public void validateAndCreatePaths() {
+    public void validateAndCreatePaths(String str) {
         clearField();
-        if (isAutoStringValid()) {
-            autoCmd = buildAutoCommand();
+        if (isAutoStringValid(str)) {
+            autoCmd = buildAutoCommand(str);
             drawPaths();
         }
     }
@@ -297,11 +266,17 @@ public class Auto extends SubsystemBase {
             String str = stringEnt.get("");
             SmartDashboard.putData(field);
 
-            autoString = str.replace(' ', Character.MIN_VALUE); // check
+            // String autoString = str.replace(' ', Character.MIN_VALUE); // check
+            String autoString = "";
+            for (char a : str.toCharArray()) {
+                if (a != ' ') {
+                    autoString += a;
+                }
+            }
             if (!autoString.equals(prevAutoString)) {
                 System.out.println(autoString + "-------------------");
                 prevAutoString = autoString;
-                validateAndCreatePaths();
+                validateAndCreatePaths(autoString);
             }
         }
     }
