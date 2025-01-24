@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.util.Elastic;
 
 public class Robot extends LoggedRobot {
   private Command m_autonomousCommand;
@@ -79,6 +80,8 @@ public class Robot extends LoggedRobot {
     if (m_autonomousCommand != null) {
       m_autonomousCommand.schedule();
     }
+
+    Elastic.selectTab("Autonomous");
   }
 
   @Override
@@ -94,6 +97,8 @@ public class Robot extends LoggedRobot {
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
+
+    Elastic.selectTab("Teleoperated");
   }
 
   @Override

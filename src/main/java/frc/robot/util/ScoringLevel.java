@@ -1,12 +1,18 @@
 package frc.robot.util;
 
-public enum CoralScoringLevel {
-    L4,
-    L3,
-    L2,
-    L1;
+public enum ScoringLevel {
+    L4 (0),
+    L3 (0),
+    L2 (0),
+    L1 (0);
 
-    public CoralScoringLevel fromInt(int x){
+    private double height;
+
+    ScoringLevel(double height) {
+        this.height = height;
+    }
+
+    public ScoringLevel fromInt(int x){
         switch(x) {
             case 4: return L4;
             case 3: return L3;
@@ -16,7 +22,7 @@ public enum CoralScoringLevel {
         return null;
     }
 
-    public CoralScoringLevel fromString(String s){
+    public ScoringLevel fromString(String s){
         switch(s) {
             case "4": return L4;
             case "3": return L3;
@@ -26,12 +32,8 @@ public enum CoralScoringLevel {
         return null;
     }
 
-    // public double getHeight(CoralScoringLevel level) {
-    //     if(level == L4) return 0;
-    //     if(level == L3) return 0;
-    //     if(level == L2) return 0;
-    //     if(level == L1) return 0;
-    //     return 0;
-    // }
+    public double getHeight() {
+        return height;
+    }
 
 }
