@@ -12,9 +12,11 @@ import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectoryState;
+import com.pathplanner.lib.util.FlippingUtil;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.trajectory.Trajectory;
+import edu.wpi.first.math.trajectory.Trajectory.State;
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator;
 import edu.wpi.first.networktables.GenericEntry;
@@ -27,6 +29,7 @@ import edu.wpi.first.networktables.StringSubscriber;
 import edu.wpi.first.networktables.StringTopic;
 import edu.wpi.first.networktables.NetworkTableEvent.Kind;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -39,6 +42,7 @@ import frc.robot.util.CoralScoringLevel;
 import frc.robot.util.Elastic;
 import frc.robot.util.Elastic.Notification;
 import frc.robot.util.Elastic.Notification.NotificationLevel;
+import frc.robot.util.PoseUtils;
 
 public class Auto extends SubsystemBase {
 
@@ -55,6 +59,8 @@ public class Auto extends SubsystemBase {
 
     StringTopic feedbackTopic = auto.getStringTopic("Auto Feedback");
     StringPublisher feedbackPub = feedbackTopic.publish();
+
+    Alliance prevAlliance = Alliance.Blue;
 
     public static Field2d field = new Field2d();
 
@@ -131,8 +137,14 @@ public class Auto extends SubsystemBase {
     public void drawPaths() { // TODO rotate for red alliance?
         for (int i = 0; i < pathList.size(); i++) {
             PathPlannerPath path = pathList.get(i);
-            Trajectory traj = TrajectoryGenerator.generateTrajectory(path.getPathPoses(), new TrajectoryConfig(Drivetrain.MAX_SPEED, Drivetrain.FORWARD_ACCEL));
-            field.getObject("obj" + i).setTrajectory(traj);
+
+            Pose2d[] posList = path.getPathPoses().toArray(new Pose2d[0]);
+            for (int j = 0; j < posList.length; j++) {
+                posList[j] = PoseUtils.flipPoseAlliance(posList[j]);
+            }
+            // Trajectory traj = TrajectoryGenerator.generateTrajectory(path.getPathPoses(), new TrajectoryConfig(Drivetrain.MAX_SPEED, Drivetrain.FORWARD_ACCEL));
+            field.getObject("obj" + i).setPoses(posList);
+            // field.getObject("obj" + i).setTrajectory(traj);
 
         }
     }
@@ -164,20 +176,39 @@ public class Auto extends SubsystemBase {
 
             /* adds command to from pickup location to scoring location */
             String pathName;
+            String middleChar = "-";
+            boolean firstPath = false;
             if (first != null && second != null) {
-                pathName = i == 1 ? "S" + first + "-" + second : first + "-" + second; // makes sure it accounts starting
+                if (Character.isLowerCase(first.charAt(0)) || Character.isLowerCase(second.charAt(0))) {
+                    middleChar = "_";
+                }
+                pathName = first + middleChar + second;
+                if (i == 1) {
+                    pathName = "S" + pathName;
+                    firstPath = true;
+                }
+                pathName = i == 1 ? "S" + first + middleChar + second : first + middleChar + second; // makes sure it accounts starting
                                                                                     // path having an "S"
 
                 try {
                     // Load the path you want to follow using its name in the GUI
 
                     PathPlannerPath path = PathPlannerPath.fromPathFile(pathName);
-                    System.out.println("Path1: " + pathName);
 
                     // Store path to be drawn on dashboard
                     // Create a path following command using AutoBuilder. This will also trigger
                     // event markers.
                     path1Cmd = AutoBuilder.followPath(path);
+
+                    if (firstPath) {
+                        Pose2d pose = PoseUtils.flipPoseAlliance(path.getStartingDifferentialPose());
+                        autoCommand.addCommands(Commands.runOnce(() -> {
+                            RobotContainer.drivetrain.swerveDrive.resetPose(pose);
+                        }));
+
+                        //TODO this can be deleted, is here for testing purposes
+                        RobotContainer.drivetrain.swerveDrive.resetPose(pose);
+                    }
 
 
                     // TODO needs to be .generateTrajectory()? maybe only if the ideal one doesn't
@@ -186,18 +217,21 @@ public class Auto extends SubsystemBase {
                 } catch (Exception e) {
                     DriverStation.reportError("Big oops: " + e.getMessage(), e.getStackTrace());
                     setFeedback("Path " + pathName + " not found!", NotificationLevel.ERROR);
+                    pathList.clear();
                     return Commands.none();
                 }
             }
 
-            pathName = third != null && fourth != null ? second + "-" + fourth : null;
-
-            if (pathName != null) {
+            if (third != null && fourth != null) {
+                    middleChar = "-";
+                if (Character.isLowerCase(third.charAt(0)) || Character.isLowerCase(fourth.charAt(0))) {
+                    middleChar = "_";
+                }
+                pathName = second + middleChar + fourth;
                 try {
-                    // Load the path you want to follow using its name in the GUI
+                    // Load the 2nd path you want to follow using its name in the GUI
 
                     PathPlannerPath path = PathPlannerPath.fromPathFile(pathName);
-                    System.out.println("Path2: " + pathName);
 
                     // Store path to be drawn on dashboard
                     // Create a path following command using AutoBuilder. This will also trigger
@@ -268,16 +302,24 @@ public class Auto extends SubsystemBase {
 
             // String autoString = str.replace(' ', Character.MIN_VALUE); // check
             String autoString = "";
+            Optional<Alliance> alliance = DriverStation.getAlliance();
             for (char a : str.toCharArray()) {
-                if (a != ' ') {
+                if (a != ' ' && a != ',') {
                     autoString += a;
                 }
             }
             if (!autoString.equals(prevAutoString)) {
-                System.out.println(autoString + "-------------------");
                 prevAutoString = autoString;
                 validateAndCreatePaths(autoString);
             }
+            else if (alliance.isPresent() && alliance.get() != prevAlliance) {
+                prevAlliance = alliance.get();
+                validateAndCreatePaths(autoString);
+            }
+        }
+
+        if (DriverStation.isAutonomous() || DriverStation.isDisabled()) {
+            field.setRobotPose(RobotContainer.drivetrain.getRobotPose());
         }
     }
 }
