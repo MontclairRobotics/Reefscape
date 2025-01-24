@@ -51,7 +51,8 @@ public class RobotContainer {
     drivetrain.setDefaultCommand(drivetrain.driveJoystickInputCommand());
     elevator.setDefaultCommand(elevator.joystickControlCommand());
     BottomLEDs.setDefaultCommand(LEDs.runPattern(LEDs.m_scrollingRainbow));
-    operatorController.triangle().onTrue(elevator.setHeightCommand(.33)); //L1
+    
+    operatorController.triangle().onTrue(elevator.setHeightCommand(.33)); //L1 Meters
     operatorController.circle().onTrue(elevator.setHeightCommand(.81)); //L2
     operatorController.cross().onTrue(elevator.setHeightCommand(1.21)); //L3
     operatorController.square().onTrue(elevator.setHeightCommand(1.83)); //4

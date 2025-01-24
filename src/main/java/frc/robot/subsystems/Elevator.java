@@ -4,11 +4,8 @@ import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
-
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.controller.ElevatorFeedforward;
-import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTable;
@@ -32,10 +29,6 @@ public class Elevator extends SubsystemBase {
     // Motor Controllers/Encoders
     private TalonFX leftTalonFX;
     private TalonFX rightTalonFX;
-
-    // PID/FeedForward controllers
-    // private PIDController pidController;
-    // private ElevatorFeedforward elevatorFeedforward;
 
     // Limit Switches
     private LimitSwitch bottomLimit;
@@ -66,19 +59,17 @@ public class Elevator extends SubsystemBase {
         leftTalonFX = new TalonFX(10, "rio"); //TODO: find ports
         rightTalonFX = new TalonFX(11, "rio");
 
-        // pidController = new PIDController(0, 0, 0);
-
         // in init function
-        var elevatorConfigs = new TalonFXConfiguration();
+        TalonFXConfiguration elevatorConfigs = new TalonFXConfiguration();
 
         // set slot 0 gains
-        var slot0Configs = elevatorConfigs.Slot0;
-        slot0Configs.kS = 0.25; // Add 0.25 V output to overcome static friction
-        slot0Configs.kV = 0.12; // A velocity target of 1 rps results in 0.12 V output
-        slot0Configs.kA = 0.01; // An acceleration of 1 rps/s requires 0.01 V output
-        slot0Configs.kP = 4.8; // A position error of 2.5 rotations results in 12 V output
-        slot0Configs.kI = 0; // no output for integrated error
-        slot0Configs.kD = 0.1; // A velocity error of 1 rps results in 0.1 V output
+        Slot0Configs slot0Configs = elevatorConfigs.Slot0; // TODO: TUNE!!!!
+        slot0Configs.kS = -1; // Add 0.25 V output to overcome static friction
+        slot0Configs.kV = -1; // A velocity target of 1 rps results in 0.12 V output
+        slot0Configs.kA = -1; // An acceleration of 1 rps/s requires 0.01 V output
+        slot0Configs.kP = -1; // A position error of 2.5 rotations results in 12 V output
+        slot0Configs.kI = -1; // no output for integrated error
+        slot0Configs.kD = -1; // A velocity error of 1 rps results in 0.1 V output
 
         // set Motion Magic settings
         var motionMagicConfigs = elevatorConfigs.MotionMagic;
@@ -89,8 +80,6 @@ public class Elevator extends SubsystemBase {
         leftTalonFX.getConfigurator().apply(elevatorConfigs);
         rightTalonFX.getConfigurator().apply(elevatorConfigs);
 
-        // elevatorFeedforward = new ElevatorFeedforward(0, 0, 0, 0); // TODO: Tune
-
         bottomLimit = new LimitSwitch(-1, false); // TODO: get port
         topLimit = new LimitSwitch(-1, false);
     }
@@ -99,6 +88,11 @@ public class Elevator extends SubsystemBase {
         return bottomLimit.get();
     }
 
+    /**
+     * 
+     * @return Height of elevator in meters averaged between the two encoders
+     *  if the difference is two much it will send a warning using elastic
+     */
     public double getHeight() {
         double leftHeight = leftTalonFX.getPosition().getValueAsDouble() * ENCODER_ROTATIONS_TO_METERS_RATIO;
         double rightHeight = rightTalonFX.getPosition().getValueAsDouble() * ENCODER_ROTATIONS_TO_METERS_RATIO;
@@ -115,15 +109,20 @@ public class Elevator extends SubsystemBase {
         return topLimit.get();
     }
 
-    // Manual Control
+    /**
+     * Manual Control of the elevator with the joystick
+     * Will slow down when nearing the top or bottom
+     * 
+     */
     public void joystickControl() {
-        // TODO: slew rate limiter
+        SlewRateLimiter accelerationLimiter = new SlewRateLimiter(0.5); //TODO: actually set this
         final MotionMagicVoltage request = new MotionMagicVoltage(0)
-        .withFeedForward(0); //TUNE??????? (confusion)
+        .withFeedForward(0); //TODO: TUNE??????? (confusion)
         
-        double voltage = RobotContainer.operatorController.getLeftY() * 11 + request.getFeedForwardMeasure().in(Units.Volts);
+        double voltage = accelerationLimiter.calculate(Math.pow(MathUtil.applyDeadband(RobotContainer.operatorController.getLeftY(), 0.04), 3))
+            * 11 + request.getFeedForwardMeasure().in(Units.Volts);
         //TODO: Check if the above line is correct
-        // Multiplying by Max Voltage (12) (ll not 12 because also feedfoward and lazy)
+        // Multiplying by Max Voltage (12) (ll not 12 because also feedfoward and lazy) Uses a rate limiter feedwoward and a deadband
 
         double percentHeight = this.getHeight() / ELEVATOR_MAX_HEIGHT;
         if (percentHeight > 0.93 && voltage > 0) {
@@ -150,7 +149,10 @@ public class Elevator extends SubsystemBase {
         rightTalonFX.setVoltage(0);
     }
 
-    // To Positions
+    /**
+     * Sets height of the elevator in meters between 0 and the Max height of the elevator
+     * @param height Position you want to set the elevator to in meters
+     */
     public void setHeight(double height) {
         if (height > ELEVATOR_MAX_HEIGHT) {
             Elastic.sendNotification(new Notification(
@@ -168,15 +170,10 @@ public class Elevator extends SubsystemBase {
         double rotations = height / ENCODER_ROTATIONS_TO_METERS_RATIO; // Converts meters to rotations
 
         final MotionMagicVoltage request = new MotionMagicVoltage(0)
-        .withFeedForward(0); //TUNE???? (CONFUSTION :(  )
+        .withFeedForward(0); //TUNE???? CONFUSTION :(  
 
         leftTalonFX.setControl(request.withPosition(rotations).withFeedForward(0));
         rightTalonFX.setControl(request.withPosition(rotations).withFeedForward(0));
-
-        // leftTalonFX.setVoltage(pidController.calculate(leftTalonFX.getPosition().getValueAsDouble(), rotations)
-        //         + elevatorFeedforward.calculate(0));
-        // rightTalonFX.setVoltage(pidController.calculate(rightTalonFX.getPosition().getValueAsDouble(), rotations)
-        //         + elevatorFeedforward.calculate(0));
     }
 
     // Commands

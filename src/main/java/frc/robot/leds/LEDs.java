@@ -34,14 +34,14 @@ public class LEDs extends SubsystemBase{
         }
         public static void progressBar(Color color) {
         LEDPattern base = LEDPattern.solid(color);
-        LEDPattern mask = LEDPattern.progressMaskLayer(() -> Elevator.getHeight() /
+        LEDPattern mask = LEDPattern.progressMaskLayer(() -> RobotContainer.elevator.getHeight() /
         Elevator.ELEVATOR_MAX_HEIGHT);
         pattern = base.mask(mask);
         pattern.applyTo(ledBuffer);
         led.setData(ledBuffer);
     }
     public static void scrollingRainbowProgress() {
-        LEDPattern mask = LEDPattern.progressMaskLayer(() -> Elevator.getHeight() / Elevator.ELEVATOR_MAX_HEIGHT);
+        LEDPattern mask = LEDPattern.progressMaskLayer(() -> RobotContainer.elevator.getHeight() / Elevator.ELEVATOR_MAX_HEIGHT);
         pattern = m_rainbow.mask(mask);
         pattern.applyTo(ledBuffer);
         led.setData(ledBuffer);
