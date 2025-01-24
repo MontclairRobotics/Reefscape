@@ -38,7 +38,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.RobotContainer;
-import frc.robot.util.CoralScoringLevel;
+import frc.robot.util.ScoringLevel;
 import frc.robot.util.Elastic;
 import frc.robot.util.Elastic.Notification;
 import frc.robot.util.Elastic.Notification.NotificationLevel;
@@ -110,7 +110,7 @@ public class Auto extends SubsystemBase {
 
             /* Checks if we are going to a valid scoring location */
             if (!scoringLocations.contains(first)) {
-                setFeedback("Character " + (i + 1) + " is not a scoring location, when it should be!",
+                setFeedback("Character " + (i + 1) + ": " + autoString.charAt(i) + " is not a scoring location, when it should be!",
                         NotificationLevel.ERROR);
                 return false;
             }
@@ -122,7 +122,7 @@ public class Auto extends SubsystemBase {
             }
             /* Checks if the pickup location we want to score at is valid */
             if (third != null && !pickupLocations.contains(third)) {
-                setFeedback("Character " + (i + 3) + " is not a valid pickup location, when it should be!",
+                setFeedback("Character " + (i + 3) + ": " + autoString.charAt(i + 2) + " is not a valid pickup location, when it should be!",
                         NotificationLevel.ERROR);
                 return false;
             }
@@ -201,7 +201,8 @@ public class Auto extends SubsystemBase {
                     path1Cmd = AutoBuilder.followPath(path);
 
                     if (firstPath) {
-                        Pose2d pose = PoseUtils.flipPoseAlliance(path.getStartingDifferentialPose());
+                        Optional<Pose2d> opPose = path.getStartingHolonomicPose();
+                        Pose2d pose = opPose.isPresent() ? PoseUtils.flipPoseAlliance(opPose.get()) : new Pose2d();
                         autoCommand.addCommands(Commands.runOnce(() -> {
                             RobotContainer.drivetrain.swerveDrive.resetPose(pose);
                         }));
@@ -222,7 +223,7 @@ public class Auto extends SubsystemBase {
                 }
             }
 
-            if (third != null && fourth != null) {
+            if (second != null && fourth != null) {
                     middleChar = "-";
                 if (Character.isLowerCase(third.charAt(0)) || Character.isLowerCase(fourth.charAt(0))) {
                     middleChar = "_";
@@ -247,6 +248,12 @@ public class Auto extends SubsystemBase {
                     return Commands.none();
                 }
             }
+
+            
+            if (third != null) {
+                autoCommand.addCommands(Commands.none()); //Elevator target height command
+            }
+            ScoringLevel.L4.getHeight();
 
             
 
@@ -283,11 +290,8 @@ public class Auto extends SubsystemBase {
         pathList.clear();
         for (int i  = 0; i < 100; i++) {
             FieldObject2d obj = field.getObject("obj" + i);
-            // obj.setPose(new Pose2d(-100, -100, Rotation2d.fromDegrees(0)));
             obj.setTrajectory(new Trajectory());
         }
-        // field.close();
-        // field = new Field2d();
     }
 
     public Command getAutoCommand() {
