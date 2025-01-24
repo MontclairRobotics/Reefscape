@@ -158,7 +158,7 @@ public class Elevator extends SubsystemBase {
                     "Somebody is messing up the button setting in robot container by setting the height to higher the range",
                     5000));
         }
-        if (height > 0) {
+        if (height < 0) {
             Elastic.sendNotification(new Notification(
                     NotificationLevel.WARNING, "Setting the elevator height outside of range",
                     "Somebody is messing up the button setting in robot container by setting the height to lower than 0 (who is doing this???! WTF??)",
@@ -189,7 +189,7 @@ public class Elevator extends SubsystemBase {
     }
 
     public Command setHeightCommand(double height) {
-        return Commands.run(() -> setHeight(height));
+        return Commands.run(() -> setHeight(height), this);
     }
 
     @Override
