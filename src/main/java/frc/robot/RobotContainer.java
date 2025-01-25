@@ -6,6 +6,7 @@ package frc.robot;
 
 import java.lang.annotation.ElementType;
 
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
@@ -48,13 +49,40 @@ public class RobotContainer {
 
   private void configureBindings() {
 
+    /* Default commands */
     drivetrain.setDefaultCommand(drivetrain.driveJoystickInputCommand());
     elevator.setDefaultCommand(elevator.joystickControlCommand());
     BottomLEDs.setDefaultCommand(LEDs.runPattern(LEDs.m_scrollingRainbow));
+
+    /* Operator bindings */
+    //elevator height commands
     operatorController.triangle().onTrue(elevator.setHeightCommand(.33)); //L1
     operatorController.circle().onTrue(elevator.setHeightCommand(.81)); //L2
     operatorController.cross().onTrue(elevator.setHeightCommand(1.21)); //L3
     operatorController.square().onTrue(elevator.setHeightCommand(1.83)); //4
+
+
+    /* DRIVER BINDINGS */
+
+    //Robot relative
+    driverController.L2()
+      .onTrue(drivetrain.toRobotRelativeCommand())
+      .onFalse(drivetrain.toFieldRelativeCommand());
+    //90 degree buttons
+    driverController.triangle()
+      .onTrue(drivetrain.alignToAngleFieldRelativeCommand(Rotation2d.fromDegrees(0), false));
+    driverController.square()
+      .onTrue(drivetrain.alignToAngleFieldRelativeCommand(Rotation2d.fromDegrees(90), false));
+    driverController.cross()
+      .onTrue(drivetrain.alignToAngleFieldRelativeCommand(Rotation2d.fromDegrees(180), false));
+    driverController.circle()
+      .onTrue(drivetrain.alignToAngleFieldRelativeCommand(Rotation2d.fromDegrees(270), false)); 
+    //zero gyro
+    driverController.touchpad().onTrue(drivetrain.zeroGyroCommand());
+    //for testing robot relative angles
+    driverController.L1().onTrue(drivetrain.alignToAngleRobotRelativeCommand(Rotation2d.fromDegrees(30), false));
+    driverController.R1().onTrue(drivetrain.alignToAngleRobotRelativeCommand(Rotation2d.fromDegrees(-30), false));
+
   }
 
   public Command getAutonomousCommand() {

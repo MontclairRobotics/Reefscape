@@ -32,12 +32,6 @@ public class Limelight extends SubsystemBase {
 
     public static final double TARGET_DEBOUNCE_TIME = 0.2;
 
-    private static final double twoTagAngleVelocityTolerance = 720 * Math.PI / 180; // degress per second
-    private static final double oneTagAngleVelocityTolerance = 540 * Math.PI / 180;
-
-    private static final double twoTagRobotVelocityTolerance = 4; // meters per second
-    private static final double oneTagRobotVelocityTolerance = 3;
-
     /* INSTANCE VARIABLES */
     private int tagCount;
     private int[] validIDs = {}; // TODO: set these
@@ -46,8 +40,7 @@ public class Limelight extends SubsystemBase {
     private boolean shouldRejectUpdate;
     private LimelightHelpers.PoseEstimate mt2;
 
-    private double angleVelocityTolerance; // in radians
-    private double robotVeloityTolerance;
+    private double angleVelocityTolerance = 540 * Math.PI / 180; // in radians per sec
 
     public Limelight(String cameraName) {
         this.cameraName = cameraName;
@@ -81,39 +74,19 @@ public class Limelight extends SubsystemBase {
     public void poseEstimationMegatag2() {
 
         // TODO does the angle need to be wrapped between 0 and 360
-        LimelightHelpers.SetRobotOrientation(cameraName, RobotContainer.drivetrain.getWrappedHeading().getDegrees(), 0,
-                0, 0, 0, 0);
+        LimelightHelpers.SetRobotOrientation(cameraName, RobotContainer.drivetrain.getWrappedHeading().getDegrees(), 0, 0, 0, 0, 0);
         mt2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(cameraName);
-        if (mt2 != null) { // TODO simulate limelight properly
-            if (mt2.tagCount == 1) {
-                // different velocity tolerances for different amount of tags
-                angleVelocityTolerance = oneTagAngleVelocityTolerance;
-                robotVeloityTolerance = oneTagRobotVelocityTolerance;
-            }
-            if (mt2.tagCount > 1) {
-                // different velocity tolerances for different amount of tags
-                angleVelocityTolerance = twoTagAngleVelocityTolerance;
-                robotVeloityTolerance = twoTagRobotVelocityTolerance;
-            }
+        
+        //TODO simulate limelight properly
+        if (mt2 != null) { 
             if (mt2.tagCount == 0) {
-                // rejects current measurement if there are no aprilTags
+                //rejects current measurement if there are no aprilTags
                 shouldRejectUpdate = true;
             }
-
-            // if our angular velocity is greater than 720 degrees per second, ignore vision
-            // updates{
             if (Math.abs(RobotContainer.drivetrain.getCurrentSpeeds().omegaRadiansPerSecond) > angleVelocityTolerance) {
                 shouldRejectUpdate = true;
             }
-
-            // TODO is this necessary? docs say only rotational velocity
-            double vx = RobotContainer.drivetrain.getCurrentSpeeds().vxMetersPerSecond;
-            double vy = RobotContainer.drivetrain.getCurrentSpeeds().vyMetersPerSecond;
-            double magnitudeOfVelocity = Math.sqrt(vx * vx + vy * vy);
-
-            if (Math.abs(magnitudeOfVelocity) > robotVeloityTolerance) {
-                shouldRejectUpdate = true;
-            }
+            //adds vision measurement if conditions are met
             if (!shouldRejectUpdate) {
                 // RobotContainer.drivetrain.swerveDrive.setVisionMeasurementStdDevs(VecBuilder.fill(.7,.7,9999999));
                 RobotContainer.drivetrain.swerveDrive.addVisionMeasurement(
@@ -123,6 +96,7 @@ public class Limelight extends SubsystemBase {
         }
     }
 
+    //TODO: Do we need these / check if the trig is right
     public double getStraightDistanceToCoralStation() {
         double distance = (coralStationTagHeightMeters - limelightMountHeight)
                 / Math.tan(
@@ -132,6 +106,7 @@ public class Limelight extends SubsystemBase {
         return distance;
     }
 
+    //TODO: Do we need these / check if the trig is right
     public double getStraightDistanceToReef() {
         double distance = (reefTagHeightMeters - limelightMountHeight)
                 / Math.tan(
@@ -157,12 +132,14 @@ public class Limelight extends SubsystemBase {
         return () -> getTX();
     }
 
+    //TODO: Do we need these / check if the trig is right
     public double getStraightDistanceToTag() {
         if (hasValidTarget())
             return goalHeightReef / (Math.tan(Math.toRadians(getTY() + limelightOffsetAngleVertical)));
         return 0;
     }
 
+    //TODO: Do we need these / check if the trig is right
     public double getStrafeDistanceToReef() {
         if (isCorrectID(reefIDs, getTagID())) {
             return (Math.tan(Math.toRadians(getTX()))) * getStraightDistanceToTag();
