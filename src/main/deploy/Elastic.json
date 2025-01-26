@@ -1,0 +1,100 @@
+{
+    "version": 1.0,
+    "grid_size": 128,
+    "tabs": [
+      {
+        "name": "Teleoperated",
+        "grid_layout": {
+          "layouts": [],
+          "containers": []
+        }
+      },
+      {
+        "name": "Autonomous",
+        "grid_layout": {
+          "layouts": [],
+          "containers": [
+            {
+              "title": "Auto Feedback",
+              "x": 0.0,
+              "y": 0.0,
+              "width": 384.0,
+              "height": 128.0,
+              "type": "Text Display",
+              "properties": {
+                "topic": "/Auto/Auto Feedback",
+                "period": 0.06,
+                "data_type": "string",
+                "show_submit_button": false
+              }
+            },
+            {
+              "title": "Auto String",
+              "x": 0.0,
+              "y": 128.0,
+              "width": 384.0,
+              "height": 128.0,
+              "type": "Text Display",
+              "properties": {
+                "topic": "/Auto/Auto String",
+                "period": 0.06,
+                "data_type": "string",
+                "show_submit_button": false
+              }
+            },
+            {
+              "title": "Field",
+              "x": 384.0,
+              "y": 0.0,
+              "width": 768.0,
+              "height": 384.0,
+              "type": "Field",
+              "properties": {
+                "topic": "/SmartDashboard/Field",
+                "period": 0.06,
+                "field_game": "Reefscape",
+                "robot_width": 0.85,
+                "robot_length": 0.85,
+                "show_other_objects": true,
+                "show_trajectories": true,
+                "field_rotation": 0.0,
+                "robot_color": 4294198070,
+                "trajectory_color": 4294967295
+              }
+            },
+            {
+              "title": "Progress Bar",
+              "x": 0.0,
+              "y": 384.0,
+              "width": 1152.0,
+              "height": 128.0,
+              "type": "Number Slider",
+              "properties": {
+                "topic": "/Auto/Progress Bar",
+                "period": 0.06,
+                "data_type": "double",
+                "min_value": 0.0,
+                "max_value": 1.0,
+                "divisions": 11,
+                "update_continuously": true
+              }
+            },
+            {
+              "title": "Time (s)",
+              "x": 0.0,
+              "y": 256.0,
+              "width": 384.0,
+              "height": 128.0,
+              "type": "Text Display",
+              "properties": {
+                "topic": "/Auto/Time (s)",
+                "period": 0.06,
+                "data_type": "double",
+                "show_submit_button": false
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
