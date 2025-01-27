@@ -8,17 +8,26 @@ import java.util.Set;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.commands.FollowPathCommand;
+import com.pathplanner.lib.config.ModuleConfig;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.path.PathPlannerPath;
+import com.pathplanner.lib.path.PathPoint;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectoryState;
 import com.pathplanner.lib.util.FlippingUtil;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.trajectory.Trajectory.State;
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator;
+import edu.wpi.first.networktables.DoubleEntry;
+import edu.wpi.first.networktables.DoublePublisher;
+import edu.wpi.first.networktables.DoubleTopic;
 import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
@@ -47,15 +56,25 @@ import frc.robot.util.PoseUtils;
 public class Auto extends SubsystemBase {
 
     private String prevAutoString = "";
+    private double prevProgressBar = 0;
     private ArrayList<PathPlannerPath> pathList = new ArrayList<PathPlannerPath>();
+    private ArrayList<Pose2d> allPosesList = new ArrayList<Pose2d>();
+    private ArrayList<PathPoint> allPathPoints = new ArrayList<PathPoint>();
 
     private Command autoCmd = Commands.none();
+
+    private boolean isUsingProgressBar;
 
     NetworkTableInstance inst = NetworkTableInstance.getDefault();
     NetworkTable auto = inst.getTable("Auto");
 
     StringTopic autoTopic = auto.getStringTopic("Auto String");
     StringEntry stringEnt = autoTopic.getEntry("");
+    DoubleTopic progressBarTopic = auto.getDoubleTopic("Progress Bar");
+    DoubleEntry progressBarEnt = progressBarTopic.getEntry(0);
+    DoubleTopic timeStampTopic = auto.getDoubleTopic("Time (s)");
+    DoublePublisher timeStampPub = timeStampTopic.publish();
+    // DoublePublisher progressBarPub = progressBarTopic.publish();
 
     StringTopic feedbackTopic = auto.getStringTopic("Auto Feedback");
     StringPublisher feedbackPub = feedbackTopic.publish();
@@ -73,8 +92,13 @@ public class Auto extends SubsystemBase {
     public Auto() {
         autoTopic.setRetained(true); // Should be retained?
         stringEnt.set("");
+        progressBarEnt.set(0);
+        progressBarTopic.setRetained(true);
+        // progressBarPub.set(0);
         feedbackTopic.setRetained(true);
         feedbackPub.set("Enter auto string!");
+        timeStampTopic.setRetained(true);
+        timeStampPub.set(0);
     }
 
     /* ArrayLists to hold the values of various waypoints */
@@ -135,17 +159,22 @@ public class Auto extends SubsystemBase {
     }
 
     public void drawPaths() { // TODO rotate for red alliance?
+
         for (int i = 0; i < pathList.size(); i++) {
             PathPlannerPath path = pathList.get(i);
-
             Pose2d[] posList = path.getPathPoses().toArray(new Pose2d[0]);
+            List<PathPoint> points = path.getAllPathPoints();
+
             for (int j = 0; j < posList.length; j++) {
                 posList[j] = PoseUtils.flipPoseAlliance(posList[j]);
+                allPosesList.add(posList[j]); //adds the pose to an ArrayList that stores all of the auto poses
             }
             // Trajectory traj = TrajectoryGenerator.generateTrajectory(path.getPathPoses(), new TrajectoryConfig(Drivetrain.MAX_SPEED, Drivetrain.FORWARD_ACCEL));
             field.getObject("obj" + i).setPoses(posList);
             // field.getObject("obj" + i).setTrajectory(traj);
-
+            for(PathPoint point: points) {
+                allPathPoints.add(point);
+            }
         }
     }
 
@@ -219,6 +248,7 @@ public class Auto extends SubsystemBase {
                     DriverStation.reportError("Big oops: " + e.getMessage(), e.getStackTrace());
                     setFeedback("Path " + pathName + " not found!", NotificationLevel.ERROR);
                     pathList.clear();
+                    allPosesList.clear();
                     return Commands.none();
                 }
             }
@@ -288,10 +318,48 @@ public class Auto extends SubsystemBase {
 
     public void clearField() {
         pathList.clear();
+        allPosesList.clear();
         for (int i  = 0; i < 100; i++) {
             FieldObject2d obj = field.getObject("obj" + i);
             obj.setTrajectory(new Trajectory());
         }
+    }
+
+    public void addRobotPoseProgressBar() {
+        isUsingProgressBar = true;
+        int index = (int) (
+            //multiplies progress from 0 to 1 by the number of poses in our auto paths altogether to get an index
+            MathUtil.clamp(progressBarEnt.getAsDouble(), 0, 1) * (allPosesList.size()-1)
+        ); //casts as int to get nearest pose
+
+        // int index = (int) (progressBarEntry.getAsDouble() * (allPathPoints.size()-1));
+        //sets the robotPose on the field to that pose
+        if(index >= 0 && allPosesList.size() > 0) {
+            Pose2d pose = allPosesList.get(index);
+            field.setRobotPose(pose);
+
+            // PathPoint point = allPathPoints.get(index);
+            // field.setRobotPose(point.position.getX(), point.position.getY(), point.rotationTarget.rotation());
+        }
+    }
+
+    public void displayTimestampSeconds() {
+       double time = 0;
+       RobotConfig config = new RobotConfig(
+        61, 
+        6.883, 
+        new ModuleConfig(0.047, 5.092, 1.2, DCMotor.getKrakenX60Foc(1), 6.120, 2), 
+        0.616
+        );
+
+       for(PathPlannerPath path: pathList) {
+            List<PathPlannerTrajectoryState> trajStates = new PathPlannerTrajectory(path, new ChassisSpeeds(), path.getInitialHeading(), config).getStates();
+            time += trajStates.get(trajStates.size()-1).timeSeconds;
+            System.out.println("Total Time: " + time);
+       }
+
+       timeStampPub.set(time);
+       System.out.println("Time: " + time);
     }
 
     public Command getAutoCommand() {
@@ -313,16 +381,30 @@ public class Auto extends SubsystemBase {
                 }
             }
             if (!autoString.equals(prevAutoString)) {
+                System.out.println("Running auto sequencer & Command Builder");
                 prevAutoString = autoString;
                 validateAndCreatePaths(autoString);
+                addRobotPoseProgressBar();
+                displayTimestampSeconds();
             }
             else if (alliance.isPresent() && alliance.get() != prevAlliance) {
+                System.out.println(" 2 -> Running auto sequencer & Command Builder");
                 prevAlliance = alliance.get();
                 validateAndCreatePaths(autoString);
+                addRobotPoseProgressBar();
+                displayTimestampSeconds();
             }
+
+            if(progressBarEnt.getAsDouble() != prevProgressBar) {
+                prevProgressBar = progressBarEnt.getAsDouble();
+                addRobotPoseProgressBar();
+            } 
+            
+
         }
 
-        if (DriverStation.isAutonomous() || DriverStation.isDisabled()) {
+        if ((DriverStation.isAutonomous() || DriverStation.isDisabled()) && !isUsingProgressBar) {
+            //System.out.println("setting the robot pose auto periodic");
             field.setRobotPose(RobotContainer.drivetrain.getRobotPose());
         }
     }
