@@ -64,9 +64,12 @@ public class Auto extends SubsystemBase {
     private Command autoCmd = Commands.none();
 
     private boolean isUsingProgressBar;
+    private Pose2d poseOnField;
 
     NetworkTableInstance inst = NetworkTableInstance.getDefault();
     NetworkTable auto = inst.getTable("Auto");
+
+    boolean foundMatchPose = false;
 
     StringTopic autoTopic = auto.getStringTopic("Auto String");
     StringEntry stringEnt = autoTopic.getEntry("");
@@ -337,10 +340,14 @@ public class Auto extends SubsystemBase {
         if(index >= 0 && allPosesList.size() > 0) {
             Pose2d pose = allPosesList.get(index);
             field.setRobotPose(pose);
-
+            poseOnField = pose;
             // PathPoint point = allPathPoints.get(index);
             // field.setRobotPose(point.position.getX(), point.position.getY(), point.rotationTarget.rotation());
         }
+    }
+
+    public boolean doPosesMatch(Pose2d p1, Pose2d p2) {
+        return false;
     }
 
     public void displayTimestampSeconds() {
@@ -351,12 +358,26 @@ public class Auto extends SubsystemBase {
         new ModuleConfig(0.047, 5.092, 1.2, DCMotor.getKrakenX60Foc(1), 6.120, 2), 
         0.616
         );
-
-       for(PathPlannerPath path: pathList) {
-            List<PathPlannerTrajectoryState> trajStates = new PathPlannerTrajectory(path, new ChassisSpeeds(), path.getInitialHeading(), config).getStates();
+        PathPlannerPath path = pathList.get(0);
+        System.out.println(path);
+      // for(PathPlannerPath path: pathList) {
+            PathPlannerTrajectory traj = new PathPlannerTrajectory(path, new ChassisSpeeds(), path.getInitialHeading(), config);
+            List<PathPlannerTrajectoryState> trajStates = traj.getStates();
             time += trajStates.get(trajStates.size()-1).timeSeconds;
-            System.out.println("Total Time: " + time);
-       }
+            //System.out.println("Total Time: " + time);
+            // for(double t=0; t<.2; t +=.01) {
+            //     System.out.println(t + "  Timed Pose: " + traj.sample(t).pose);
+            //     System.out.println("Current Robot Pose: " + poseOnField);
+            //     if(traj.sample(t).pose.nearest(allPosesList).equals(poseOnField)) {
+            //         foundMatchPose = true;
+            //         time = t;
+            //         //System.out.println("Time: " + t + "\tfoundMatchPose: " + foundMatchPose);
+            //     } 
+            // }
+            for(PathPlannerTrajectoryState state: trajStates){
+                System.out.println("Time " + state.timeSeconds + "\t" + state.pose);
+            }
+      // }
 
        timeStampPub.set(time);
        System.out.println("Time: " + time);
@@ -398,6 +419,7 @@ public class Auto extends SubsystemBase {
             if(progressBarEnt.getAsDouble() != prevProgressBar) {
                 prevProgressBar = progressBarEnt.getAsDouble();
                 addRobotPoseProgressBar();
+                displayTimestampSeconds();
             } 
             
 
