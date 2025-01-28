@@ -18,6 +18,7 @@ import frc.robot.leds.LEDs;
 import frc.robot.subsystems.Auto;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Elevator;
+import frc.robot.subsystems.Rollers;
 import frc.robot.vision.Limelight;
 
 
@@ -35,6 +36,7 @@ public class RobotContainer {
   public static Elevator elevator = new Elevator();
   public static Limelight limelight = new Limelight("Camera");
   public static BottomLEDs BottomLEDs = new BottomLEDs();
+  public static Rollers rollers = new Rollers();
 
   public static Auto auto = new Auto();
 
@@ -60,6 +62,10 @@ public class RobotContainer {
     operatorController.circle().onTrue(elevator.setHeightCommand(.81)); //L2
     operatorController.cross().onTrue(elevator.setHeightCommand(1.21)); //L3
     operatorController.square().onTrue(elevator.setHeightCommand(1.83)); //4
+    
+    //roller intake/outtake commands
+    operatorController.R1().onTrue(rollers.setIntakeCommand(1));
+    operatorController.L1().onTrue(rollers.setOuttakeCommand(1));
 
 
     /* DRIVER BINDINGS */
