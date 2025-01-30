@@ -52,7 +52,7 @@ public class RobotContainer {
     /* Default commands */
     drivetrain.setDefaultCommand(drivetrain.driveJoystickInputCommand());
     elevator.setDefaultCommand(elevator.joystickControlCommand());
-    BottomLEDs.setDefaultCommand(LEDs.runPattern(LEDs.m_scrollingRainbow));
+    BottomLEDs.setDefaultCommand(BottomLEDs.playPatternCommand(LEDs.m_scrollingRainbow));
 
     /* Operator bindings */
     //elevator height commands
