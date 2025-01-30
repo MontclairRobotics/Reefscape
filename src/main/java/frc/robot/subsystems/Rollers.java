@@ -10,6 +10,10 @@ public class Rollers extends SubsystemBase {
     private SparkMax rightMotor;
     private SparkMax leftMotor;
     private double targetSpeed;
+    private double altSpeed = targetSpeed/2;
+// The second speed ↑
+    public boolean doAltSpeed = false;
+// If true, this ↑ sets the speed to be 1/2 of the target speed
 
     public Rollers() {
     rightMotor = new SparkMax(0, MotorType.kBrushless);
@@ -19,14 +23,27 @@ public class Rollers extends SubsystemBase {
         targetSpeed = speed;
     }
 
-    public void setIntake () {
-    rightMotor.set (targetSpeed);
-    leftMotor.set (targetSpeed);
+    public void switchSpeed() {
+     doAltSpeed = !doAltSpeed;
     }
 
+    public void setIntake () {
+    if(doAltSpeed){
+        rightMotor.set (altSpeed);
+        leftMotor.set (altSpeed);
+    } else {
+        rightMotor.set (targetSpeed);
+        leftMotor.set (targetSpeed);
+    }
+    }
     public void setOuttake (){
-    rightMotor.set (-targetSpeed);
-    leftMotor.set (-targetSpeed);
+        if(doAltSpeed){
+            rightMotor.set (-altSpeed);
+            leftMotor.set (-altSpeed);
+        } else {
+            rightMotor.set (-targetSpeed);
+            leftMotor.set (-targetSpeed);
+        }
     }
     public Command setIntakeCommand(double targetSpeed) {
         return Commands.run(() -> setIntake(), this);
@@ -34,5 +51,7 @@ public class Rollers extends SubsystemBase {
     public Command setOuttakeCommand (double targetSpeed) {
         return Commands.run(() -> setOuttake(), this);
     }
-    
+    public Command switchSpeedCommand () {
+        return Commands.run(() -> switchSpeed());
+    }
 }

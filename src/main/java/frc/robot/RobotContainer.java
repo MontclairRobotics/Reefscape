@@ -64,6 +64,7 @@ public class RobotContainer {
     operatorController.square().onTrue(elevator.setHeightCommand(1.83)); //4
     
     //roller intake/outtake commands
+    operatorController.create().onTrue(rollers.switchSpeedCommand());
     operatorController.R1().onTrue(rollers.setIntakeCommand(1));
     operatorController.L1().onTrue(rollers.setOuttakeCommand(1));
 
