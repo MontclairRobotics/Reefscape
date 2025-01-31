@@ -236,11 +236,11 @@ public class Auto extends SubsystemBase {
                         Optional<Pose2d> opPose = path.getStartingHolonomicPose();
                         Pose2d pose = opPose.isPresent() ? PoseUtils.flipPoseAlliance(opPose.get()) : new Pose2d();
                         autoCommand.addCommands(Commands.runOnce(() -> {
-                            RobotContainer.drivetrain.swerveDrive.resetPose(pose);
+                            RobotContainer.drivetrain.resetPose(pose);
                         }));
 
                         //TODO this can be deleted, is here for testing purposes
-                        RobotContainer.drivetrain.swerveDrive.resetPose(pose);
+                        RobotContainer.drivetrain.resetPose(pose);
                     }
 
 

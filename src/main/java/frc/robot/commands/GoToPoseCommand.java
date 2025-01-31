@@ -11,7 +11,7 @@ import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.Drivetrain;
-import frc.robot.util.DriveConfig;
+import frc.robot.util.TunerConstants;
 
 public class GoToPoseCommand extends Command {
 
@@ -31,9 +31,9 @@ public class GoToPoseCommand extends Command {
     public GoToPoseCommand(Pose2d pose) {
         addRequirements(RobotContainer.drivetrain);
         xController = new ProfiledPIDController(5, 0, 0, new TrapezoidProfile.Constraints(
-                DriveConfig.kSpeedAt12Volts.in(Units.MetersPerSecond), Drivetrain.FORWARD_ACCEL));
+                TunerConstants.kSpeedAt12Volts.in(Units.MetersPerSecond), Drivetrain.FORWARD_ACCEL));
         yController = new ProfiledPIDController(5, 0, 0, new TrapezoidProfile.Constraints(
-                DriveConfig.kSpeedAt12Volts.in(Units.MetersPerSecond), Drivetrain.SIDE_ACCEL));
+                TunerConstants.kSpeedAt12Volts.in(Units.MetersPerSecond), Drivetrain.SIDE_ACCEL));
         thetaController = new ProfiledPIDController(RobotContainer.drivetrain.thetaController.getP(),
                 RobotContainer.drivetrain.thetaController.getI(), RobotContainer.drivetrain.thetaController.getD(),
                 new TrapezoidProfile.Constraints(Drivetrain.MAX_ROT_SPEED, Drivetrain.ROT_ACCEL));

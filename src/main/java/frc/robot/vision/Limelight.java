@@ -89,7 +89,7 @@ public class Limelight extends SubsystemBase {
             //adds vision measurement if conditions are met
             if (!shouldRejectUpdate) {
                 // RobotContainer.drivetrain.swerveDrive.setVisionMeasurementStdDevs(VecBuilder.fill(.7,.7,9999999));
-                RobotContainer.drivetrain.swerveDrive.addVisionMeasurement(
+                RobotContainer.drivetrain.addVisionMeasurement(
                         mt2.pose,
                         mt2.timestampSeconds);
             }

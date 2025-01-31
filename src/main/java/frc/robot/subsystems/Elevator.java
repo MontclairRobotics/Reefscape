@@ -56,8 +56,8 @@ public class Elevator extends SubsystemBase {
             bottomLimitPub = debug.getBooleanTopic("Elevator Bottom Limit").publish();
         }
 
-        leftTalonFX = new TalonFX(10, "rio"); //TODO: find ports
-        rightTalonFX = new TalonFX(11, "rio");
+        //leftTalonFX = new TalonFX(10, "rio"); //TODO: find ports
+        //rightTalonFX = new TalonFX(11, "rio");
 
         // in init function
         TalonFXConfiguration elevatorConfigs = new TalonFXConfiguration();
@@ -77,11 +77,11 @@ public class Elevator extends SubsystemBase {
         motionMagicConfigs.MotionMagicAcceleration = 160; // Target acceleration of 160 rps/s (0.5 seconds)
         motionMagicConfigs.MotionMagicJerk = 1600; // Target jerk of 1600 rps/s/s (0.1 seconds)
 
-        leftTalonFX.getConfigurator().apply(elevatorConfigs);
-        rightTalonFX.getConfigurator().apply(elevatorConfigs);
+        //leftTalonFX.getConfigurator().apply(elevatorConfigs);
+        //rightTalonFX.getConfigurator().apply(elevatorConfigs);
 
-        bottomLimit = new LimitSwitch(-1, false); // TODO: get port
-        topLimit = new LimitSwitch(-1, false);
+       //bottomLimit = new LimitSwitch(21, false); // TODO: get port
+       //topLimit = new LimitSwitch(22, false);
     }
 
     public boolean isAtBottom() {
@@ -191,21 +191,21 @@ public class Elevator extends SubsystemBase {
 
     @Override
     public void periodic() {
-        heightPub.set(getHeight());
-        if (RobotContainer.debugMode) {
-            rightHeightPub.set(rightTalonFX.getPosition().getValueAsDouble());
-            leftHeightPub.set(leftTalonFX.getPosition().getValueAsDouble());
-            topLimitPub.set(false);
-            bottomLimitPub.set(bottomLimit.get());
-        }
-        // Set encoders based on if the elevator is at the top of the bottom
-        if (isAtTop()) {
-            leftTalonFX.setPosition(ELEVATOR_MAX_HEIGHT * ENCODER_ROTATIONS_TO_METERS_RATIO);
-            rightTalonFX.setPosition(ELEVATOR_MAX_HEIGHT * ENCODER_ROTATIONS_TO_METERS_RATIO);
-        }
-        if (isAtBottom()) {
-            leftTalonFX.setPosition(0);
-            rightTalonFX.setPosition(0);
-        }
+        // heightPub.set(getHeight());
+        // if (RobotContainer.debugMode) {
+        //     rightHeightPub.set(rightTalonFX.getPosition().getValueAsDouble());
+        //     leftHeightPub.set(leftTalonFX.getPosition().getValueAsDouble());
+        //     topLimitPub.set(false);
+        //     bottomLimitPub.set(bottomLimit.get());
+        // }
+        // // Set encoders based on if the elevator is at the top of the bottom
+        // if (isAtTop()) {
+        //     leftTalonFX.setPosition(ELEVATOR_MAX_HEIGHT * ENCODER_ROTATIONS_TO_METERS_RATIO);
+        //     rightTalonFX.setPosition(ELEVATOR_MAX_HEIGHT * ENCODER_ROTATIONS_TO_METERS_RATIO);
+        // }
+        // if (isAtBottom()) {
+        //     leftTalonFX.setPosition(0);
+        //     rightTalonFX.setPosition(0);
+        // }
     }
 }

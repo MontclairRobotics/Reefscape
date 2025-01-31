@@ -16,8 +16,8 @@ public class Rollers extends SubsystemBase {
 // If true, this ↑ sets the speed to be 1/2 of the target speed
 
     public Rollers() {
-    rightMotor = new SparkMax(0, MotorType.kBrushless);
-    leftMotor = new SparkMax(0, MotorType.kBrushless);
+    //rightMotor = new SparkMax(0, MotorType.kBrushless);
+    //leftMotor = new SparkMax(0, MotorType.kBrushless);
     }
     public void setIntakeSpeed (double speed) {
         targetSpeed = speed;

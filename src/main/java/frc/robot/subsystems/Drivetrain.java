@@ -1,6 +1,7 @@
 package frc.robot.subsystems;
 import frc.robot.RobotContainer;
-import frc.robot.util.DriveConfig;
+import frc.robot.util.TunerConstants;
+import frc.robot.util.TunerConstants.TunerSwerveDrivetrain;
 
 import java.util.Arrays;
 import java.util.List;
@@ -34,9 +35,10 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-public class Drivetrain extends SubsystemBase {
+public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
     /*
      * 
@@ -49,10 +51,7 @@ public class Drivetrain extends SubsystemBase {
     public static final double FORWARD_ACCEL = 3; // m / s^2
     public static final double SIDE_ACCEL = 3; //m / s^2
     public static final double ROT_ACCEL = 2; // radians / s^2
-    
-    /* Swerve Drive Object */
-    public final SwerveDrivetrain<TalonFX, TalonFX, CANcoder> swerveDrive = DriveConfig.createSwerveDrivetrain();    
-   
+       
     /* Acceleration limiters for our drivetrain */
     private SlewRateLimiter forwardLimiter = new SlewRateLimiter(FORWARD_ACCEL); //TODO: actually set this
     private SlewRateLimiter strafeLimiter = new SlewRateLimiter(SIDE_ACCEL); //TODO: actually set this
@@ -63,7 +62,8 @@ public class Drivetrain extends SubsystemBase {
     
     /* variable to store our heading  */
     private Rotation2d odometryHeading;
-    // private Pigeon2 gyro = swerveDrive.getPigeon2(); //they say not to use this like this, allegedly
+
+    // private Pigeon2 gyro = this.getPigeon2(); //they say not to use this like this, allegedly
     //putting this here so we know how to get it
     private boolean isRobotAtAngleSetPoint; //for angle turning
     private boolean fieldRelative;
@@ -71,12 +71,22 @@ public class Drivetrain extends SubsystemBase {
     //TODO: Set these values
     public static final PathConstraints DEFAULT_CONSTRAINTS = new PathConstraints(MAX_SPEED, FORWARD_ACCEL, MAX_ROT_SPEED, ROT_ACCEL);
 
-
     public Drivetrain() {
+
+        super (
+            TunerConstants.DrivetrainConstants, 
+            TunerConstants.odometryUpdateFrequency, 
+            TunerConstants.odometryStandardDeviation, 
+            TunerConstants.visionStandardDeviation, 
+            TunerConstants.FrontLeft, 
+            TunerConstants.FrontRight, 
+            TunerConstants.BackLeft, 
+            TunerConstants.BackRight
+        );
 
         thetaController.setTolerance(1 * Math.PI / 180); //degrees converted to radians
         configurePathPlanner();
-
+        
     }
 
     /* RETURNS X VELOCITY FROM CONTROLLER 
@@ -120,7 +130,7 @@ public class Drivetrain extends SubsystemBase {
         .withSteerRequestType(SteerRequestType.Position)
         .withSpeeds(chassisSpeeds);
 
-        swerveDrive.setControl(request);
+        this.setControl(request);
     }
 
     /* DRIVES USING CLOSED LOOP VELOCITY CONTROL 
@@ -136,7 +146,7 @@ public class Drivetrain extends SubsystemBase {
                 .withDriveRequestType(DriveRequestType.Velocity) //Velocity is closed-loop velocity control
                 .withSteerRequestType(SteerRequestType.Position); 
         
-            swerveDrive.setControl(
+            this.setControl(
                 driveRequest
                 .withVelocityX(velocityX)
                 .withVelocityY(velocityY)
@@ -151,7 +161,7 @@ public class Drivetrain extends SubsystemBase {
                 .withSteerRequestType(SteerRequestType.Position); 
 
             //sets the control for the drivetrain
-            swerveDrive.setControl(
+            this.setControl(
                 driveRequest
                 .withVelocityX(velocityX)
                 .withVelocityY(velocityY)
@@ -216,11 +226,11 @@ public class Drivetrain extends SubsystemBase {
         try {
             var config = RobotConfig.fromGUISettings();
             AutoBuilder.configure(
-                () -> swerveDrive.getState().Pose,   // Supplier of current robot pose
-                swerveDrive::resetPose,         // Consumer for seeding pose against auto
-                () -> swerveDrive.getState().Speeds, // Supplier of current robot speeds
+                () -> this.getState().Pose,   // Supplier of current robot pose
+                this::resetPose,         // Consumer for seeding pose against auto
+                () -> this.getState().Speeds, // Supplier of current robot speeds
                 // Consumer of ChassisSpeeds and feedforwards to drive the robot
-                (speeds, feedforwards) -> swerveDrive.setControl(
+                (speeds, feedforwards) -> this.setControl(
                     new SwerveRequest.ApplyRobotSpeeds().withSpeeds(speeds)
                         .withWheelForceFeedforwardsX(feedforwards.robotRelativeForcesXNewtons())
                         .withWheelForceFeedforwardsY(feedforwards.robotRelativeForcesYNewtons())
@@ -328,7 +338,7 @@ public class Drivetrain extends SubsystemBase {
         fieldRelative = true;
     }
     public void zeroGyro(){
-        swerveDrive.getPigeon2().setYaw(0);
+        this.getPigeon2().setYaw(0);
     }
 
     /*
@@ -384,17 +394,17 @@ public class Drivetrain extends SubsystemBase {
     }
 
     public Pose2d getRobotPose() {
-        return swerveDrive.getState().Pose;
+        return this.getState().Pose;
     }
 
     public ChassisSpeeds getCurrentSpeeds() {
-        return swerveDrive.getState().Speeds;
+        return this.getState().Speeds;
     }
 
     @Override
     public void periodic(){
         //Not sure if this is correct at all
-        odometryHeading = swerveDrive.getState().Pose.getRotation();
+        odometryHeading = this.getState().Pose.getRotation();
         isRobotAtAngleSetPoint = thetaController.atSetpoint();
         fieldRelative = !RobotContainer.driverController.L2().getAsBoolean();
     }
