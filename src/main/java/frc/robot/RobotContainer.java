@@ -33,7 +33,7 @@ public class RobotContainer {
 
   //Subsystems
   public static Drivetrain drivetrain = new Drivetrain();
-  public static Elevator elevator = new Elevator();
+  // public static Elevator elevator = new Elevator();
   public static Limelight limelight = new Limelight("Camera");
   public static BottomLEDs BottomLEDs = new BottomLEDs();
   public static Rollers rollers = new Rollers();
@@ -51,17 +51,18 @@ public class RobotContainer {
 
   private void configureBindings() {
 
+    
     /* Default commands */
     drivetrain.setDefaultCommand(drivetrain.driveJoystickInputCommand());
-    elevator.setDefaultCommand(elevator.joystickControlCommand());
+   // elevator.setDefaultCommand(elevator.joystickControlCommand());
     BottomLEDs.setDefaultCommand(BottomLEDs.playPatternCommand(LEDs.m_scrollingRainbow));
 
     /* Operator bindings */
     //elevator height commands
-    operatorController.triangle().onTrue(elevator.setHeightCommand(.33)); //L1
-    operatorController.circle().onTrue(elevator.setHeightCommand(.81)); //L2
-    operatorController.cross().onTrue(elevator.setHeightCommand(1.21)); //L3
-    operatorController.square().onTrue(elevator.setHeightCommand(1.83)); //4
+    // operatorController.triangle().onTrue(elevator.setHeightCommand(.33)); //L1
+    // operatorController.circle().onTrue(elevator.setHeightCommand(.81)); //L2
+    // operatorController.cross().onTrue(elevator.setHeightCommand(1.21)); //L3
+    // operatorController.square().onTrue(elevator.setHeightCommand(1.83)); //4
     
     //roller intake/outtake commands
     operatorController.create().onTrue(rollers.switchSpeedCommand());

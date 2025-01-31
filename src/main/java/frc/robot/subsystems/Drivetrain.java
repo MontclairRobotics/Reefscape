@@ -25,6 +25,7 @@ import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.path.PathPoint;
 import com.pathplanner.lib.path.RotationTarget;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -93,7 +94,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
      * 
     */
     public double getVelocityXFromController(){
-        double xInput = RobotContainer.driverController.getLeftX();
+        double xInput = MathUtil.applyDeadband(RobotContainer.driverController.getLeftX(), 0.04);
         return forwardLimiter.calculate(Math.pow(xInput, 3) * MAX_SPEED);
     }
 
@@ -101,7 +102,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
      * 
     */
     public double getVelocityYFromController(){
-        double yInput = RobotContainer.driverController.getLeftY();
+        double yInput = MathUtil.applyDeadband(RobotContainer.driverController.getLeftY(), 0.04);
         return strafeLimiter.calculate(Math.pow(yInput, 3) * MAX_SPEED);
     }
 
@@ -110,7 +111,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
      * 
      */
     public void drive() {
-        double rotInput = RobotContainer.driverController.getRightX();
+        double rotInput = -MathUtil.applyDeadband(RobotContainer.driverController.getRightX(), 0.04);
         double rotVelocity = rotationLimiter.calculate(Math.pow(rotInput,3) * MAX_ROT_SPEED);
         drive(getVelocityYFromController(), getVelocityXFromController(), rotVelocity, fieldRelative); //drives using supposed velocities, rot velocity, and field relative boolean
     }

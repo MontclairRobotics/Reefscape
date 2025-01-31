@@ -20,8 +20,8 @@ public class LEDs extends SubsystemBase{
     public static final LEDPattern m_rainbow = LEDPattern.rainbow(255, 128);
     public static final Distance kLedSpacing = Units.Meters.of(1 / 100.0);
     public static final LEDPattern m_scrollingRainbow = m_rainbow.scrollAtAbsoluteSpeed(Units.MetersPerSecond.of(1), kLedSpacing);
-    public static LEDPattern m_progress = LEDPattern.progressMaskLayer(() -> RobotContainer.elevator.getHeight() /
-    Elevator.ELEVATOR_MAX_HEIGHT);
+   // public static LEDPattern m_progress = LEDPattern.progressMaskLayer(() -> RobotContainer.elevator.getHeight() /
+    //Elevator.ELEVATOR_MAX_HEIGHT);
     // public static final LEDPattern m_progressbar = LEDs.progressBar(Color.kRed);
     static AddressableLED led;
     static AddressableLEDBuffer ledBuffer;
@@ -35,8 +35,8 @@ public class LEDs extends SubsystemBase{
             led.start();
         }
     public static void scrollingRainbowProgress() {
-        LEDPattern mask = LEDPattern.progressMaskLayer(() -> RobotContainer.elevator.getHeight() / Elevator.ELEVATOR_MAX_HEIGHT);
-        pattern = m_rainbow.mask(mask);
+        //LEDPattern mask = LEDPattern.progressMaskLayer(() -> RobotContainer.elevator.getHeight() / Elevator.ELEVATOR_MAX_HEIGHT);
+        //pattern = m_rainbow.mask(mask);
         pattern.applyTo(ledBuffer);
         led.setData(ledBuffer);
     }

@@ -71,30 +71,30 @@ public class Limelight extends SubsystemBase {
         return targetDebouncer.calculate(hasMatch);
     }
 
-    public void poseEstimationMegatag2() {
+    // public void poseEstimationMegatag2() {
 
-        // TODO does the angle need to be wrapped between 0 and 360
-        LimelightHelpers.SetRobotOrientation(cameraName, RobotContainer.drivetrain.getWrappedHeading().getDegrees(), 0, 0, 0, 0, 0);
-        mt2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(cameraName);
+    //     // TODO does the angle need to be wrapped between 0 and 360
+    //     LimelightHelpers.SetRobotOrientation(cameraName, RobotContainer.drivetrain.getWrappedHeading().getDegrees(), 0, 0, 0, 0, 0);
+    //     mt2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(cameraName);
         
-        //TODO simulate limelight properly
-        if (mt2 != null) { 
-            if (mt2.tagCount == 0) {
-                //rejects current measurement if there are no aprilTags
-                shouldRejectUpdate = true;
-            }
-            if (Math.abs(RobotContainer.drivetrain.getCurrentSpeeds().omegaRadiansPerSecond) > angleVelocityTolerance) {
-                shouldRejectUpdate = true;
-            }
-            //adds vision measurement if conditions are met
-            if (!shouldRejectUpdate) {
-                // RobotContainer.drivetrain.swerveDrive.setVisionMeasurementStdDevs(VecBuilder.fill(.7,.7,9999999));
-                RobotContainer.drivetrain.addVisionMeasurement(
-                        mt2.pose,
-                        mt2.timestampSeconds);
-            }
-        }
-    }
+    //     //TODO simulate limelight properly
+    //     if (mt2 != null) { 
+    //         if (mt2.tagCount == 0) {
+    //             //rejects current measurement if there are no aprilTags
+    //             shouldRejectUpdate = true;
+    //         }
+    //         if (Math.abs(RobotContainer.drivetrain.getCurrentSpeeds().omegaRadiansPerSecond) > angleVelocityTolerance) {
+    //             shouldRejectUpdate = true;
+    //         }
+    //         //adds vision measurement if conditions are met
+    //         if (!shouldRejectUpdate) {
+    //             // RobotContainer.drivetrain.swerveDrive.setVisionMeasurementStdDevs(VecBuilder.fill(.7,.7,9999999));
+    //             RobotContainer.drivetrain.addVisionMeasurement(
+    //                     mt2.pose,
+    //                     mt2.timestampSeconds);
+    //         }
+    //     }
+    // }
 
     //TODO: Do we need these / check if the trig is right
     public double getStraightDistanceToCoralStation() {
@@ -157,6 +157,6 @@ public class Limelight extends SubsystemBase {
 
     public void periodic() {
         // tagID = (int) Limetable.getEntry("tid").getDouble(-1);
-        poseEstimationMegatag2();
+       // poseEstimationMegatag2();
     }
 }

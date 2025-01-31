@@ -98,7 +98,7 @@ public class Robot extends LoggedRobot {
       m_autonomousCommand.cancel();
     }
 
-    Elastic.selectTab("Teleoperated");
+   // Elastic.selectTab("Teleoperated");
   }
 
   @Override

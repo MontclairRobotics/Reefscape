@@ -26,9 +26,9 @@ public class BottomLEDs extends LEDs{
 
     public void rainbowProgress() {
         final LEDPattern m_rainbow = LEDPattern.rainbow(255, 128);
-        final LEDPattern progress = LEDPattern
-                .progressMaskLayer(() -> RobotContainer.elevator.getHeight() / Elevator.ELEVATOR_MAX_HEIGHT);
-        LEDPattern pattern = m_rainbow.mask(progress);
+        // final LEDPattern progress = LEDPattern
+        //         .progressMaskLayer(() -> RobotContainer.elevator.getHeight() / Elevator.ELEVATOR_MAX_HEIGHT);
+        // LEDPattern pattern = m_rainbow.mask(progress);
 
         pattern.applyTo(ledBuffer);
         led.setData(ledBuffer);
