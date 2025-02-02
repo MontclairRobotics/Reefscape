@@ -8,6 +8,7 @@ import static edu.wpi.first.units.Units.MetersPerSecond;
 
 import java.lang.annotation.ElementType;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -53,6 +54,8 @@ public class RobotContainer {
     DriverStation.silenceJoystickConnectionWarning(true);
     configureBindings();
 
+    // Reset robot to starting position
+    drivetrain.resetPose(new Pose2d(3, 3, new Rotation2d()));
   }
 
   private void configureBindings() {
