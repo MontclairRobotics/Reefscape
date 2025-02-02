@@ -1,19 +1,28 @@
 package frc.robot.subsystems;
 import frc.robot.RobotContainer;
+import frc.robot.simulation.MapleSimSwerveDrivetrain;
 import frc.robot.util.TunerConstants;
 import frc.robot.util.TunerConstants.TunerSwerveDrivetrain;
+
+import static edu.wpi.first.units.Units.Inches;
+import static edu.wpi.first.units.Units.Pounds;
+import static edu.wpi.first.units.Units.Seconds;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
+import com.ctre.phoenix6.Utils;
+import com.ctre.phoenix6.configs.CANcoderConfiguration;
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.mechanisms.swerve.LegacySwerveRequest.SwerveDriveBrake;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveModule.SteerRequestType;
+import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.PIDConstants;
@@ -32,8 +41,11 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.Notifier;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
@@ -79,12 +91,18 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
             TunerConstants.odometryUpdateFrequency, 
             TunerConstants.odometryStandardDeviation, 
             TunerConstants.visionStandardDeviation, 
-            TunerConstants.FrontLeft, 
-            TunerConstants.FrontRight, 
-            TunerConstants.BackLeft, 
-            TunerConstants.BackRight
+            MapleSimSwerveDrivetrain.regulateModuleConstantsForSimulation(
+                new SwerveModuleConstants<?, ?, ?>[]{ 
+                    TunerConstants.FrontLeft, 
+                    TunerConstants.FrontRight, 
+                    TunerConstants.BackLeft, 
+                    TunerConstants.BackRight 
+                }
+            )
         );
-
+        if (Utils.isSimulation()) {
+            startSimThread();
+        }
         thetaController.setTolerance(1 * Math.PI / 180); //degrees converted to radians
         configurePathPlanner();
         
@@ -94,6 +112,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
      * 
     */
     public double getVelocityXFromController(){
+        System.out.println("X: " + RobotContainer.driverController.getLeftX());
         double xInput = MathUtil.applyDeadband(RobotContainer.driverController.getLeftX(), 0.04);
         return forwardLimiter.calculate(Math.pow(xInput, 3) * MAX_SPEED);
     }
@@ -102,6 +121,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
      * 
     */
     public double getVelocityYFromController(){
+        System.out.println("Y: " + RobotContainer.driverController.getLeftY());
         double yInput = MathUtil.applyDeadband(RobotContainer.driverController.getLeftY(), 0.04);
         return strafeLimiter.calculate(Math.pow(yInput, 3) * MAX_SPEED);
     }
@@ -408,5 +428,41 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         odometryHeading = this.getState().Pose.getRotation();
         isRobotAtAngleSetPoint = thetaController.atSetpoint();
         fieldRelative = !RobotContainer.driverController.L2().getAsBoolean();
+    }
+
+    @Override
+    public void resetPose(Pose2d pose) {
+        if (this.mapleSimSwerveDrivetrain != null) {
+            mapleSimSwerveDrivetrain.mapleSimDrive.setSimulationWorldPose(pose);
+            Timer.delay(0.1); // wait for simulation to update
+        }
+        super.resetPose(pose);
+    }
+
+
+
+    private Notifier m_simNotifier = null;
+    private MapleSimSwerveDrivetrain mapleSimSwerveDrivetrain = null;
+    @SuppressWarnings("unchecked")
+    private void startSimThread() {
+        mapleSimSwerveDrivetrain = new MapleSimSwerveDrivetrain(
+                Seconds.of(0.002),
+                // TODO: modify the following constants according to your robot
+                Pounds.of(115), // robot weight
+                Inches.of(36), // bumper length
+                Inches.of(36), // bumper width
+                DCMotor.getKrakenX60(1), // drive motor type
+                DCMotor.getKrakenX60(1), // steer motor type
+                1.2, // wheel COF
+                getModuleLocations(),
+                getPigeon2(),
+                getModules(),
+                TunerConstants.FrontLeft,
+                TunerConstants.FrontRight,
+                TunerConstants.BackLeft,
+                TunerConstants.BackRight);
+        /* Run simulation at a faster rate so PID gains behave more reasonably */
+        m_simNotifier = new Notifier(mapleSimSwerveDrivetrain::update);
+        m_simNotifier.startPeriodic(0.002);
     }
 }

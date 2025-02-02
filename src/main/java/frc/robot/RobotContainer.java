@@ -4,6 +4,8 @@
 
 package frc.robot;
 
+import static edu.wpi.first.units.Units.MetersPerSecond;
+
 import java.lang.annotation.ElementType;
 
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -19,6 +21,7 @@ import frc.robot.subsystems.Auto;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Rollers;
+import frc.robot.util.TunerConstants;
 import frc.robot.vision.Limelight;
 
 
@@ -39,6 +42,9 @@ public class RobotContainer {
   public static Rollers rollers = new Rollers();
 
   public static Auto auto = new Auto();
+
+  // Logging
+  private final Telemetry telemetryLogger = new Telemetry(TunerConstants.kSpeedAt12Volts.in(MetersPerSecond));
 
   //Alliance
   public static boolean isBlueAlliance;
@@ -91,6 +97,7 @@ public class RobotContainer {
     driverController.L1().onTrue(drivetrain.alignToAngleRobotRelativeCommand(Rotation2d.fromDegrees(30), false));
     driverController.R1().onTrue(drivetrain.alignToAngleRobotRelativeCommand(Rotation2d.fromDegrees(-30), false));
 
+    drivetrain.registerTelemetry(telemetryLogger::telemeterize);
   }
 
   public Command getAutonomousCommand() {
