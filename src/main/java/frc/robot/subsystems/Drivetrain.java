@@ -57,9 +57,9 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
     public static final double MAX_SPEED = 4; //TODO: actually set this with units
     public static final double MAX_ROT_SPEED = Math.PI*2;
-    public static final double FORWARD_ACCEL = 3; // m / s^2
-    public static final double SIDE_ACCEL = 3; //m / s^2
-    public static final double ROT_ACCEL = 2; // radians / s^2
+    public static final double FORWARD_ACCEL = 9; // m / s^2
+    public static final double SIDE_ACCEL = 9; //m / s^2
+    public static final double ROT_ACCEL = 6; // radians / s^2
        
     /* Acceleration limiters for our drivetrain */
     private SlewRateLimiter forwardLimiter = new SlewRateLimiter(FORWARD_ACCEL); //TODO: actually set this
@@ -117,7 +117,9 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     */
     public double getVelocityXFromController(){
         double xInput = MathUtil.applyDeadband(RobotContainer.driverController.getLeftX(), 0.04);
-        return forwardLimiter.calculate(Math.pow(xInput, 3) * MAX_SPEED);
+        return forwardLimiter.calculate(
+            Math.pow(xInput, 3) * MAX_SPEED
+            );
     }
 
     /* RETURNS Y VELOCITY FROM CONTROLLER 
@@ -126,6 +128,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     public double getVelocityYFromController(){
         double yInput = MathUtil.applyDeadband(RobotContainer.driverController.getLeftY(), 0.04);
         return strafeLimiter.calculate(Math.pow(yInput, 3) * MAX_SPEED);
+       
     }
 
     /* DEFAULT DRIVE METHOD
@@ -134,7 +137,9 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
      */
     public void drive() {
         double rotInput = -MathUtil.applyDeadband(RobotContainer.driverController.getRightX(), 0.04);
-        double rotVelocity = rotationLimiter.calculate(Math.pow(rotInput,3) * MAX_ROT_SPEED);
+        double rotVelocity = rotationLimiter.calculate(
+            Math.pow(rotInput,3) * MAX_ROT_SPEED
+            );
         drive(getVelocityYFromController(), getVelocityXFromController(), rotVelocity, fieldRelative); //drives using supposed velocities, rot velocity, and field relative boolean
     }
 
@@ -214,7 +219,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     private final SysIdRoutine m_sysIdRoutineSteer = new SysIdRoutine(
         new SysIdRoutine.Config(
             null,        // Use default ramp rate (1 V/s)
-            Volts.of(2), // Use dynamic voltage of 7 V
+            Volts.of(7), // Use dynamic voltage of 7 V
             null,        // Use default timeout (10 s)
             // Log state with SignalLogger class
             state -> SignalLogger.writeString("SysIdSteer_State", state.toString())

@@ -27,8 +27,8 @@ public class Elevator extends SubsystemBase {
     public static final double ELEVATOR_MAX_HEIGHT = 2.0; // IN METERS
 
     // Motor Controllers/Encoders
-    private TalonFX leftTalonFX;
-    private TalonFX rightTalonFX;
+    // private TalonFX leftTalonFX;
+    // private TalonFX rightTalonFX;
 
     // Limit Switches
     private LimitSwitch bottomLimit;
@@ -93,17 +93,17 @@ public class Elevator extends SubsystemBase {
      * @return Height of elevator in meters averaged between the two encoders
      *  if the difference is two much it will send a warning using elastic
      */
-    public double getHeight() {
-        double leftHeight = leftTalonFX.getPosition().getValueAsDouble() * ENCODER_ROTATIONS_TO_METERS_RATIO;
-        double rightHeight = rightTalonFX.getPosition().getValueAsDouble() * ENCODER_ROTATIONS_TO_METERS_RATIO;
+    // public double getHeight() {
+    //     // double leftHeight = leftTalonFX.getPosition().getValueAsDouble() * ENCODER_ROTATIONS_TO_METERS_RATIO;
+    //     // double rightHeight = rightTalonFX.getPosition().getValueAsDouble() * ENCODER_ROTATIONS_TO_METERS_RATIO;
 
-        if (Math.abs(leftHeight - rightHeight) < 0.2) {
-            Elastic.sendNotification(new Notification(
-                    NotificationLevel.WARNING, "Elevator Height Mismatch",
-                    "The two elevator encoders give different values :(", 5000));
-        }
-        return (leftHeight + rightHeight) / 2;
-    }
+    //     // if (Math.abs(leftHeight - rightHeight) < 0.2) {
+    //     //     Elastic.sendNotification(new Notification(
+    //     //             NotificationLevel.WARNING, "Elevator Height Mismatch",
+    //     //             "The two elevator encoders give different values :(", 5000));
+    //     // }
+    //     // return (leftHeight + rightHeight) / 2;
+    // }
 
     public boolean isAtTop() {
         return topLimit.get();
@@ -114,40 +114,40 @@ public class Elevator extends SubsystemBase {
      * Will slow down when nearing the top or bottom
      * 
      */
-    public void joystickControl() {
-        SlewRateLimiter accelerationLimiter = new SlewRateLimiter(0.5); //TODO: actually set this
-        final MotionMagicVoltage request = new MotionMagicVoltage(0)
-        .withFeedForward(0); //TODO: TUNE??????? (confusion)
+    // public void joystickControl() {
+    //     SlewRateLimiter accelerationLimiter = new SlewRateLimiter(0.5); //TODO: actually set this
+    //     final MotionMagicVoltage request = new MotionMagicVoltage(0)
+    //     .withFeedForward(0); //TODO: TUNE??????? (confusion)
         
-        double voltage = accelerationLimiter.calculate(Math.pow(MathUtil.applyDeadband(RobotContainer.operatorController.getLeftY(), 0.04), 3))
-            * 11 + request.getFeedForwardMeasure().in(Units.Volts);
-        //TODO: Check if the above line is correct
-        // Multiplying by Max Voltage (12) (ll not 12 because also feedfoward and lazy) Uses a rate limiter feedwoward and a deadband
+    //     double voltage = accelerationLimiter.calculate(Math.pow(MathUtil.applyDeadband(RobotContainer.operatorController.getLeftY(), 0.04), 3))
+    //         * 11 + request.getFeedForwardMeasure().in(Units.Volts);
+    //     //TODO: Check if the above line is correct
+    //     // Multiplying by Max Voltage (12) (ll not 12 because also feedfoward and lazy) Uses a rate limiter feedwoward and a deadband
 
-        double percentHeight = this.getHeight() / ELEVATOR_MAX_HEIGHT;
-        if (percentHeight > 0.93 && voltage > 0) {
-            voltage = MathUtil.clamp(voltage, 0, ( 12 * (1 - percentHeight) * (100.0 / 7.0)));
-            //This clamps the voltage as it gets closer to the the top. 7 is because at 7% closer to the top is when it starts clamping
-        }
-        if (percentHeight < 0.07 && voltage < 0) {
-            voltage = MathUtil.clamp(voltage, -( 12 * (percentHeight) * (100.0 / 7.0)), 0);
-        }
+    //     double percentHeight = this.getHeight() / ELEVATOR_MAX_HEIGHT;
+    //     if (percentHeight > 0.93 && voltage > 0) {
+    //         voltage = MathUtil.clamp(voltage, 0, ( 12 * (1 - percentHeight) * (100.0 / 7.0)));
+    //         //This clamps the voltage as it gets closer to the the top. 7 is because at 7% closer to the top is when it starts clamping
+    //     }
+    //     if (percentHeight < 0.07 && voltage < 0) {
+    //         voltage = MathUtil.clamp(voltage, -( 12 * (percentHeight) * (100.0 / 7.0)), 0);
+    //     }
 
-        // speed
-        if (isAtTop() && voltage > 0) {
-            stop();
-        } else if (isAtBottom() && voltage < 0) {
-            stop();
-        } else {
-            leftTalonFX.setVoltage(voltage);
-            rightTalonFX.setVoltage(voltage);
-        }
-    }
+    //     // speed
+    //     if (isAtTop() && voltage > 0) {
+    //         stop();
+    //     } else if (isAtBottom() && voltage < 0) {
+    //         stop();
+    //     } else {
+    //         leftTalonFX.setVoltage(voltage);
+    //         rightTalonFX.setVoltage(voltage);
+    //     }
+    // }
 
-    public void stop() {
-        leftTalonFX.setVoltage(0);
-        rightTalonFX.setVoltage(0);
-    }
+    // public void stop() {
+    //     leftTalonFX.setVoltage(0);
+    //     rightTalonFX.setVoltage(0);
+    // }
 
     /**
      * Sets height of the elevator in meters between 0 and the Max height of the elevator
@@ -172,18 +172,18 @@ public class Elevator extends SubsystemBase {
         final MotionMagicVoltage request = new MotionMagicVoltage(0)
         .withFeedForward(0); //TUNE???? CONFUSTION :(  
 
-        leftTalonFX.setControl(request.withPosition(rotations).withFeedForward(0));
-        rightTalonFX.setControl(request.withPosition(rotations).withFeedForward(0));
+       // leftTalonFX.setControl(request.withPosition(rotations).withFeedForward(0));
+        //rightTalonFX.setControl(request.withPosition(rotations).withFeedForward(0));
     }
 
-    // Commands
-    public Command joystickControlCommand() {
-        return Commands.run(() -> joystickControl(), this);
-    }
+    // // Commands
+    // public Command joystickControlCommand() {
+    //     return Commands.run(() -> joystickControl(), this);
+    // }
 
-    public Command stopCommand() {
-        return Commands.runOnce(() -> stop());
-    }
+    // public Command stopCommand() {
+    //     return Commands.runOnce(() -> stop());
+    // }
 
     public Command setHeightCommand(double height) {
         return Commands.run(() -> setHeight(height), this);

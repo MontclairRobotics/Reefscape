@@ -36,7 +36,7 @@ public class RobotContainer {
 
   //Subsystems
   public static Drivetrain drivetrain = new Drivetrain();
-  // public static Elevator elevator = new Elevator();
+  public static Elevator elevator = new Elevator();
   public static Limelight limelight = new Limelight("Camera");
   public static BottomLEDs BottomLEDs = new BottomLEDs();
   public static Rollers rollers = new Rollers();
@@ -54,27 +54,27 @@ public class RobotContainer {
 
   private void configureBindings() {
     
-    /* Default commands */
-    drivetrain.setDefaultCommand(drivetrain.driveJoystickInputCommand());
-   // elevator.setDefaultCommand(elevator.joystickControlCommand());
-    BottomLEDs.setDefaultCommand(BottomLEDs.playPatternCommand(LEDs.m_scrollingRainbow));
+  /*     Default commands */
+     drivetrain.setDefaultCommand(drivetrain.driveJoystickInputCommand());
+   //elevator.setDefaultCommand(elevator.joystickControlCommand());
+     BottomLEDs.setDefaultCommand(BottomLEDs.playPatternCommand(LEDs.m_scrollingRainbow));
 
     /* Operator bindings */
-    //elevator height commands
-    // operatorController.triangle().onTrue(elevator.setHeightCommand(.33)); //L1
-    // operatorController.circle().onTrue(elevator.setHeightCommand(.81)); //L2
-    // operatorController.cross().onTrue(elevator.setHeightCommand(1.21)); //L3
-    // operatorController.square().onTrue(elevator.setHeightCommand(1.83)); //4
+    // elevator height commands
+    //  operatorController.triangle().onTrue(elevator.setHeightCommand(.33)); //L1
+    //  operatorController.circle().onTrue(elevator.setHeightCommand(.81)); //L2
+    //  operatorController.cross().onTrue(elevator.setHeightCommand(1.21)); //L3
+    //  operatorController.square().onTrue(elevator.setHeightCommand(1.83)); //4
     
     //roller intake/outtake commands
     operatorController.create().onTrue(rollers.switchSpeedCommand());
     operatorController.R1().onTrue(rollers.setIntakeCommand(1));
     operatorController.L1().onTrue(rollers.setOuttakeCommand(1));
 
-    operatorController.triangle().whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
-    operatorController.circle().whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
-    operatorController.cross().whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
-    operatorController.square().whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
+    operatorController.triangle().onTrue(drivetrain.sysIdDynamic(Direction.kReverse));
+    operatorController.circle().onTrue(drivetrain.sysIdDynamic(Direction.kForward));
+    operatorController.cross().onTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
+    operatorController.square().onTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
 
     //SignalLogger.setPath("/media/sda1/");
     operatorController.L2().onTrue(Commands.runOnce(() -> SignalLogger.start()));
@@ -104,6 +104,7 @@ public class RobotContainer {
   }
 
   public Command getAutonomousCommand() {
-    return auto.getAutoCommand();
+    //return auto.getAutoCommand();
+    return Commands.none();
   }
 }
