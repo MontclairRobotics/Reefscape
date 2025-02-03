@@ -55,6 +55,7 @@ import frc.robot.util.PoseUtils;
 
 public class Auto extends SubsystemBase {
 
+    public int estimatedScore = 0;
     private String prevAutoString = "";
     private double prevProgressBar = 0;
     private ArrayList<PathPlannerPath> pathList = new ArrayList<PathPlannerPath>();
@@ -85,6 +86,19 @@ public class Auto extends SubsystemBase {
     Alliance prevAlliance = Alliance.Blue;
 
     public static Field2d field = new Field2d();
+    public static int getOutput(int x) {
+        if (x == 1) {
+            return 3;
+        } else if (x == 2) {
+            return 4;
+        } else if (x == 3) {
+            return 6;
+        } else if (x == 4) {
+            return 7;
+        } else {
+            return 0;
+        }
+    }
 
     public void setFeedback(String s, NotificationLevel level) {
         feedbackPub.set(s);
@@ -103,7 +117,22 @@ public class Auto extends SubsystemBase {
         timeStampTopic.setRetained(true);
         timeStampPub.set(0);
     }
+    public int calculateEstimatedScore(int estimatedScore) {
+        estimatedScore = 0;
+            for (int i = 2; i < prevAutoString.length(); i += 3) {
+                String coralLevelStr = prevAutoString.substring(i + 1, i + 2);
+        
+                if (coralLevels.contains(coralLevelStr)) {
+                    try {
+                        int coralLevel = getOutput(Integer.parseInt(coralLevelStr));
+                        estimatedScore += coralLevel; 
+                    }finally{
 
+                    }
+                }
+            }
+            return estimatedScore;
+    }
     /* ArrayLists to hold the values of various waypoints */
     private ArrayList<String> startingLocations = new ArrayList<String>(
             Arrays.asList("S1", "S2", "S3", "S4", "S5"));
@@ -391,6 +420,7 @@ public class Auto extends SubsystemBase {
     public void periodic() {
         if (DriverStation.isDisabled()) {
             String str = stringEnt.get("");
+            SmartDashboard.putNumber("Score", calculateEstimatedScore(estimatedScore));
             SmartDashboard.putData(field);
 
             // String autoString = str.replace(' ', Character.MIN_VALUE); // check
