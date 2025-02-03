@@ -67,9 +67,10 @@ public class RobotContainer {
     //  operatorController.square().onTrue(elevator.setHeightCommand(1.83)); //4
     
     //roller intake/outtake commands
-    operatorController.create().onTrue(rollers.switchSpeedCommand());
-    operatorController.R1().onTrue(rollers.setIntakeCommand(1));
-    operatorController.L1().onTrue(rollers.setOuttakeCommand(1));
+    operatorController.R1().onTrue(rollers.intakeAlgaeCommand());
+    operatorController.R2().onTrue(rollers.outtakeAlgaeCommand());
+    operatorController.L1().onTrue(rollers.intakeCoralCommand());
+    operatorController.L2().onTrue(rollers.outtakeCoralCommand());
 
     operatorController.triangle().whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
     operatorController.circle().whileTrue(drivetrain.sysIdDynamic(Direction.kForward));

@@ -5,53 +5,69 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.util.BreakBeam;
 
 public class Rollers extends SubsystemBase {
     private SparkMax rightMotor;
     private SparkMax leftMotor;
-    private double targetSpeed;
-    private double altSpeed = targetSpeed/2;
-// The second speed ↑
-    public boolean doAltSpeed = false;
-// If true, this ↑ sets the speed to be 1/2 of the target speed
+    private final double CORAL_SPEED = 1;
+    private final double ALGAE_SPEED = 0.5;
+    private BreakBeam breakBeam = new BreakBeam(0, false);
 
     public Rollers() {
-    //rightMotor = new SparkMax(0, MotorType.kBrushless);
-    //leftMotor = new SparkMax(0, MotorType.kBrushless);
-    }
-    public void setIntakeSpeed (double speed) {
-        targetSpeed = speed;
+        rightMotor = new SparkMax(0, MotorType.kBrushless);
+        leftMotor = new SparkMax(0, MotorType.kBrushless);
     }
 
-    public void switchSpeed() {
-     doAltSpeed = !doAltSpeed;
+    private boolean hasObject () {
+        return breakBeam.get();
     }
 
-    public void setIntake () {
-    if(doAltSpeed){
-        rightMotor.set (altSpeed);
-        leftMotor.set (altSpeed);
-    } else {
-        rightMotor.set (targetSpeed);
-        leftMotor.set (targetSpeed);
+    private void intakeAlgae () {
+        rightMotor.set (ALGAE_SPEED);
+        leftMotor.set (ALGAE_SPEED);
     }
+
+    private void outtakeAlgae (){
+        rightMotor.set(-ALGAE_SPEED);
+        leftMotor.set(-ALGAE_SPEED);
     }
-    public void setOuttake (){
-        if(doAltSpeed){
-            rightMotor.set (-altSpeed);
-            leftMotor.set (-altSpeed);
-        } else {
-            rightMotor.set (-targetSpeed);
-            leftMotor.set (-targetSpeed);
-        }
+
+    private void intakeCoral (){
+        rightMotor.set(CORAL_SPEED);
+        leftMotor.set(CORAL_SPEED);
     }
-    public Command setIntakeCommand(double targetSpeed) {
-        return Commands.run(() -> setIntake(), this);
+  
+    private void outtakeCoral (){
+        rightMotor.set(-CORAL_SPEED);
+        leftMotor.set(-CORAL_SPEED);
     }
-    public Command setOuttakeCommand (double targetSpeed) {
-        return Commands.run(() -> setOuttake(), this);
+
+    private void stopMotors (){
+        rightMotor.set (0);
+        leftMotor.set (0);
     }
-    public Command switchSpeedCommand () {
-        return Commands.run(() -> switchSpeed());
+    public Command intakeAlgaeCommand() {
+        return Commands.run (() -> intakeAlgae(), this)
+        .until (() -> hasObject())
+        .finallyDo (() -> stopMotors());
+    }
+
+    public Command outtakeAlgaeCommand () {
+        return Commands.runOnce(() -> outtakeAlgae(), this)
+        .onlyWhile (() -> hasObject())
+        .finallyDo (() -> stopMotors());
+    }
+
+    public Command intakeCoralCommand () {
+        return Commands.runOnce(() -> intakeCoral(), this)
+        .onlyWhile (() -> hasObject())
+        .finallyDo (() -> stopMotors());
+    }
+
+    public Command outtakeCoralCommand () {
+        return Commands.runOnce(() -> outtakeCoral(), this)
+        .onlyWhile (() -> hasObject())
+        .finallyDo (() -> stopMotors());
     }
 }
