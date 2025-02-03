@@ -37,6 +37,8 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -59,7 +61,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     public static final double MAX_ROT_SPEED = Math.PI*2;
     public static final double FORWARD_ACCEL = 9; // m / s^2
     public static final double SIDE_ACCEL = 9; //m / s^2
-    public static final double ROT_ACCEL = 6; // radians / s^2
+    public static final double ROT_ACCEL = 9; // radians / s^2
        
     /* Acceleration limiters for our drivetrain */
     private SlewRateLimiter forwardLimiter = new SlewRateLimiter(FORWARD_ACCEL); //TODO: actually set this
@@ -96,6 +98,10 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
     public Drivetrain() {
 
+   
+        
+
+        
         super (
             TunerConstants.DrivetrainConstants, 
             TunerConstants.odometryUpdateFrequency, 
@@ -109,6 +115,9 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
         thetaController.setTolerance(1 * Math.PI / 180); //degrees converted to radians
         configurePathPlanner();
+
+        NetworkTableInstance inst = NetworkTableInstance.getDefault();
+        NetworkTable teleop = inst.getTable("Teleoperated");
         
     }
 
@@ -259,7 +268,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     );
 
     /* The SysId routine to test */
-    private SysIdRoutine m_sysIdRoutineToApply = m_sysIdRoutineSteer;
+    private SysIdRoutine m_sysIdRoutineToApply = m_sysIdRoutineTranslation;
 
     /**
      * Runs the SysId Quasistatic test in the given direction for the routine

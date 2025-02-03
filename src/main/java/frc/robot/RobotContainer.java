@@ -71,10 +71,10 @@ public class RobotContainer {
     operatorController.R1().onTrue(rollers.setIntakeCommand(1));
     operatorController.L1().onTrue(rollers.setOuttakeCommand(1));
 
-    operatorController.triangle().onTrue(drivetrain.sysIdDynamic(Direction.kReverse));
-    operatorController.circle().onTrue(drivetrain.sysIdDynamic(Direction.kForward));
-    operatorController.cross().onTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
-    operatorController.square().onTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
+    operatorController.triangle().whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
+    operatorController.circle().whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
+    operatorController.cross().whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
+    operatorController.square().whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
 
     //SignalLogger.setPath("/media/sda1/");
     operatorController.L2().onTrue(Commands.runOnce(() -> SignalLogger.start()));
