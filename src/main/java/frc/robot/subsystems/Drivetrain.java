@@ -6,16 +6,17 @@ import frc.robot.util.TunerConstants.TunerSwerveDrivetrain;
 
 import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Pounds;
+import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Seconds;
+import static edu.wpi.first.units.Units.Volts;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
+import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
-import com.ctre.phoenix6.configs.CANcoderConfiguration;
-import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.mechanisms.swerve.LegacySwerveRequest.SwerveDriveBrake;
@@ -42,6 +43,11 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.units.VoltageUnit;
+import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
@@ -50,6 +56,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
@@ -61,9 +68,9 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
     public static final double MAX_SPEED = 4; //TODO: actually set this with units
     public static final double MAX_ROT_SPEED = Math.PI*2;
-    public static final double FORWARD_ACCEL = 3; // m / s^2
-    public static final double SIDE_ACCEL = 3; //m / s^2
-    public static final double ROT_ACCEL = 2; // radians / s^2
+    public static final double FORWARD_ACCEL = 9; // m / s^2
+    public static final double SIDE_ACCEL = 9; //m / s^2
+    public static final double ROT_ACCEL = 9; // radians / s^2
        
     /* Acceleration limiters for our drivetrain */
     private SlewRateLimiter forwardLimiter = new SlewRateLimiter(FORWARD_ACCEL); //TODO: actually set this
@@ -81,11 +88,29 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     private boolean isRobotAtAngleSetPoint; //for angle turning
     private boolean fieldRelative;
 
+
+    /* Blue alliance sees forward as 0 degrees (toward red alliance wall) */
+    private static final Rotation2d kBlueAlliancePerspectiveRotation = Rotation2d.kZero;
+    /* Red alliance sees forward as 180 degrees (toward blue alliance wall) */
+    private static final Rotation2d kRedAlliancePerspectiveRotation = Rotation2d.k180deg;
+    /* Keep track if we've ever applied the operator perspective before or not */
+    private boolean m_hasAppliedOperatorPerspective = false;
+
+
+    /* Swerve requests to apply during SysId characterization */
+    private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization = new SwerveRequest.SysIdSwerveTranslation();
+    private final SwerveRequest.SysIdSwerveSteerGains m_steerCharacterization = new SwerveRequest.SysIdSwerveSteerGains();
+    private final SwerveRequest.SysIdSwerveRotation m_rotationCharacterization = new SwerveRequest.SysIdSwerveRotation();
+
     //TODO: Set these values
     public static final PathConstraints DEFAULT_CONSTRAINTS = new PathConstraints(MAX_SPEED, FORWARD_ACCEL, MAX_ROT_SPEED, ROT_ACCEL);
 
     public Drivetrain() {
 
+   
+        
+
+        
         super (
             TunerConstants.DrivetrainConstants, 
             TunerConstants.odometryUpdateFrequency, 
@@ -105,6 +130,9 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         }
         thetaController.setTolerance(1 * Math.PI / 180); //degrees converted to radians
         configurePathPlanner();
+
+        NetworkTableInstance inst = NetworkTableInstance.getDefault();
+        NetworkTable teleop = inst.getTable("Teleoperated");
         
     }
 
@@ -114,7 +142,9 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     public double getVelocityXFromController(){
         // double xInput = MathUtil.applyDeadband(RobotContainer.driverController.getRawAxis(0), 0.04);
         double xInput = MathUtil.applyDeadband(RobotContainer.driverController.getLeftX(), 0.04);
-        return forwardLimiter.calculate(Math.pow(xInput, 3) * MAX_SPEED);
+        return forwardLimiter.calculate(
+            Math.pow(xInput, 3) * MAX_SPEED
+            );
     }
 
     /* RETURNS Y VELOCITY FROM CONTROLLER 
@@ -124,6 +154,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         // double yInput = MathUtil.applyDeadband(RobotContainer.driverController.getRawAxis(1), 0.04);
         double yInput = MathUtil.applyDeadband(RobotContainer.driverController.getLeftY(), 0.04);
         return strafeLimiter.calculate(Math.pow(yInput, 3) * MAX_SPEED);
+       
     }
 
     /* DEFAULT DRIVE METHOD
@@ -133,7 +164,9 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     public void drive() {
         // double rotInput = -MathUtil.applyDeadband(RobotContainer.driverController.getRawAxis(2), 0.04);
         double rotInput = -MathUtil.applyDeadband(RobotContainer.driverController.getRightX(), 0.04);
-        double rotVelocity = rotationLimiter.calculate(Math.pow(rotInput,3) * MAX_ROT_SPEED);
+        double rotVelocity = rotationLimiter.calculate(
+            Math.pow(rotInput,3) * MAX_ROT_SPEED
+            );
         drive(getVelocityYFromController(), getVelocityXFromController(), rotVelocity, fieldRelative); //drives using supposed velocities, rot velocity, and field relative boolean
     }
 
@@ -191,6 +224,90 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
             );
 
         }
+    }
+
+    /* SysId routine for characterizing translation. This is used to find PID gains for the drive motors. */
+    private final SysIdRoutine m_sysIdRoutineTranslation = new SysIdRoutine(
+        new SysIdRoutine.Config(
+            null,        // Use default ramp rate (1 V/s)
+            Volts.of(2), // Reduce dynamic step voltage to 4 V to prevent brownout
+            null,        // Use default timeout (10 s)
+            // Log state with SignalLogger class
+            state -> SignalLogger.writeString("SysIdTranslation_State", state.toString())
+        ),
+        new SysIdRoutine.Mechanism(
+            output -> setControl(m_translationCharacterization.withVolts(output)),
+            null,
+            this
+        )
+    );
+
+    /* SysId routine for characterizing steer. This is used to find PID gains for the steer motors. */
+    private final SysIdRoutine m_sysIdRoutineSteer = new SysIdRoutine(
+        new SysIdRoutine.Config(
+            null,        // Use default ramp rate (1 V/s)
+            Volts.of(7), // Use dynamic voltage of 7 V
+            null,        // Use default timeout (10 s)
+            // Log state with SignalLogger class
+            state -> SignalLogger.writeString("SysIdSteer_State", state.toString())
+        ),
+        new SysIdRoutine.Mechanism(
+            volts -> setControl(m_steerCharacterization.withVolts(volts)),
+            null,
+            this
+        )
+    );
+
+    /*
+     * SysId routine for characterizing rotation.
+     * This is used to find PID gains for the FieldCentricFacingAngle HeadingController.
+     * See the documentation of SwerveRequest.SysIdSwerveRotation for info on importing the log to SysId.
+     */
+    private final SysIdRoutine m_sysIdRoutineRotation = new SysIdRoutine(
+        new SysIdRoutine.Config(
+            /* This is in radians per second², but SysId only supports "volts per second" */
+            Volts.of(Math.PI / 6).per(Second),
+            /* This is in radians per second, but SysId only supports "volts" */
+            Volts.of(Math.PI),
+            null, // Use default timeout (10 s)
+            // Log state with SignalLogger class
+            state -> SignalLogger.writeString("SysIdRotation_State", state.toString())
+        ),
+        new SysIdRoutine.Mechanism(
+            output -> {
+                /* output is actually radians per second, but SysId only supports "volts" */
+                setControl(m_rotationCharacterization.withRotationalRate(output.in(Volts)));
+                /* also log the requested output for SysId */
+                SignalLogger.writeDouble("Rotational_Rate", output.in(Volts));
+            },
+            null,
+            this
+        )
+    );
+
+    /* The SysId routine to test */
+    private SysIdRoutine m_sysIdRoutineToApply = m_sysIdRoutineTranslation;
+
+    /**
+     * Runs the SysId Quasistatic test in the given direction for the routine
+     * specified by {@link #m_sysIdRoutineToApply}.
+     *
+     * @param direction Direction of the SysId Quasistatic test
+     * @return Command to run
+     */
+    public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
+        return m_sysIdRoutineToApply.quasistatic(direction);
+    }
+
+    /**
+     * Runs the SysId Dynamic test in the given direction for the routine
+     * specified by {@link #m_sysIdRoutineToApply}.
+     *
+     * @param direction Direction of the SysId Dynamic test
+     * @return Command to run
+     */
+    public Command sysIdDynamic(SysIdRoutine.Direction direction) {
+        return m_sysIdRoutineToApply.dynamic(direction);
     }
 
     /** 
@@ -428,8 +545,9 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         //Not sure if this is correct at all
         odometryHeading = this.getState().Pose.getRotation();
         isRobotAtAngleSetPoint = thetaController.atSetpoint();
-        // fieldRelative = !RobotContainer.driverController.L2().getAsBoolean();
+        fieldRelative = !RobotContainer.driverController.L2().getAsBoolean();
     }
+
 
     @Override
     public void resetPose(Pose2d pose) {
@@ -450,8 +568,8 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
                 Seconds.of(0.002),
                 // TODO: modify the following constants according to your robot
                 Pounds.of(115), // robot weight
-                Inches.of(36), // bumper length
-                Inches.of(36), // bumper width
+                Inches.of(35.5), // bumper length
+                Inches.of(35.5), // bumper width
                 DCMotor.getKrakenX60(1), // drive motor type
                 DCMotor.getKrakenX60(1), // steer motor type
                 1.2, // wheel COF
@@ -465,5 +583,5 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         /* Run simulation at a faster rate so PID gains behave more reasonably */
         m_simNotifier = new Notifier(mapleSimSwerveDrivetrain::update);
         m_simNotifier.startPeriodic(0.002);
-    }
+     }
 }
