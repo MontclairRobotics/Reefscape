@@ -41,22 +41,22 @@
         }
       ],
       "axisCount": 3,
-      "buttonCount": 17,
+      "buttonCount": 0,
       "buttonKeys": [
-        90,
-        88,
-        67,
-        86,
+        -1,
+        -1,
+        -1,
+        -1,
         66,
         78,
         77,
         44,
         71,
         72,
-        74,
-        75,
-        76,
-        59,
+        -1,
+        -1,
+        -1,
+        -1,
         39,
         -1,
         -1
@@ -78,32 +78,30 @@
     {
       "axisConfig": [
         {
-          "decayRate": 0.5
+          "decKey": 263,
+          "decayRate": 0.5,
+          "incKey": 262
         },
         {
-          "decKey": 73
+          "decKey": 264,
+          "incKey": 265
         }
       ],
       "axisCount": 2,
       "buttonCount": 4,
       "buttonKeys": [
-        -1,
-        -1,
-        46,
-        47
+        74,
+        75,
+        76,
+        59
       ],
       "povCount": 0
     },
     {
       "axisConfig": [
+        {},
         {
-          "decKey": 263,
-          "incKey": 262
-        },
-        {
-          "decKey": 264,
-          "decayRate": 0.5,
-          "incKey": 265
+          "decayRate": 0.5
         }
       ],
       "axisCount": 2,
@@ -129,7 +127,7 @@
       "guid": "Keyboard0"
     },
     {
-      "guid": "Keyboard2"
+      "guid": "Keyboard1"
     }
   ]
 }

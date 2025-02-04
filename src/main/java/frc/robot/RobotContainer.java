@@ -74,24 +74,25 @@ public class RobotContainer {
 
     /* Operator bindings */
     // elevator height commands
-    //  operatorController.triangle().onTrue(elevator.setHeightCommand(.33)); //L1
-    //  operatorController.circle().onTrue(elevator.setHeightCommand(.81)); //L2
-    //  operatorController.cross().onTrue(elevator.setHeightCommand(1.21)); //L3
-    //  operatorController.square().onTrue(elevator.setHeightCommand(1.83)); //4
+    operatorController.L2().whileTrue(elevator.joystickControlCommand()).onFalse(elevator.stopCommand());
+    operatorController.triangle().onTrue(elevator.setHeightCommand(0));
+    operatorController.circle().onTrue(elevator.setHeightCommand(Elevator.ELEVATOR_MAX_HEIGHT/3));
+    operatorController.cross().onTrue(elevator.setHeightCommand(2*Elevator.ELEVATOR_MAX_HEIGHT/3));
+    operatorController.square().onTrue(elevator.setHeightCommand(Elevator.ELEVATOR_MAX_HEIGHT));
     
     //roller intake/outtake commands
-    operatorController.create().onTrue(rollers.switchSpeedCommand());
-    operatorController.R1().onTrue(rollers.setIntakeCommand(1));
-    operatorController.L1().onTrue(rollers.setOuttakeCommand(1));
+    // operatorController.create().onTrue(rollers.switchSpeedCommand());
+    // operatorController.R1().onTrue(rollers.setIntakeCommand(1));
+    // operatorController.L1().onTrue(rollers.setOuttakeCommand(1));
 
-    operatorController.triangle().whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
-    operatorController.circle().whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
-    operatorController.cross().whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
-    operatorController.square().whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
+    // operatorController.triangle().whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
+    // operatorController.circle().whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
+    // operatorController.cross().whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
+    // operatorController.square().whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
 
     //SignalLogger.setPath("/media/sda1/");
-    operatorController.L2().onTrue(Commands.runOnce(() -> SignalLogger.start()));
-    operatorController.R2().onTrue(Commands.runOnce(() -> SignalLogger.stop()));
+    // operatorController.L2().onTrue(Commands.runOnce(() -> SignalLogger.start()));
+    // operatorController.R2().onTrue(Commands.runOnce(() -> SignalLogger.stop()));
 
     /* DRIVER BINDINGS */
 

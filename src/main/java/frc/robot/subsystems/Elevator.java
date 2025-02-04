@@ -379,7 +379,6 @@ public class Elevator extends SubsystemBase {
     // ---------------------------------------------------------
     // COMMANDS
     public Command joystickControlCommand() {
-        System.out.println("Joystick");
         return Commands.run(() -> joystickControl(), this);
     }
 
@@ -388,8 +387,7 @@ public class Elevator extends SubsystemBase {
     }
 
     public Command setHeightCommand(double height) {
-        System.out.println("Setting height to " + height);
-        return Commands.run(() -> setHeight(height), this); //.until(() -> atHeight(height)).andThen(() -> stop());
+        return Commands.run(() -> setHeight(height), this).until(() -> atHeight(height)).andThen(() -> stop());
         // return Commands.run(() -> setHeightMagicMotion(height), this);
     }
 
