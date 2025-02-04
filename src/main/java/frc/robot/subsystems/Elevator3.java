@@ -37,7 +37,7 @@ import frc.robot.util.LimitSwitch;
 import frc.robot.util.Elastic.Notification;
 import frc.robot.util.Elastic.Notification.NotificationLevel;
 
-public class Elevator extends SubsystemBase {
+public class Elevator3 extends SubsystemBase {
 
     // -------------------------------------------------------------
     // CONSTANTS
@@ -134,7 +134,7 @@ public class Elevator extends SubsystemBase {
     /**
      * Constructor
      */
-    public Elevator() {
+    public Elevator3() {
         // Get network table
         NetworkTableInstance inst = NetworkTableInstance.getDefault();
         NetworkTable elevatorTable = inst.getTable("Elevator");

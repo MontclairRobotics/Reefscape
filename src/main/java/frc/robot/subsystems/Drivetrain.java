@@ -112,7 +112,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
      * 
     */
     public double getVelocityXFromController(){
-        System.out.println("X: " + RobotContainer.driverController.getLeftX());
+        // double xInput = MathUtil.applyDeadband(RobotContainer.driverController.getRawAxis(0), 0.04);
         double xInput = MathUtil.applyDeadband(RobotContainer.driverController.getLeftX(), 0.04);
         return forwardLimiter.calculate(Math.pow(xInput, 3) * MAX_SPEED);
     }
@@ -121,7 +121,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
      * 
     */
     public double getVelocityYFromController(){
-        System.out.println("Y: " + RobotContainer.driverController.getLeftY());
+        // double yInput = MathUtil.applyDeadband(RobotContainer.driverController.getRawAxis(1), 0.04);
         double yInput = MathUtil.applyDeadband(RobotContainer.driverController.getLeftY(), 0.04);
         return strafeLimiter.calculate(Math.pow(yInput, 3) * MAX_SPEED);
     }
@@ -131,6 +131,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
      * 
      */
     public void drive() {
+        // double rotInput = -MathUtil.applyDeadband(RobotContainer.driverController.getRawAxis(2), 0.04);
         double rotInput = -MathUtil.applyDeadband(RobotContainer.driverController.getRightX(), 0.04);
         double rotVelocity = rotationLimiter.calculate(Math.pow(rotInput,3) * MAX_ROT_SPEED);
         drive(getVelocityYFromController(), getVelocityXFromController(), rotVelocity, fieldRelative); //drives using supposed velocities, rot velocity, and field relative boolean
@@ -427,7 +428,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         //Not sure if this is correct at all
         odometryHeading = this.getState().Pose.getRotation();
         isRobotAtAngleSetPoint = thetaController.atSetpoint();
-        fieldRelative = !RobotContainer.driverController.L2().getAsBoolean();
+        // fieldRelative = !RobotContainer.driverController.L2().getAsBoolean();
     }
 
     @Override
