@@ -6,7 +6,6 @@ import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.SlewRateLimiter;
-import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -16,14 +15,13 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.RobotContainer;
 import frc.robot.util.Elastic;
-import frc.robot.util.LimitSwitch;
+// import frc.robot.util.LimitSwitch;
 import frc.robot.util.Elastic.Notification;
 import frc.robot.util.Elastic.Notification.NotificationLevel;
 
 public class Elevator extends SubsystemBase {
 
     // Constants
-    private final double ENCODER_ROTATIONS_TO_METERS_RATIO = 0; // TODO: FIND THIS
     private final double METERS_PER_ROTATION = 36*5/1000;
     private final double ELEVATOR_MAX_HEIGHT = 2.0; // IN METERS
 
@@ -95,6 +93,10 @@ public class Elevator extends SubsystemBase {
        //topLimit = new LimitSwitch(22, false);
 
     }
+    
+    // public boolean isAtTop() {
+    //     return topLimit.get();
+    // }
 
     // public boolean isAtBottom() {
     //     return bottomLimit.get();
@@ -118,49 +120,45 @@ public class Elevator extends SubsystemBase {
         return (leftHeight + rightHeight) / 2;
     }
 
-    // public boolean isAtTop() {
-    //     return topLimit.get();
-    // }
-
     /**
      * Manual Control of the elevator with the joystick
      * Will slow down when nearing the top or bottom
      * 
      */
-    // public void joystickControl() {
-    //     SlewRateLimiter accelerationLimiter = new SlewRateLimiter(0.5); //TODO: actually set this
-    //     final MotionMagicVoltage request = new MotionMagicVoltage(0)
-    //     .withFeedForward(0); //TODO: TUNE??????? (confusion)
+    public void joystickControl() {
+        SlewRateLimiter accelerationLimiter = new SlewRateLimiter(0.5); //TODO: actually set this
+        final MotionMagicVoltage request = new MotionMagicVoltage(0)
+        .withFeedForward(0); //TODO: TUNE??????? (confusion)
         
-    //     double voltage = accelerationLimiter.calculate(Math.pow(MathUtil.applyDeadband(RobotContainer.operatorController.getLeftY(), 0.04), 3))
-    //         * 11 + request.getFeedForwardMeasure().in(Units.Volts);
-    //     //TODO: Check if the above line is correct
-    //     // Multiplying by Max Voltage (12) (ll not 12 because also feedfoward and lazy) Uses a rate limiter feedwoward and a deadband
+        double voltage = accelerationLimiter.calculate(Math.pow(MathUtil.applyDeadband(RobotContainer.operatorController.getLeftY(), 0.04), 3))
+            * 11 + request.getFeedForwardMeasure().in(Units.Volts);
+        //TODO: Check if the above line is correct
+        // Multiplying by Max Voltage (12) (ll not 12 because also feedfoward and lazy) Uses a rate limiter feedwoward and a deadband
 
-    //     double percentHeight = this.getHeight() / ELEVATOR_MAX_HEIGHT;
-    //     if (percentHeight > 0.93 && voltage > 0) {
-    //         voltage = MathUtil.clamp(voltage, 0, ( 12 * (1 - percentHeight) * (100.0 / 7.0)));
-    //         //This clamps the voltage as it gets closer to the the top. 7 is because at 7% closer to the top is when it starts clamping
-    //     }
-    //     if (percentHeight < 0.07 && voltage < 0) {
-    //         voltage = MathUtil.clamp(voltage, -( 12 * (percentHeight) * (100.0 / 7.0)), 0);
-    //     }
+        double percentHeight = this.getHeight() / ELEVATOR_MAX_HEIGHT;
+        if (percentHeight > 0.93 && voltage > 0) {
+            voltage = MathUtil.clamp(voltage, 0, ( 12 * (1 - percentHeight) * (100.0 / 7.0)));
+            //This clamps the voltage as it gets closer to the the top. 7 is because at 7% closer to the top is when it starts clamping
+        }
+        if (percentHeight < 0.07 && voltage < 0) {
+            voltage = MathUtil.clamp(voltage, -( 12 * (percentHeight) * (100.0 / 7.0)), 0);
+        }
 
-    //     // speed
-    //     if (isAtTop() && voltage > 0) {
-    //         stop();
-    //     } else if (isAtBottom() && voltage < 0) {
-    //         stop();
-    //     } else {
-    //         leftTalonFX.setVoltage(voltage);
-    //         rightTalonFX.setVoltage(voltage);
-    //     }
-    // }
+        // speed
+        // if (isAtTop() && voltage > 0) {
+            // stop();
+        // } else if (isAtBottom() && voltage < 0) {
+            // stop();
+        // } else {
+            leftTalonFX.setVoltage(voltage);
+            rightTalonFX.setVoltage(voltage);
+        // }
+    }
 
-    // public void stop() {
-    //     leftTalonFX.setVoltage(0);
-    //     rightTalonFX.setVoltage(0);
-    // }
+    public void stop() {
+        leftTalonFX.setVoltage(0);
+        rightTalonFX.setVoltage(0);
+    }
 
     /**
      * Sets height of the elevator in meters between 0 and the Max height of the elevator
@@ -180,23 +178,23 @@ public class Elevator extends SubsystemBase {
                     5000));
         }
         height = MathUtil.clamp(height, 0, ELEVATOR_MAX_HEIGHT);
-        double rotations = height / ENCODER_ROTATIONS_TO_METERS_RATIO; // Converts meters to rotations
+        double rotations = height / METERS_PER_ROTATION; // Converts meters to rotations
 
         final MotionMagicVoltage request = new MotionMagicVoltage(0)
         .withFeedForward(0); //TUNE???? CONFUSTION :(  
-
-       // leftTalonFX.setControl(request.withPosition(rotations).withFeedForward(0));
-        //rightTalonFX.setControl(request.withPosition(rotations).withFeedForward(0));
+        
+        leftTalonFX.setControl(request.withPosition(rotations).withFeedForward(0));
+        rightTalonFX.setControl(request.withPosition(rotations).withFeedForward(0));
     }
 
-    // // Commands
-    // public Command joystickControlCommand() {
-    //     return Commands.run(() -> joystickControl(), this);
-    // }
+    // Commands
+    public Command joystickControlCommand() {
+        return Commands.run(() -> joystickControl(), this);
+    }
 
-    // public Command stopCommand() {
-    //     return Commands.runOnce(() -> stop());
-    // }
+    public Command stopCommand() {
+        return Commands.runOnce(() -> stop());
+    }
 
     public Command setHeightCommand(double height) {
         return Commands.run(() -> setHeight(height), this);
@@ -219,6 +217,6 @@ public class Elevator extends SubsystemBase {
         // if (isAtBottom()) {
         //     leftTalonFX.setPosition(0);
         //     rightTalonFX.setPosition(0);
-        // }
+        // } TODO: check
     }
 }
