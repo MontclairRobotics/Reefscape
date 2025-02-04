@@ -23,24 +23,31 @@ import frc.robot.util.Elastic.Notification.NotificationLevel;
 public class Elevator extends SubsystemBase {
 
     // Constants
-    private final double ENCODER_ROTATIONS_TO_METERS_RATIO = 0.5; // TODO: FIND THIS
-    public static final double ELEVATOR_MAX_HEIGHT = 2.0; // IN METERS
+    private final double ENCODER_ROTATIONS_TO_METERS_RATIO = 0; // TODO: FIND THIS
+    private final double METERS_PER_ROTATION = 36*5/1000;
+    private final double ELEVATOR_MAX_HEIGHT = 2.0; // IN METERS
+
+    private final int LEFT_MOTOR_ID = 0;
+    private final int RIGHT_MOTOR_ID = 0;
 
     // Motor Controllers/Encoders
-    // private TalonFX leftTalonFX;
-    // private TalonFX rightTalonFX;
+    private TalonFX leftTalonFX;
+    private TalonFX rightTalonFX;
+
+    private final double LEFT_ZERO = leftTalonFX.getPosition().getValueAsDouble();
+    private final double RIGHT_ZERO = rightTalonFX.getPosition().getValueAsDouble();
 
     // Limit Switches
-    private LimitSwitch bottomLimit;
-    private LimitSwitch topLimit;
+    // private LimitSwitch bottomLimit;
+    // private LimitSwitch topLimit;
 
     // Logging to NT
     DoublePublisher heightPub;
     DoublePublisher leftHeightPub;
     DoublePublisher rightHeightPub;
 
-    BooleanPublisher topLimitPub;
-    BooleanPublisher bottomLimitPub;
+    // BooleanPublisher topLimitPub;
+    // BooleanPublisher bottomLimitPub;
 
     public Elevator() {
 
@@ -52,62 +59,68 @@ public class Elevator extends SubsystemBase {
         if (RobotContainer.debugMode) {
             leftHeightPub = debug.getDoubleTopic("Elevator Left Height").publish();
             rightHeightPub = debug.getDoubleTopic("Elevator Right Height").publish();
-            topLimitPub = debug.getBooleanTopic("Elevator Top Limit").publish();
-            bottomLimitPub = debug.getBooleanTopic("Elevator Bottom Limit").publish();
+            // topLimitPub = debug.getBooleanTopic("Elevator Top Limit").publish();
+            // bottomLimitPub = debug.getBooleanTopic("Elevator Bottom Limit").publish();
         }
 
-        //leftTalonFX = new TalonFX(10, "rio"); //TODO: find ports
-        //rightTalonFX = new TalonFX(11, "rio");
-
-        // in init function
-        TalonFXConfiguration elevatorConfigs = new TalonFXConfiguration();
+        leftTalonFX = new TalonFX(LEFT_MOTOR_ID, "rio"); //TODO: find ports
+        rightTalonFX = new TalonFX(RIGHT_MOTOR_ID, "rio");
 
         // set slot 0 gains
-        Slot0Configs slot0Configs = elevatorConfigs.Slot0; // TODO: TUNE!!!!
-        slot0Configs.kS = -1; // Add 0.25 V output to overcome static friction
-        slot0Configs.kV = -1; // A velocity target of 1 rps results in 0.12 V output
-        slot0Configs.kA = -1; // An acceleration of 1 rps/s requires 0.01 V output
-        slot0Configs.kP = -1; // A position error of 2.5 rotations results in 12 V output
-        slot0Configs.kI = -1; // no output for integrated error
-        slot0Configs.kD = -1; // A velocity error of 1 rps results in 0.1 V output
+        // Slot0Configs slot0Configs = elevatorConfigs.Slot0; // TODO: TUNE!!!!
+        // slot0Configs.kS = -1; // Add 0.25 V output to overcome static friction
+        // slot0Configs.kV = -1; // A velocity target of 1 rps results in 0.12 V output
+        // slot0Configs.kA = -1; // An acceleration of 1 rps/s requires 0.01 V output
+        // slot0Configs.kP = -1; // A position error of 2.5 rotations results in 12 V output
+        // slot0Configs.kI = -1; // no output for integrated error
+        // slot0Configs.kD = -1; // A velocity error of 1 rps results in 0.1 V output
+
+        Slot0Configs slot0Configs = new Slot0Configs()
+        .withKP(0).withKI(0).withKD(0)
+        .withKS(0).withKV(0).withKA(0).withKG(0);
+
+        //Configures Elevator with Slot 0 Configs ^^
+        TalonFXConfiguration elevatorConfigs = new TalonFXConfiguration().withSlot0(slot0Configs);
 
         // set Motion Magic settings
-        var motionMagicConfigs = elevatorConfigs.MotionMagic;
-        motionMagicConfigs.MotionMagicCruiseVelocity = 80; // Target cruise velocity of 80 rps
-        motionMagicConfigs.MotionMagicAcceleration = 160; // Target acceleration of 160 rps/s (0.5 seconds)
-        motionMagicConfigs.MotionMagicJerk = 1600; // Target jerk of 1600 rps/s/s (0.1 seconds)
+        // var motionMagicConfigs = elevatorConfigs.MotionMagic;
+        // motionMagicConfigs.MotionMagicCruiseVelocity = 80; // Target cruise velocity of 80 rps
+        // motionMagicConfigs.MotionMagicAcceleration = 160; // Target acceleration of 160 rps/s (0.5 seconds)
+        // motionMagicConfigs.MotionMagicJerk = 1600; // Target jerk of 1600 rps/s/s (0.1 seconds)
 
-        //leftTalonFX.getConfigurator().apply(elevatorConfigs);
-        //rightTalonFX.getConfigurator().apply(elevatorConfigs);
+        leftTalonFX.getConfigurator().apply(elevatorConfigs);
+        rightTalonFX.getConfigurator().apply(elevatorConfigs);
 
        //bottomLimit = new LimitSwitch(21, false); // TODO: get port
        //topLimit = new LimitSwitch(22, false);
+
     }
 
-    public boolean isAtBottom() {
-        return bottomLimit.get();
-    }
+    // public boolean isAtBottom() {
+    //     return bottomLimit.get();
+    // }
 
     /**
      * 
      * @return Height of elevator in meters averaged between the two encoders
      *  if the difference is two much it will send a warning using elastic
      */
-    // public double getHeight() {
-    //     // double leftHeight = leftTalonFX.getPosition().getValueAsDouble() * ENCODER_ROTATIONS_TO_METERS_RATIO;
-    //     // double rightHeight = rightTalonFX.getPosition().getValueAsDouble() * ENCODER_ROTATIONS_TO_METERS_RATIO;
+    public double getHeight() {
+        double leftHeight = (leftTalonFX.getPosition().getValueAsDouble() - LEFT_ZERO) * METERS_PER_ROTATION;
+        double rightHeight = (rightTalonFX.getPosition().getValueAsDouble() - RIGHT_ZERO) * METERS_PER_ROTATION;
 
-    //     // if (Math.abs(leftHeight - rightHeight) < 0.2) {
-    //     //     Elastic.sendNotification(new Notification(
-    //     //             NotificationLevel.WARNING, "Elevator Height Mismatch",
-    //     //             "The two elevator encoders give different values :(", 5000));
-    //     // }
-    //     // return (leftHeight + rightHeight) / 2;
-    // }
+        if (Math.abs(leftHeight - rightHeight) < 0.02) {
+            Elastic.sendNotification(new Notification(
+                    NotificationLevel.WARNING, "Elevator Height Mismatch",
+                    "The two elevator encoders give different values :(", 5000));
+        }
 
-    public boolean isAtTop() {
-        return topLimit.get();
+        return (leftHeight + rightHeight) / 2;
     }
+
+    // public boolean isAtTop() {
+    //     return topLimit.get();
+    // }
 
     /**
      * Manual Control of the elevator with the joystick
