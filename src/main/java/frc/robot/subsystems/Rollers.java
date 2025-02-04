@@ -1,4 +1,6 @@
 package frc.robot.subsystems;
+
+import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 
 import edu.wpi.first.wpilibj2.command.Command;
@@ -9,64 +11,56 @@ import frc.robot.util.BreakBeam;
 public class Rollers extends SubsystemBase {
     private SparkMax rightMotor;
     private SparkMax leftMotor;
-    private final double CORAL_SPEED = 1;
-    private final double ALGAE_SPEED = 0.5;
+    public final double CORAL_INTAKE_SPEED = 1;
+    public final double CORAL_OUTTAKE_SPEED = 1;
+    public final double ALGAE_INTAKE_SPEED = 0.5;
+    public final double ALGAE_OUTTAKE_SPEED = 0.5;
     private BreakBeam breakBeam = new BreakBeam(0, false);
 
     public Rollers() {
-        rightMotor = new SparkMax(0, MotorType.kBrushless);
-        leftMotor = new SparkMax(0, MotorType.kBrushless);
+        rightMotor = new SparkMax(13, MotorType.kBrushless);
+        leftMotor = new SparkMax(14, MotorType.kBrushless);
     }
 
-    private boolean hasObject () {
+    public boolean hasObject() {
         return breakBeam.get();
     }
 
-    private void intakeAlgae () {
-        rightMotor.set (ALGAE_SPEED);
-        leftMotor.set (ALGAE_SPEED);
+    private void setSpeed(double speed) {
+        setSpeed(speed, speed);
     }
 
-    private void outtakeAlgae (){
-        rightMotor.set(-ALGAE_SPEED);
-        leftMotor.set(-ALGAE_SPEED);
+    private void setSpeed(double leftSpeed, double rightSpeed) {
+        rightMotor.set(leftSpeed);
+        leftMotor.set(rightSpeed);
     }
 
-    private void intakeCoral (){
-        rightMotor.set(CORAL_SPEED);
-        leftMotor.set(CORAL_SPEED);
-    }
-  
-    private void outtakeCoral (){
-        rightMotor.set(-CORAL_SPEED);
-        leftMotor.set(-CORAL_SPEED);
+    private void stopMotors() {
+        rightMotor.stopMotor();
+        leftMotor.stopMotor();
     }
 
-    private void stopMotors (){
-        rightMotor.set (0);
-        leftMotor.set (0);
-    }
     public Command intakeAlgaeCommand() {
-        return Commands.run (() -> intakeAlgae(), this)
-        .until (() -> hasObject())
-        .finallyDo (() -> stopMotors());
+        return Commands.run(() -> setSpeed(ALGAE_INTAKE_SPEED), this)
+                .until(() -> hasObject())
+                .finallyDo(() -> stopMotors());
     }
 
-    public Command outtakeAlgaeCommand () {
-        return Commands.runOnce(() -> outtakeAlgae(), this)
-        .onlyWhile (() -> hasObject())
-        .finallyDo (() -> stopMotors());
+    public Command outtakeAlgaeCommand() {
+        return Commands.run(() -> setSpeed(-ALGAE_OUTTAKE_SPEED), this)
+                .onlyWhile(() -> hasObject())
+                .finallyDo(() -> stopMotors());
     }
 
-    public Command intakeCoralCommand () {
-        return Commands.runOnce(() -> intakeCoral(), this)
-        .onlyWhile (() -> hasObject())
-        .finallyDo (() -> stopMotors());
+    public Command intakeCoralCommand() {
+        return Commands.run(() -> setSpeed(CORAL_INTAKE_SPEED), this)
+                .until(() -> hasObject())
+                .finallyDo(() -> stopMotors());
     }
 
-    public Command outtakeCoralCommand () {
-        return Commands.runOnce(() -> outtakeCoral(), this)
-        .onlyWhile (() -> hasObject())
-        .finallyDo (() -> stopMotors());
+    public Command outtakeCoralCommand() {
+        return Commands.run(() -> setSpeed(CORAL_OUTTAKE_SPEED), this)
+                .onlyWhile(() -> hasObject())
+                .finallyDo(() -> stopMotors());
     }
 }
