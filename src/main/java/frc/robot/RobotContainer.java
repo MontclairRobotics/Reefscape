@@ -4,14 +4,10 @@
 
 package frc.robot;
 
-import java.lang.annotation.ElementType;
-
 import com.ctre.phoenix6.SignalLogger;
 
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
@@ -54,17 +50,18 @@ public class RobotContainer {
 
   private void configureBindings() {
     
-  /*     Default commands */
-     drivetrain.setDefaultCommand(drivetrain.driveJoystickInputCommand());
-   //elevator.setDefaultCommand(elevator.joystickControlCommand());
-     BottomLEDs.setDefaultCommand(BottomLEDs.playPatternCommand(LEDs.m_scrollingRainbow));
+    /*     Default commands */
+    drivetrain.setDefaultCommand(drivetrain.driveJoystickInputCommand());
+    elevator.setDefaultCommand(elevator.joystickControlCommand());
+    BottomLEDs.setDefaultCommand(BottomLEDs.playPatternCommand(LEDs.m_scrollingRainbow));
 
     /* Operator bindings */
-    // elevator height commands
-    //  operatorController.triangle().onTrue(elevator.setHeightCommand(.33)); //L1
-    //  operatorController.circle().onTrue(elevator.setHeightCommand(.81)); //L2
-    //  operatorController.cross().onTrue(elevator.setHeightCommand(1.21)); //L3
-    //  operatorController.square().onTrue(elevator.setHeightCommand(1.83)); //4
+
+    //elevator height commands
+    operatorController.triangle().onTrue(elevator.setHeightCommand(.33)); //L1
+    operatorController.circle().onTrue(elevator.setHeightCommand(.81)); //L2
+    operatorController.cross().onTrue(elevator.setHeightCommand(1.21)); //L3
+    operatorController.square().onTrue(elevator.setHeightCommand(1.83)); //4
     
     //roller intake/outtake commands
     operatorController.R1().onTrue(rollers.intakeAlgaeCommand());
@@ -105,7 +102,6 @@ public class RobotContainer {
   }
 
   public Command getAutonomousCommand() {
-    //return auto.getAutoCommand();
-    return Commands.none();
+    return auto.getAutoCommand();
   }
 }
