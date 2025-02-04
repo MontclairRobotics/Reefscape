@@ -24,7 +24,6 @@ import frc.robot.leds.LEDs;
 import frc.robot.subsystems.Auto;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Elevator;
-import frc.robot.subsystems.Elevator3;
 import frc.robot.subsystems.Rollers;
 import frc.robot.subsystems.TestSubSystem;
 import frc.robot.util.TunerConstants;
