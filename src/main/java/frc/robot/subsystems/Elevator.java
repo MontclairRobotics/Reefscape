@@ -109,7 +109,7 @@ public class Elevator extends SubsystemBase {
         leftTalonFX.setNeutralMode(NeutralModeValue.Brake);
         rightTalonFX.setNeutralMode(NeutralModeValue.Brake);
         leftTalonFX.setPosition(0);
-        rightTalonFX.setPosition(0);
+        rightTalonFX.setPosition(0); //Setting encoder to 0
 
         mm_req = new MotionMagicVoltage(0);
 
@@ -176,13 +176,7 @@ public class Elevator extends SubsystemBase {
             // stop();
         // } else {
             leftTalonFX.setControl(new VoltageOut(voltage).withEnableFOC(true));
-            rightTalonFX.setControl(new VoltageOut(voltage).withEnableFOC(true));
         // }
-
-        
-        // leftTalonFX.setVoltage(voltage);
-        // rightTalonFX.setVoltage(voltage);
-        leftTalonFX.setControl(new VoltageOut(voltage).withEnableFOC(true));
     }
 
     public void stop() {
