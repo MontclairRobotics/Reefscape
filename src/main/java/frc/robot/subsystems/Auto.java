@@ -55,7 +55,7 @@ import frc.robot.util.PoseUtils;
 
 public class Auto extends SubsystemBase {
 
-    public int estimatedScore = 0;
+    public int estimatedScore = 3;
     private String prevAutoString = "";
     private double prevProgressBar = 0;
     private ArrayList<PathPlannerPath> pathList = new ArrayList<PathPlannerPath>();
@@ -118,7 +118,7 @@ public class Auto extends SubsystemBase {
         timeStampPub.set(0);
     }
     public int calculateEstimatedScore(int estimatedScore) {
-        estimatedScore = 0;
+        estimatedScore = 3;
             for (int i = 2; i < prevAutoString.length(); i += 3) {
                 String coralLevelStr = prevAutoString.substring(i + 1, i + 2);
         
@@ -380,20 +380,30 @@ public class Auto extends SubsystemBase {
     }
 
     public void displayTimestampSeconds() {
-       double time = 0;
-       RobotConfig config = new RobotConfig(
-        61, 
-        6.883, 
-        new ModuleConfig(0.047, 5.092, 1.2, DCMotor.getKrakenX60Foc(1), 6.120, 2), 
-        0.616
-        );
-        PathPlannerPath path = pathList.get(0);
-        System.out.println(path);
-      // for(PathPlannerPath path: pathList) {
+        double time = 0;
+        
+        try {
+            if (pathList == null || pathList.isEmpty()) {
+                throw new IllegalStateException("Path list is empty or null.");
+            }
+    
+            RobotConfig config = new RobotConfig(
+                61, 
+                6.883, 
+                new ModuleConfig(0.047, 5.092, 1.2, DCMotor.getKrakenX60Foc(1), 6.120, 2), 
+                0.616
+            );
+    
+            PathPlannerPath path = pathList.get(0);
+            if (path == null) {
+                throw new IllegalStateException("First path in pathList is null.");
+            }
+    
+            System.out.println(path);
+    
             PathPlannerTrajectory traj = new PathPlannerTrajectory(path, new ChassisSpeeds(), path.getInitialHeading(), config);
             List<PathPlannerTrajectoryState> trajStates = traj.getStates();
-            time += trajStates.get(trajStates.size()-1).timeSeconds;
-            //System.out.println("Total Time: " + time);
+                //System.out.println("Total Time: " + time);
             // for(double t=0; t<.2; t +=.01) {
             //     System.out.println(t + "  Timed Pose: " + traj.sample(t).pose);
             //     System.out.println("Current Robot Pose: " + poseOnField);
@@ -403,14 +413,31 @@ public class Auto extends SubsystemBase {
             //         //System.out.println("Time: " + t + "\tfoundMatchPose: " + foundMatchPose);
             //     } 
             // }
-            for(PathPlannerTrajectoryState state: trajStates){
+            if (trajStates == null || trajStates.isEmpty()) {
+                throw new IllegalStateException("Trajectory states are empty or null.");
+            }
+    
+            time += trajStates.get(trajStates.size() - 1).timeSeconds;
+    
+            for (PathPlannerTrajectoryState state : trajStates) {
                 System.out.println("Time " + state.timeSeconds + "\t" + state.pose);
             }
-      // }
-
-       timeStampPub.set(time);
-       System.out.println("Time: " + time);
+    
+            timeStampPub.set(time);
+            System.out.println("Time: " + time);
+    
+        } catch (IndexOutOfBoundsException e) {
+            System.err.println("Error: Attempted to access an invalid index in pathList or trajStates. " + e.getMessage());
+        } catch (NullPointerException e) {
+            System.err.println("Error: Encountered a null reference. " + e.getMessage());
+        } catch (IllegalStateException e) {
+            System.err.println("Error: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("Unexpected error: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
+    
 
     public Command getAutoCommand() {
         return autoCmd;
