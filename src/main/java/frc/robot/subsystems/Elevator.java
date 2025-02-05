@@ -57,7 +57,6 @@ public class Elevator extends SubsystemBase {
 
     private Slot0Configs slot0Configs;
     private ElevatorFeedforward elevatorFeedforward;
-    private PIDController pidController;
     
 
     // Limit Switches
@@ -105,7 +104,6 @@ public class Elevator extends SubsystemBase {
         motionMagicConfigs.MotionMagicJerk = 1600; // Target jerk of 1600 rps/s/s (0.1 seconds)
 
         leftTalonFX.getConfigurator().apply(elevatorConfigs);
-        leftTalonFX.setInverted(false);
         rightTalonFX.setControl(new Follower(LEFT_MOTOR_ID, true));
 
         leftTalonFX.setNeutralMode(NeutralModeValue.Brake);
@@ -137,11 +135,11 @@ public class Elevator extends SubsystemBase {
         double leftDisplacement = (leftTalonFX.getPosition().getValueAsDouble()) * METERS_PER_ROTATION;
         double rightDisplacement = (rightTalonFX.getPosition().getValueAsDouble()) * METERS_PER_ROTATION;
 
-        // if (Math.abs(leftDisplacement - rightDisplacement) < 0.02) {
-        //     Elastic.sendNotification(new Notification(
-        //             NotificationLevel.WARNING, "Elevator Height Mismatch",
-        //             "The two elevator encoders give different values :(", 5000));
-        // }
+        if (Math.abs(leftDisplacement - rightDisplacement) < 0.06) { //TODO: lower when things get more reliable
+            Elastic.sendNotification(new Notification(
+                    NotificationLevel.WARNING, "Elevator Height Mismatch",
+                    "The two elevator encoders give different values :(", 5000));
+        }
 
         return (leftDisplacement + rightDisplacement) / 2.0;
     }
@@ -156,36 +154,29 @@ public class Elevator extends SubsystemBase {
      * 
      */
     public void joystickControl() {
-        SlewRateLimiter accelerationLimiter = new SlewRateLimiter(0.5); //TODO: actually set this
+        SlewRateLimiter accelerationLimiter = new SlewRateLimiter(4); //TODO: actually set this
         // final MotionMagicVoltage request = new MotionMagicVoltage(0)
         // .withSlot(0);
         
-        double voltage = Math.pow(-MathUtil.applyDeadband(RobotContainer.operatorController.getLeftY(), 0.04), 3)
-        * 12; //+ request.getFeedForwardMeasure().in(Units.Volts);
+        double voltage = Math.pow(-MathUtil.applyDeadband(RobotContainer.operatorController.getLeftY(), 0.04), 3) * 12;
 
-        voltage = MathUtil.clamp(voltage, -12, 12);
-        // accelerationLimiter.calculate(voltage);
-        //TODO: Check if the above line is correct
+        accelerationLimiter.calculate(voltage);
 
         double percentHeight = this.getHeight() / MAX_DISPLACEMENT;
         System.out.println(voltage);
         System.out.println("Percent Height: " + percentHeight);
-        if (percentHeight > 0.93 && voltage > 0) {
-            voltage = MathUtil.clamp(voltage, 0, ( 12 * (1 - percentHeight) * (100.0 / 7.0)));
-            //This clamps the voltage as it gets closer to the the top. 7 is because at 7% closer to the top is when it starts clamping
-        }
-        if (percentHeight < 0.07 && voltage < 0) {
-            voltage = MathUtil.clamp(voltage, -( 12 * (percentHeight) * (100.0 / 7.0)), 0);
-        }
 
-
-
+        voltage = MathUtil.clamp(voltage, -(12 * (percentHeight) * (100.0 / 7.0)) - 0.1, ( 12 * (1 - percentHeight) * (100.0 / 7.0)) + 0.1);
+        //This clamps the voltage as it gets closer to the the top. 7 is because at 7% closer to the top is when it starts clamping. The 0.1 is so it can still always move slowly until limit switch
+        
         // speed
         // if (isAtTop() && voltage > 0) {
             // stop();
         // } else if (isAtBottom() && voltage < 0) {
             // stop();
         // } else {
+            leftTalonFX.setControl(new VoltageOut(voltage).withEnableFOC(true));
+            rightTalonFX.setControl(new VoltageOut(voltage).withEnableFOC(true));
         // }
 
         
