@@ -119,20 +119,27 @@ public class Auto extends SubsystemBase {
     }
     public int calculateEstimatedScore(int estimatedScore) {
         estimatedScore = 3;
-            for (int i = 2; i < prevAutoString.length(); i += 3) {
-                String coralLevelStr = prevAutoString.substring(i + 1, i + 2);
         
-                if (coralLevels.contains(coralLevelStr)) {
-                    try {
-                        int coralLevel = getOutput(Integer.parseInt(coralLevelStr));
-                        estimatedScore += coralLevel; 
-                    }finally{
-
-                    }
+        for (int i = 2; i < prevAutoString.length(); i += 3) {
+            if (i + 1 >= prevAutoString.length()) { 
+                setFeedback("Error: Auto string is too short for a scoring level at index " + i, NotificationLevel.ERROR);
+                return estimatedScore;
+            }
+    
+            String coralLevelStr = prevAutoString.substring(i + 1, i + 2);
+    
+            if (coralLevels.contains(coralLevelStr)) {
+                try {
+                    int coralLevel = getOutput(Integer.parseInt(coralLevelStr));
+                    estimatedScore += coralLevel; 
+                } catch (NumberFormatException e) {
+                    setFeedback("Error: Invalid coral level '" + coralLevelStr + "' at index " + (i + 1), NotificationLevel.ERROR);
                 }
             }
-            return estimatedScore;
+        }
+        return estimatedScore;
     }
+    
     /* ArrayLists to hold the values of various waypoints */
     private ArrayList<String> startingLocations = new ArrayList<String>(
             Arrays.asList("S1", "S2", "S3", "S4", "S5"));
@@ -402,6 +409,9 @@ public class Auto extends SubsystemBase {
             System.out.println(path);
     
             PathPlannerTrajectory traj = new PathPlannerTrajectory(path, new ChassisSpeeds(), path.getInitialHeading(), config);
+            if (traj == null) {
+                throw new IllegalStateException("First path in pathList is null.");
+            }
             List<PathPlannerTrajectoryState> trajStates = traj.getStates();
                 //System.out.println("Total Time: " + time);
             // for(double t=0; t<.2; t +=.01) {
@@ -424,15 +434,33 @@ public class Auto extends SubsystemBase {
             }
     
             timeStampPub.set(time);
-            System.out.println("Time: " + time);
-    
+            System.out.println("Time: " + time);   
         } catch (IndexOutOfBoundsException e) {
             System.err.println("Error: Attempted to access an invalid index in pathList or trajStates. " + e.getMessage());
         } catch (NullPointerException e) {
             System.err.println("Error: Encountered a null reference. " + e.getMessage());
         } catch (IllegalStateException e) {
             System.err.println("Error: " + e.getMessage());
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
+            System.err.println("Error: " + e.getMessage());
+            e.printStackTrace();
+        }catch (ClassCastException ex5) {  
+            System.out.println("\n Exception Generated: "  
+                +  
+                ex5.getMessage());  
+            ex5.printStackTrace();  
+        }catch (NegativeArraySizeException ex2) {  
+            System.out.println("\n Exception Generated: "  
+                +  
+                ex2.getMessage());  
+            ex2.printStackTrace();  
+        }catch (ArrayStoreException ex6) {  
+            System.out.println("\n Exception Generated: "  
+                +  
+                ex6.getMessage());  
+            ex6.printStackTrace();  
+        }  
+        catch (Exception e) {
             System.err.println("Unexpected error: " + e.getMessage());
             e.printStackTrace();
         }
