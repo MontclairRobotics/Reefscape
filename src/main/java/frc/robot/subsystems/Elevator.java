@@ -8,6 +8,8 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.ControlRequest;
 import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.controls.PositionTorqueCurrentFOC;
+import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
@@ -28,6 +30,9 @@ import frc.robot.RobotContainer;
 import frc.robot.util.Elastic;
 
 import com.ctre.phoenix6.controls.VoltageOut;
+import com.ctre.phoenix6.controls.Follower;
+import com.ctre.phoenix6.controls.MotionMagicTorqueCurrentFOC;
+
 // import frc.robot.util.LimitSwitch;
 import frc.robot.util.Elastic.Notification;
 import frc.robot.util.Elastic.Notification.NotificationLevel;
@@ -40,6 +45,8 @@ public class Elevator extends SubsystemBase {
     private final double STARTING_HEIGHT = 0.9718607; // (meters) - distance between top bar and ground (no extension)
     private final double MAX_HEIGHT = 1.4211 + STARTING_HEIGHT + 0.041; // (meters) - distance between top bar and ground (fully extended)
     private final double MAX_DISPLACEMENT = MAX_HEIGHT - STARTING_HEIGHT; // (meters) - distance bewteen max height and starting height
+
+    private MotionMagicVoltage mm_req;
 
     private final int LEFT_MOTOR_ID = 20;
     private final int RIGHT_MOTOR_ID = 21;
@@ -86,25 +93,27 @@ public class Elevator extends SubsystemBase {
         .withKP(0).withKI(0).withKD(0)
         .withKS(0).withKV(0).withKA(0).withKG(0);
 
+        elevatorFeedforward = new ElevatorFeedforward(slot0Configs.kS, slot0Configs.kG, slot0Configs.kV);
+
         //Configures Elevator with Slot 0 Configs ^^
-        TalonFXConfiguration leftConf = new TalonFXConfiguration().withSlot0(slot0Configs);
-        TalonFXConfiguration rightConf = new TalonFXConfiguration().withSlot0(slot0Configs);
+        TalonFXConfiguration elevatorConfigs = new TalonFXConfiguration().withSlot0(slot0Configs);
 
         // set Motion Magic settings
-        // var motionMagicConfigs = elevatorConfigs.MotionMagic;
-        // motionMagicConfigs.MotionMagicCruiseVelocity = 80; // Target cruise velocity of 80 rps
-        // motionMagicConfigs.MotionMagicAcceleration = 160; // Target acceleration of 160 rps/s (0.5 seconds)
-        // motionMagicConfigs.MotionMagicJerk = 1600; // Target jerk of 1600 rps/s/s (0.1 seconds)
+        var motionMagicConfigs = elevatorConfigs.MotionMagic;
+        motionMagicConfigs.MotionMagicCruiseVelocity = 80; // Target cruise velocity of 80 rps
+        motionMagicConfigs.MotionMagicAcceleration = 160; // Target acceleration of 160 rps/s (0.5 seconds)
+        motionMagicConfigs.MotionMagicJerk = 1600; // Target jerk of 1600 rps/s/s (0.1 seconds)
 
-        leftTalonFX.getConfigurator().apply(leftConf);
+        leftTalonFX.getConfigurator().apply(elevatorConfigs);
         leftTalonFX.setInverted(false);
-        rightTalonFX.getConfigurator().apply(rightConf);
-        rightTalonFX.setInverted(true);
+        rightTalonFX.setControl(new Follower(LEFT_MOTOR_ID, true));
 
         leftTalonFX.setNeutralMode(NeutralModeValue.Brake);
         rightTalonFX.setNeutralMode(NeutralModeValue.Brake);
         leftTalonFX.setPosition(0);
         rightTalonFX.setPosition(0);
+
+        mm_req = new MotionMagicVoltage(0);
 
        //bottomLimit = new LimitSwitch(21, false); // TODO: get port
        //topLimit = new LimitSwitch(22, false);
@@ -183,12 +192,10 @@ public class Elevator extends SubsystemBase {
         // leftTalonFX.setVoltage(voltage);
         // rightTalonFX.setVoltage(voltage);
         leftTalonFX.setControl(new VoltageOut(voltage).withEnableFOC(true));
-        rightTalonFX.setControl(new VoltageOut(voltage).withEnableFOC(true));
     }
 
     public void stop() {
         leftTalonFX.setVoltage(0);
-        rightTalonFX.setVoltage(0);
     }
 
     private final SysIdRoutine routine = new SysIdRoutine(
@@ -212,7 +219,6 @@ public class Elevator extends SubsystemBase {
                     volts = Volts.of(0);  
                 }
                 leftTalonFX.setVoltage(volts.in(Volts));
-                rightTalonFX.setVoltage(volts.in(Volts));
             },
             null,
             this
@@ -225,15 +231,6 @@ public class Elevator extends SubsystemBase {
     
     public Command sysIdDynamic(SysIdRoutine.Direction direction) {
         return routine.dynamic(direction);
-    }
-
-    public void setHeightRegular(double height) {
-        double displacement = height - STARTING_HEIGHT;
-        displacement = MathUtil.clamp(displacement, 0, MAX_DISPLACEMENT);
-        pidController.setSetpoint(displacement);
-        double voltage = elevatorFeedforward.calculate(0) + pidController.calculate(getHeight());
-        leftTalonFX.setVoltage(voltage);
-        rightTalonFX.setVoltage(voltage);
     }
 
     /**
@@ -257,12 +254,8 @@ public class Elevator extends SubsystemBase {
 
         displacement = MathUtil.clamp(displacement, 0, MAX_DISPLACEMENT);
         double rotations = displacement * ROTATIONS_PER_METER; // Converts meters to rotations
-
-        final MotionMagicVoltage request = new MotionMagicVoltage(0)
-        .withFeedForward(0); //TUNE???? CONFUSTION :(  
         
-        leftTalonFX.setControl(request.withPosition(rotations).withFeedForward(0));
-        rightTalonFX.setControl(request.withPosition(rotations).withFeedForward(0));
+        leftTalonFX.setControl(mm_req.withPosition(rotations).withSlot(0).withEnableFOC(true));
     }
 
     // Commands

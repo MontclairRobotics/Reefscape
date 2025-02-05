@@ -58,10 +58,10 @@ public class RobotContainer {
     /* Operator bindings */
 
     //elevator height commands
-    operatorController.triangle().onTrue(Commands.run(() -> elevator.setHeightRegular(0.25))); //L1
-    operatorController.circle().onTrue(Commands.run(() -> elevator.setHeightRegular(0.5))); //L2
-    operatorController.cross().onTrue(Commands.run(() -> elevator.setHeightRegular(0.75))); //L3
-    operatorController.square().onTrue(Commands.run(() -> elevator.setHeightRegular(1))); //4
+    // operatorController.triangle().onTrue(Commands.run(() -> elevator.setHeightRegular(0.25))); //L1
+    // operatorController.circle().onTrue(Commands.run(() -> elevator.setHeightRegular(0.5))); //L2
+    // operatorController.cross().onTrue(Commands.run(() -> elevator.setHeightRegular(0.75))); //L3
+    // operatorController.square().onTrue(Commands.run(() -> elevator.setHeightRegular(1))); //4
     
     //roller intake/outtake commands
     operatorController.R1().onTrue(rollers.intakeAlgaeCommand());
