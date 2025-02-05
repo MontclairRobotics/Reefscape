@@ -1,10 +1,15 @@
 package frc.robot.subsystems;
 
+import static edu.wpi.first.units.Units.Volts;
+
+import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.ControlRequest;
 import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.controls.PositionTorqueCurrentFOC;
+import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
@@ -20,10 +25,14 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.PIDCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.RobotContainer;
 import frc.robot.util.Elastic;
 
 import com.ctre.phoenix6.controls.VoltageOut;
+import com.ctre.phoenix6.controls.Follower;
+import com.ctre.phoenix6.controls.MotionMagicTorqueCurrentFOC;
+
 // import frc.robot.util.LimitSwitch;
 import frc.robot.util.Elastic.Notification;
 import frc.robot.util.Elastic.Notification.NotificationLevel;
@@ -31,11 +40,13 @@ import frc.robot.util.Elastic.Notification.NotificationLevel;
 public class Elevator extends SubsystemBase {
 
     // Constants
-    private final double METERS_PER_ROTATION = 36*5/1000;
+    private final double METERS_PER_ROTATION = 36*5/1000.0 * (1.0/12.0);
     private final double ROTATIONS_PER_METER = 1/METERS_PER_ROTATION;
-    private final double MAX_HEIGHT = 2.1464524; // (meters) - distance between top bar and ground (fully extended)
     private final double STARTING_HEIGHT = 0.9718607; // (meters) - distance between top bar and ground (no extension)
+    private final double MAX_HEIGHT = 1.4211 + STARTING_HEIGHT + 0.041; // (meters) - distance between top bar and ground (fully extended)
     private final double MAX_DISPLACEMENT = MAX_HEIGHT - STARTING_HEIGHT; // (meters) - distance bewteen max height and starting height
+
+    private MotionMagicVoltage mm_req;
 
     private final int LEFT_MOTOR_ID = 20;
     private final int RIGHT_MOTOR_ID = 21;
@@ -46,7 +57,6 @@ public class Elevator extends SubsystemBase {
 
     private Slot0Configs slot0Configs;
     private ElevatorFeedforward elevatorFeedforward;
-    private PIDController pidController;
     
 
     // Limit Switches
@@ -82,23 +92,26 @@ public class Elevator extends SubsystemBase {
         .withKP(0).withKI(0).withKD(0)
         .withKS(0).withKV(0).withKA(0).withKG(0);
 
+        elevatorFeedforward = new ElevatorFeedforward(slot0Configs.kS, slot0Configs.kG, slot0Configs.kV);
+
         //Configures Elevator with Slot 0 Configs ^^
-        TalonFXConfiguration leftConf = new TalonFXConfiguration().withSlot0(slot0Configs);
-        TalonFXConfiguration rightConf = new TalonFXConfiguration().withSlot0(slot0Configs);
+        TalonFXConfiguration elevatorConfigs = new TalonFXConfiguration().withSlot0(slot0Configs);
 
         // set Motion Magic settings
-        // var motionMagicConfigs = elevatorConfigs.MotionMagic;
-        // motionMagicConfigs.MotionMagicCruiseVelocity = 80; // Target cruise velocity of 80 rps
-        // motionMagicConfigs.MotionMagicAcceleration = 160; // Target acceleration of 160 rps/s (0.5 seconds)
-        // motionMagicConfigs.MotionMagicJerk = 1600; // Target jerk of 1600 rps/s/s (0.1 seconds)
+        var motionMagicConfigs = elevatorConfigs.MotionMagic;
+        motionMagicConfigs.MotionMagicCruiseVelocity = 80; // Target cruise velocity of 80 rps
+        motionMagicConfigs.MotionMagicAcceleration = 160; // Target acceleration of 160 rps/s (0.5 seconds)
+        motionMagicConfigs.MotionMagicJerk = 1600; // Target jerk of 1600 rps/s/s (0.1 seconds)
 
-        leftTalonFX.getConfigurator().apply(leftConf);
-        leftTalonFX.setInverted(false);
-        rightTalonFX.getConfigurator().apply(rightConf);
-        rightTalonFX.setInverted(true);
+        leftTalonFX.getConfigurator().apply(elevatorConfigs);
+        rightTalonFX.setControl(new Follower(LEFT_MOTOR_ID, true));
 
         leftTalonFX.setNeutralMode(NeutralModeValue.Brake);
         rightTalonFX.setNeutralMode(NeutralModeValue.Brake);
+        leftTalonFX.setPosition(0);
+        rightTalonFX.setPosition(0); //Setting encoder to 0
+
+        mm_req = new MotionMagicVoltage(0);
 
        //bottomLimit = new LimitSwitch(21, false); // TODO: get port
        //topLimit = new LimitSwitch(22, false);
@@ -118,22 +131,22 @@ public class Elevator extends SubsystemBase {
      * @return Height of elevator in meters averaged between the two encoders
      *  if the difference is two much it will send a warning using elastic
      */
-    public double getDisplacedHeight() {
+    public double getHeight() {
         double leftDisplacement = (leftTalonFX.getPosition().getValueAsDouble()) * METERS_PER_ROTATION;
         double rightDisplacement = (rightTalonFX.getPosition().getValueAsDouble()) * METERS_PER_ROTATION;
 
-        if (Math.abs(leftDisplacement - rightDisplacement) < 0.02) {
+        if (Math.abs(leftDisplacement - rightDisplacement) < 0.06) { //TODO: lower when things get more reliable
             Elastic.sendNotification(new Notification(
                     NotificationLevel.WARNING, "Elevator Height Mismatch",
                     "The two elevator encoders give different values :(", 5000));
         }
 
-        return (leftDisplacement + rightDisplacement) / 2;
+        return (leftDisplacement + rightDisplacement) / 2.0;
     }
 
-    public double getHeight() {
-        return getDisplacedHeight() + STARTING_HEIGHT;
-    }
+    // public double getHeight() {
+    //     return getDisplacedHeight() + STARTING_HEIGHT;
+    // }
 
     /**
      * Manual Control of the elevator with the joystick
@@ -141,44 +154,68 @@ public class Elevator extends SubsystemBase {
      * 
      */
     public void joystickControl() {
-        SlewRateLimiter accelerationLimiter = new SlewRateLimiter(0.5); //TODO: actually set this
+        SlewRateLimiter accelerationLimiter = new SlewRateLimiter(4); //TODO: actually set this
         // final MotionMagicVoltage request = new MotionMagicVoltage(0)
         // .withSlot(0);
         
-        double voltage = Math.pow(-MathUtil.applyDeadband(RobotContainer.operatorController.getLeftY(), 0.04), 3)
-        * 12; //+ request.getFeedForwardMeasure().in(Units.Volts);
+        double voltage = Math.pow(-MathUtil.applyDeadband(RobotContainer.operatorController.getLeftY(), 0.04), 3) * 12;
 
-        voltage = MathUtil.clamp(voltage, -12, 12);
-        // accelerationLimiter.calculate(voltage);
-        //TODO: Check if the above line is correct
+        accelerationLimiter.calculate(voltage);
 
-        double percentHeight = this.getDisplacedHeight() / MAX_DISPLACEMENT;
+        double percentHeight = this.getHeight() / MAX_DISPLACEMENT;
         System.out.println(voltage);
         System.out.println("Percent Height: " + percentHeight);
-        // if (percentHeight > 0.93 && voltage > 0) {
-        //     voltage = MathUtil.clamp(voltage, 0, ( 12 * (1 - percentHeight) * (100.0 / 7.0)));
-        //     //This clamps the voltage as it gets closer to the the top. 7 is because at 7% closer to the top is when it starts clamping
-        // }
-        // if (percentHeight < 0.07 && voltage < 0) {
-        //     voltage = MathUtil.clamp(voltage, -( 12 * (percentHeight) * (100.0 / 7.0)), 0);
-        // }
 
+        voltage = MathUtil.clamp(voltage, -(12 * (percentHeight) * (100.0 / 7.0)) - 0.1, ( 12 * (1 - percentHeight) * (100.0 / 7.0)) + 0.1);
+        //This clamps the voltage as it gets closer to the the top. 7 is because at 7% closer to the top is when it starts clamping. The 0.1 is so it can still always move slowly until limit switch
+        
         // speed
         // if (isAtTop() && voltage > 0) {
             // stop();
         // } else if (isAtBottom() && voltage < 0) {
             // stop();
         // } else {
-            // leftTalonFX.setControl(new VoltageOut(voltage).withEnableFOC(true));
-            // rightTalonFX.setControl(new VoltageOut(voltage).withEnableFOC(true));
+            leftTalonFX.setControl(new VoltageOut(voltage).withEnableFOC(true));
         // }
-        leftTalonFX.setVoltage(voltage);
-        rightTalonFX.setVoltage(voltage);
     }
 
     public void stop() {
         leftTalonFX.setVoltage(0);
-        rightTalonFX.setVoltage(0);
+    }
+
+    private final SysIdRoutine routine = new SysIdRoutine(
+        new SysIdRoutine.Config(
+            null,        // Use default ramp rate (1 V/s)
+            Volts.of(1), // Use dynamic voltage of 1 V
+            null,        // Use default timeout (10 s)
+            // Log state with SignalLogger class
+            state -> SignalLogger.writeString("Elevator-State", state.toString())
+        ),
+        new SysIdRoutine.Mechanism(
+            volts -> {
+                double percentHeight = this.getHeight() / MAX_DISPLACEMENT;
+                System.out.println(volts);
+                System.out.println("Percent Height: " + percentHeight);
+                if (percentHeight > 0.93 && volts.in(Volts) > 0) {
+                    volts = Volts.of(0);
+                    //This clamps the voltage as it gets closer to the the top. 7 is because at 7% closer to the top is when it starts clamping
+                }
+                if (percentHeight < 0.07 && volts.in(Volts) < 0) {
+                    volts = Volts.of(0);  
+                }
+                leftTalonFX.setVoltage(volts.in(Volts));
+            },
+            null,
+            this
+        )
+    );
+
+    public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
+        return routine.quasistatic(direction);
+    }
+    
+    public Command sysIdDynamic(SysIdRoutine.Direction direction) {
+        return routine.dynamic(direction);
     }
 
     /**
@@ -202,12 +239,8 @@ public class Elevator extends SubsystemBase {
 
         displacement = MathUtil.clamp(displacement, 0, MAX_DISPLACEMENT);
         double rotations = displacement * ROTATIONS_PER_METER; // Converts meters to rotations
-
-        final MotionMagicVoltage request = new MotionMagicVoltage(0)
-        .withFeedForward(0); //TUNE???? CONFUSTION :(  
         
-        leftTalonFX.setControl(request.withPosition(rotations).withFeedForward(0));
-        rightTalonFX.setControl(request.withPosition(rotations).withFeedForward(0));
+        leftTalonFX.setControl(mm_req.withPosition(rotations).withSlot(0).withEnableFOC(true));
     }
 
     // Commands
@@ -225,21 +258,21 @@ public class Elevator extends SubsystemBase {
 
     @Override
     public void periodic() {
-        // heightPub.set(getHeight());
-        // if (RobotContainer.debugMode) {
-        //     rightHeightPub.set(rightTalonFX.getPosition().getValueAsDouble());
-        //     leftHeightPub.set(leftTalonFX.getPosition().getValueAsDouble());
-        //     topLimitPub.set(false);
-        //     bottomLimitPub.set(bottomLimit.get());
-        // }
-        // // Set encoders based on if the elevator is at the top of the bottom
+        heightPub.set(getHeight());
+        if (RobotContainer.debugMode) {
+            rightHeightPub.set(rightTalonFX.getPosition().getValueAsDouble());
+            leftHeightPub.set(leftTalonFX.getPosition().getValueAsDouble());
+            // topLimitPub.set(false);
+            // bottomLimitPub.set(bottomLimit.get());
+        }
+        // Set encoders based on if the elevator is at the top of the bottom
         // if (isAtTop()) {
-        //     leftTalonFX.setPosition(ELEVATOR_MAX_HEIGHT * ENCODER_ROTATIONS_TO_METERS_RATIO);
-        //     rightTalonFX.setPosition(ELEVATOR_MAX_HEIGHT * ENCODER_ROTATIONS_TO_METERS_RATIO);
+        //     leftTalonFX.setPosition(MAX_HEIGHT * ROTATIONS_PER_METER);
+        //     rightTalonFX.setPosition(MAX_HEIGHT * ROTATIONS_PER_METER);
         // }
         // if (isAtBottom()) {
         //     leftTalonFX.setPosition(0);
         //     rightTalonFX.setPosition(0);
-        // } TODO: check
+        // } //TODO: check
     }
 }
