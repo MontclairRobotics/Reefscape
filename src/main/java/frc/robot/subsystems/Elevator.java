@@ -2,8 +2,12 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.ControlRequest;
+import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.NeutralModeValue;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.networktables.DoublePublisher;
@@ -15,6 +19,8 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.RobotContainer;
 import frc.robot.util.Elastic;
+
+import com.ctre.phoenix6.controls.VoltageOut;
 // import frc.robot.util.LimitSwitch;
 import frc.robot.util.Elastic.Notification;
 import frc.robot.util.Elastic.Notification.NotificationLevel;
@@ -25,15 +31,15 @@ public class Elevator extends SubsystemBase {
     private final double METERS_PER_ROTATION = 36*5/1000;
     private final double ELEVATOR_MAX_HEIGHT = 2.0; // IN METERS
 
-    private final int LEFT_MOTOR_ID = 0;
-    private final int RIGHT_MOTOR_ID = 0;
+    private final int LEFT_MOTOR_ID = 20;
+    private final int RIGHT_MOTOR_ID = 21;
 
     // Motor Controllers/Encoders
     private TalonFX leftTalonFX;
     private TalonFX rightTalonFX;
 
-    private final double LEFT_ZERO = leftTalonFX.getPosition().getValueAsDouble();
-    private final double RIGHT_ZERO = rightTalonFX.getPosition().getValueAsDouble();
+    // private final double LEFT_ZERO = leftTalonFX.getPosition().getValueAsDouble();
+    // private final double RIGHT_ZERO = rightTalonFX.getPosition().getValueAsDouble();
 
     // Limit Switches
     // private LimitSwitch bottomLimit;
@@ -78,7 +84,8 @@ public class Elevator extends SubsystemBase {
         .withKS(0).withKV(0).withKA(0).withKG(0);
 
         //Configures Elevator with Slot 0 Configs ^^
-        TalonFXConfiguration elevatorConfigs = new TalonFXConfiguration().withSlot0(slot0Configs);
+        TalonFXConfiguration leftConf = new TalonFXConfiguration().withSlot0(slot0Configs);
+        TalonFXConfiguration rightConf = new TalonFXConfiguration().withSlot0(slot0Configs);
 
         // set Motion Magic settings
         // var motionMagicConfigs = elevatorConfigs.MotionMagic;
@@ -86,8 +93,13 @@ public class Elevator extends SubsystemBase {
         // motionMagicConfigs.MotionMagicAcceleration = 160; // Target acceleration of 160 rps/s (0.5 seconds)
         // motionMagicConfigs.MotionMagicJerk = 1600; // Target jerk of 1600 rps/s/s (0.1 seconds)
 
-        leftTalonFX.getConfigurator().apply(elevatorConfigs);
-        rightTalonFX.getConfigurator().apply(elevatorConfigs);
+        leftTalonFX.getConfigurator().apply(leftConf);
+        leftTalonFX.setInverted(false);
+        rightTalonFX.getConfigurator().apply(rightConf);
+        rightTalonFX.setInverted(true);
+
+        leftTalonFX.setNeutralMode(NeutralModeValue.Brake);
+        rightTalonFX.setNeutralMode(NeutralModeValue.Brake);
 
        //bottomLimit = new LimitSwitch(21, false); // TODO: get port
        //topLimit = new LimitSwitch(22, false);
@@ -108,8 +120,8 @@ public class Elevator extends SubsystemBase {
      *  if the difference is two much it will send a warning using elastic
      */
     public double getHeight() {
-        double leftHeight = (leftTalonFX.getPosition().getValueAsDouble() - LEFT_ZERO) * METERS_PER_ROTATION;
-        double rightHeight = (rightTalonFX.getPosition().getValueAsDouble() - RIGHT_ZERO) * METERS_PER_ROTATION;
+        double leftHeight = (leftTalonFX.getPosition().getValueAsDouble() /*- LEFT_ZERO*/) * METERS_PER_ROTATION;
+        double rightHeight = (rightTalonFX.getPosition().getValueAsDouble()/* - RIGHT_ZERO*/) * METERS_PER_ROTATION;
 
         if (Math.abs(leftHeight - rightHeight) < 0.02) {
             Elastic.sendNotification(new Notification(
@@ -127,22 +139,26 @@ public class Elevator extends SubsystemBase {
      */
     public void joystickControl() {
         SlewRateLimiter accelerationLimiter = new SlewRateLimiter(0.5); //TODO: actually set this
-        final MotionMagicVoltage request = new MotionMagicVoltage(0)
-        .withFeedForward(0); //TODO: TUNE??????? (confusion)
+        // final MotionMagicVoltage request = new MotionMagicVoltage(0)
+        // .withSlot(0);
         
-        double voltage = accelerationLimiter.calculate(Math.pow(MathUtil.applyDeadband(RobotContainer.operatorController.getLeftY(), 0.04), 3))
-            * 11 + request.getFeedForwardMeasure().in(Units.Volts);
+        double voltage = Math.pow(-MathUtil.applyDeadband(RobotContainer.operatorController.getLeftY(), 0.04), 3)
+        * 12; //+ request.getFeedForwardMeasure().in(Units.Volts);
+
+        voltage = MathUtil.clamp(voltage, -12, 12);
+        // accelerationLimiter.calculate(voltage);
         //TODO: Check if the above line is correct
-        // Multiplying by Max Voltage (12) (ll not 12 because also feedfoward and lazy) Uses a rate limiter feedwoward and a deadband
 
         double percentHeight = this.getHeight() / ELEVATOR_MAX_HEIGHT;
-        if (percentHeight > 0.93 && voltage > 0) {
-            voltage = MathUtil.clamp(voltage, 0, ( 12 * (1 - percentHeight) * (100.0 / 7.0)));
-            //This clamps the voltage as it gets closer to the the top. 7 is because at 7% closer to the top is when it starts clamping
-        }
-        if (percentHeight < 0.07 && voltage < 0) {
-            voltage = MathUtil.clamp(voltage, -( 12 * (percentHeight) * (100.0 / 7.0)), 0);
-        }
+        System.out.println(voltage);
+        System.out.println("Percent Height: " + percentHeight);
+        // if (percentHeight > 0.93 && voltage > 0) {
+        //     voltage = MathUtil.clamp(voltage, 0, ( 12 * (1 - percentHeight) * (100.0 / 7.0)));
+        //     //This clamps the voltage as it gets closer to the the top. 7 is because at 7% closer to the top is when it starts clamping
+        // }
+        // if (percentHeight < 0.07 && voltage < 0) {
+        //     voltage = MathUtil.clamp(voltage, -( 12 * (percentHeight) * (100.0 / 7.0)), 0);
+        // }
 
         // speed
         // if (isAtTop() && voltage > 0) {
@@ -150,9 +166,11 @@ public class Elevator extends SubsystemBase {
         // } else if (isAtBottom() && voltage < 0) {
             // stop();
         // } else {
-            leftTalonFX.setVoltage(voltage);
-            rightTalonFX.setVoltage(voltage);
+            // leftTalonFX.setControl(new VoltageOut(voltage).withEnableFOC(true));
+            // rightTalonFX.setControl(new VoltageOut(voltage).withEnableFOC(true));
         // }
+        leftTalonFX.setVoltage(voltage);
+        rightTalonFX.setVoltage(voltage);
     }
 
     public void stop() {
