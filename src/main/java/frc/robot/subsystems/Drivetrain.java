@@ -110,7 +110,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
      * 
     */
     public double getVelocityXFromController(){
-        double xInput = MathUtil.applyDeadband(RobotContainer.driverController.getLeftX(), 0.04);
+        double xInput = -MathUtil.applyDeadband(RobotContainer.driverController.getLeftX(), 0.04);
         return forwardLimiter.calculate(
             Math.pow(xInput, 3) * MAX_SPEED
             );
@@ -120,7 +120,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
      * 
     */
     public double getVelocityYFromController(){
-        double yInput = MathUtil.applyDeadband(RobotContainer.driverController.getLeftY(), 0.04);
+        double yInput = -MathUtil.applyDeadband(RobotContainer.driverController.getLeftY(), 0.04);
         return strafeLimiter.calculate(Math.pow(yInput, 3) * MAX_SPEED);
        
     }
@@ -135,6 +135,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
             Math.pow(rotInput,3) * MAX_ROT_SPEED
             );
         drive(getVelocityYFromController(), getVelocityXFromController(), rotVelocity, fieldRelative); //drives using supposed velocities, rot velocity, and field relative boolean
+        // drive(0, 1, 0, true);
     }
 
     public void drive(ChassisSpeeds speeds, boolean fieldRelative) {
@@ -145,15 +146,15 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
      * 
      * 
     */
-    public void drive(ChassisSpeeds chassisSpeeds){
-        //robot relative chassis speeds
-        SwerveRequest.ApplyRobotSpeeds request = new SwerveRequest.ApplyRobotSpeeds()
-        .withDriveRequestType(DriveRequestType.Velocity)
-        .withSteerRequestType(SteerRequestType.Position)
-        .withSpeeds(chassisSpeeds);
+    // public void drive(ChassisSpeeds chassisSpeeds){
+    //     //robot relative chassis speeds
+    //     SwerveRequest.ApplyRobotSpeeds request = new SwerveRequest.ApplyRobotSpeeds()
+    //     .withDriveRequestType(DriveRequestType.Velocity)
+    //     .withSteerRequestType(SteerRequestType.Position)
+    //     .withSpeeds(chassisSpeeds);
 
-        this.setControl(request);
-    }
+    //     this.setControl(request);
+    // }
 
     /* DRIVES USING CLOSED LOOP VELOCITY CONTROL 
      * 
@@ -163,8 +164,8 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     public void drive(double velocityX, double velocityY, double rotationalVelocity, boolean fieldRelative){
         if(fieldRelative){
             SwerveRequest.FieldCentric driveRequest = new SwerveRequest.FieldCentric() 
-                //.withDeadband(2) //TODO: set these
-                //.withRotationalDeadband(3) 
+                // .withDeadband(0.03) //TODO: set these
+                // .withRotationalDeadband(1) 
                 .withDriveRequestType(DriveRequestType.Velocity) //Velocity is closed-loop velocity control
                 .withSteerRequestType(SteerRequestType.Position); 
         
