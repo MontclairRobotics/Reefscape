@@ -59,7 +59,7 @@ public class Rollers extends SubsystemBase {
     }
 
     public Command outtakeCoralCommand() {
-        return Commands.run(() -> setSpeed(CORAL_OUTTAKE_SPEED), this)
+        return Commands.run(() -> setSpeed(-CORAL_OUTTAKE_SPEED), this)
                 .onlyWhile(() -> hasObject())
                 .finallyDo(() -> stopMotors());
     }
