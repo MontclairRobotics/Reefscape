@@ -9,6 +9,8 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.controller.ElevatorFeedforward;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTable;
@@ -16,6 +18,7 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.PIDCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.RobotContainer;
 import frc.robot.util.Elastic;
@@ -29,7 +32,10 @@ public class Elevator extends SubsystemBase {
 
     // Constants
     private final double METERS_PER_ROTATION = 36*5/1000;
-    private final double ELEVATOR_MAX_HEIGHT = 2.0; // IN METERS
+    private final double ROTATIONS_PER_METER = 1/METERS_PER_ROTATION;
+    private final double MAX_HEIGHT = 2.1464524; // (meters) - distance between top bar and ground (fully extended)
+    private final double STARTING_HEIGHT = 0.9718607; // (meters) - distance between top bar and ground (no extension)
+    private final double MAX_DISPLACEMENT = MAX_HEIGHT - STARTING_HEIGHT; // (meters) - distance bewteen max height and starting height
 
     private final int LEFT_MOTOR_ID = 20;
     private final int RIGHT_MOTOR_ID = 21;
@@ -38,8 +44,10 @@ public class Elevator extends SubsystemBase {
     private TalonFX leftTalonFX;
     private TalonFX rightTalonFX;
 
-    // private final double LEFT_ZERO = leftTalonFX.getPosition().getValueAsDouble();
-    // private final double RIGHT_ZERO = rightTalonFX.getPosition().getValueAsDouble();
+    private Slot0Configs slot0Configs;
+    private ElevatorFeedforward elevatorFeedforward;
+    private PIDController pidController;
+    
 
     // Limit Switches
     // private LimitSwitch bottomLimit;
@@ -70,16 +78,7 @@ public class Elevator extends SubsystemBase {
         leftTalonFX = new TalonFX(LEFT_MOTOR_ID, "rio"); //TODO: find ports
         rightTalonFX = new TalonFX(RIGHT_MOTOR_ID, "rio");
 
-        // set slot 0 gains
-        // Slot0Configs slot0Configs = elevatorConfigs.Slot0; // TODO: TUNE!!!!
-        // slot0Configs.kS = -1; // Add 0.25 V output to overcome static friction
-        // slot0Configs.kV = -1; // A velocity target of 1 rps results in 0.12 V output
-        // slot0Configs.kA = -1; // An acceleration of 1 rps/s requires 0.01 V output
-        // slot0Configs.kP = -1; // A position error of 2.5 rotations results in 12 V output
-        // slot0Configs.kI = -1; // no output for integrated error
-        // slot0Configs.kD = -1; // A velocity error of 1 rps results in 0.1 V output
-
-        Slot0Configs slot0Configs = new Slot0Configs()
+        slot0Configs = new Slot0Configs()
         .withKP(0).withKI(0).withKD(0)
         .withKS(0).withKV(0).withKA(0).withKG(0);
 
@@ -119,17 +118,21 @@ public class Elevator extends SubsystemBase {
      * @return Height of elevator in meters averaged between the two encoders
      *  if the difference is two much it will send a warning using elastic
      */
-    public double getHeight() {
-        double leftHeight = (leftTalonFX.getPosition().getValueAsDouble() /*- LEFT_ZERO*/) * METERS_PER_ROTATION;
-        double rightHeight = (rightTalonFX.getPosition().getValueAsDouble()/* - RIGHT_ZERO*/) * METERS_PER_ROTATION;
+    public double getDisplacedHeight() {
+        double leftDisplacement = (leftTalonFX.getPosition().getValueAsDouble()) * METERS_PER_ROTATION;
+        double rightDisplacement = (rightTalonFX.getPosition().getValueAsDouble()) * METERS_PER_ROTATION;
 
-        if (Math.abs(leftHeight - rightHeight) < 0.02) {
+        if (Math.abs(leftDisplacement - rightDisplacement) < 0.02) {
             Elastic.sendNotification(new Notification(
                     NotificationLevel.WARNING, "Elevator Height Mismatch",
                     "The two elevator encoders give different values :(", 5000));
         }
 
-        return (leftHeight + rightHeight) / 2;
+        return (leftDisplacement + rightDisplacement) / 2;
+    }
+
+    public double getHeight() {
+        return getDisplacedHeight() + STARTING_HEIGHT;
     }
 
     /**
@@ -149,7 +152,7 @@ public class Elevator extends SubsystemBase {
         // accelerationLimiter.calculate(voltage);
         //TODO: Check if the above line is correct
 
-        double percentHeight = this.getHeight() / ELEVATOR_MAX_HEIGHT;
+        double percentHeight = this.getDisplacedHeight() / MAX_DISPLACEMENT;
         System.out.println(voltage);
         System.out.println("Percent Height: " + percentHeight);
         // if (percentHeight > 0.93 && voltage > 0) {
@@ -180,23 +183,25 @@ public class Elevator extends SubsystemBase {
 
     /**
      * Sets height of the elevator in meters between 0 and the Max height of the elevator
-     * @param height Position you want to set the elevator to in meters
+     * @param height meters, the distance from top bar to floor
      */
     public void setHeight(double height) {
-        if (height > ELEVATOR_MAX_HEIGHT) {
+        double displacement = height - STARTING_HEIGHT;
+        if (displacement > MAX_DISPLACEMENT) {
             Elastic.sendNotification(new Notification(
                     NotificationLevel.WARNING, "Setting the elevator height outside of range",
                     "Somebody is messing up the button setting in robot container by setting the height to higher the range",
                     5000));
         }
-        if (height < 0) {
+        if (displacement < 0) {
             Elastic.sendNotification(new Notification(
                     NotificationLevel.WARNING, "Setting the elevator height outside of range",
                     "Somebody is messing up the button setting in robot container by setting the height to lower than 0 (who is doing this???! WTF??)",
                     5000));
         }
-        height = MathUtil.clamp(height, 0, ELEVATOR_MAX_HEIGHT);
-        double rotations = height / METERS_PER_ROTATION; // Converts meters to rotations
+
+        displacement = MathUtil.clamp(displacement, 0, MAX_DISPLACEMENT);
+        double rotations = displacement * ROTATIONS_PER_METER; // Converts meters to rotations
 
         final MotionMagicVoltage request = new MotionMagicVoltage(0)
         .withFeedForward(0); //TUNE???? CONFUSTION :(  
