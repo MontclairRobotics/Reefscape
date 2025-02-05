@@ -1,5 +1,8 @@
 package frc.robot.subsystems;
 
+import static edu.wpi.first.units.Units.Volts;
+
+import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.ControlRequest;
@@ -20,6 +23,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.PIDCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.RobotContainer;
 import frc.robot.util.Elastic;
 
@@ -31,10 +35,10 @@ import frc.robot.util.Elastic.Notification.NotificationLevel;
 public class Elevator extends SubsystemBase {
 
     // Constants
-    private final double METERS_PER_ROTATION = 36*5/1000;
+    private final double METERS_PER_ROTATION = 36*5/1000.0 * (1.0/12.0);
     private final double ROTATIONS_PER_METER = 1/METERS_PER_ROTATION;
-    private final double MAX_HEIGHT = 2.1464524; // (meters) - distance between top bar and ground (fully extended)
     private final double STARTING_HEIGHT = 0.9718607; // (meters) - distance between top bar and ground (no extension)
+    private final double MAX_HEIGHT = 1.4211 + STARTING_HEIGHT + 0.041; // (meters) - distance between top bar and ground (fully extended)
     private final double MAX_DISPLACEMENT = MAX_HEIGHT - STARTING_HEIGHT; // (meters) - distance bewteen max height and starting height
 
     private final int LEFT_MOTOR_ID = 20;
@@ -99,6 +103,8 @@ public class Elevator extends SubsystemBase {
 
         leftTalonFX.setNeutralMode(NeutralModeValue.Brake);
         rightTalonFX.setNeutralMode(NeutralModeValue.Brake);
+        leftTalonFX.setPosition(0);
+        rightTalonFX.setPosition(0);
 
        //bottomLimit = new LimitSwitch(21, false); // TODO: get port
        //topLimit = new LimitSwitch(22, false);
@@ -118,22 +124,22 @@ public class Elevator extends SubsystemBase {
      * @return Height of elevator in meters averaged between the two encoders
      *  if the difference is two much it will send a warning using elastic
      */
-    public double getDisplacedHeight() {
+    public double getHeight() {
         double leftDisplacement = (leftTalonFX.getPosition().getValueAsDouble()) * METERS_PER_ROTATION;
         double rightDisplacement = (rightTalonFX.getPosition().getValueAsDouble()) * METERS_PER_ROTATION;
 
-        if (Math.abs(leftDisplacement - rightDisplacement) < 0.02) {
-            Elastic.sendNotification(new Notification(
-                    NotificationLevel.WARNING, "Elevator Height Mismatch",
-                    "The two elevator encoders give different values :(", 5000));
-        }
+        // if (Math.abs(leftDisplacement - rightDisplacement) < 0.02) {
+        //     Elastic.sendNotification(new Notification(
+        //             NotificationLevel.WARNING, "Elevator Height Mismatch",
+        //             "The two elevator encoders give different values :(", 5000));
+        // }
 
-        return (leftDisplacement + rightDisplacement) / 2;
+        return (leftDisplacement + rightDisplacement) / 2.0;
     }
 
-    public double getHeight() {
-        return getDisplacedHeight() + STARTING_HEIGHT;
-    }
+    // public double getHeight() {
+    //     return getDisplacedHeight() + STARTING_HEIGHT;
+    // }
 
     /**
      * Manual Control of the elevator with the joystick
@@ -152,16 +158,18 @@ public class Elevator extends SubsystemBase {
         // accelerationLimiter.calculate(voltage);
         //TODO: Check if the above line is correct
 
-        double percentHeight = this.getDisplacedHeight() / MAX_DISPLACEMENT;
+        double percentHeight = this.getHeight() / MAX_DISPLACEMENT;
         System.out.println(voltage);
         System.out.println("Percent Height: " + percentHeight);
-        // if (percentHeight > 0.93 && voltage > 0) {
-        //     voltage = MathUtil.clamp(voltage, 0, ( 12 * (1 - percentHeight) * (100.0 / 7.0)));
-        //     //This clamps the voltage as it gets closer to the the top. 7 is because at 7% closer to the top is when it starts clamping
-        // }
-        // if (percentHeight < 0.07 && voltage < 0) {
-        //     voltage = MathUtil.clamp(voltage, -( 12 * (percentHeight) * (100.0 / 7.0)), 0);
-        // }
+        if (percentHeight > 0.93 && voltage > 0) {
+            voltage = MathUtil.clamp(voltage, 0, ( 12 * (1 - percentHeight) * (100.0 / 7.0)));
+            //This clamps the voltage as it gets closer to the the top. 7 is because at 7% closer to the top is when it starts clamping
+        }
+        if (percentHeight < 0.07 && voltage < 0) {
+            voltage = MathUtil.clamp(voltage, -( 12 * (percentHeight) * (100.0 / 7.0)), 0);
+        }
+
+
 
         // speed
         // if (isAtTop() && voltage > 0) {
@@ -169,16 +177,63 @@ public class Elevator extends SubsystemBase {
         // } else if (isAtBottom() && voltage < 0) {
             // stop();
         // } else {
-            // leftTalonFX.setControl(new VoltageOut(voltage).withEnableFOC(true));
-            // rightTalonFX.setControl(new VoltageOut(voltage).withEnableFOC(true));
         // }
-        leftTalonFX.setVoltage(voltage);
-        rightTalonFX.setVoltage(voltage);
+
+        
+        // leftTalonFX.setVoltage(voltage);
+        // rightTalonFX.setVoltage(voltage);
+        leftTalonFX.setControl(new VoltageOut(voltage).withEnableFOC(true));
+        rightTalonFX.setControl(new VoltageOut(voltage).withEnableFOC(true));
     }
 
     public void stop() {
         leftTalonFX.setVoltage(0);
         rightTalonFX.setVoltage(0);
+    }
+
+    private final SysIdRoutine routine = new SysIdRoutine(
+        new SysIdRoutine.Config(
+            null,        // Use default ramp rate (1 V/s)
+            Volts.of(1), // Use dynamic voltage of 1 V
+            null,        // Use default timeout (10 s)
+            // Log state with SignalLogger class
+            state -> SignalLogger.writeString("Elevator-State", state.toString())
+        ),
+        new SysIdRoutine.Mechanism(
+            volts -> {
+                double percentHeight = this.getHeight() / MAX_DISPLACEMENT;
+                System.out.println(volts);
+                System.out.println("Percent Height: " + percentHeight);
+                if (percentHeight > 0.93 && volts.in(Volts) > 0) {
+                    volts = Volts.of(0);
+                    //This clamps the voltage as it gets closer to the the top. 7 is because at 7% closer to the top is when it starts clamping
+                }
+                if (percentHeight < 0.07 && volts.in(Volts) < 0) {
+                    volts = Volts.of(0);  
+                }
+                leftTalonFX.setVoltage(volts.in(Volts));
+                rightTalonFX.setVoltage(volts.in(Volts));
+            },
+            null,
+            this
+        )
+    );
+
+    public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
+        return routine.quasistatic(direction);
+    }
+    
+    public Command sysIdDynamic(SysIdRoutine.Direction direction) {
+        return routine.dynamic(direction);
+    }
+
+    public void setHeightRegular(double height) {
+        double displacement = height - STARTING_HEIGHT;
+        displacement = MathUtil.clamp(displacement, 0, MAX_DISPLACEMENT);
+        pidController.setSetpoint(displacement);
+        double voltage = elevatorFeedforward.calculate(0) + pidController.calculate(getHeight());
+        leftTalonFX.setVoltage(voltage);
+        rightTalonFX.setVoltage(voltage);
     }
 
     /**
@@ -225,21 +280,21 @@ public class Elevator extends SubsystemBase {
 
     @Override
     public void periodic() {
-        // heightPub.set(getHeight());
-        // if (RobotContainer.debugMode) {
-        //     rightHeightPub.set(rightTalonFX.getPosition().getValueAsDouble());
-        //     leftHeightPub.set(leftTalonFX.getPosition().getValueAsDouble());
-        //     topLimitPub.set(false);
-        //     bottomLimitPub.set(bottomLimit.get());
-        // }
-        // // Set encoders based on if the elevator is at the top of the bottom
+        heightPub.set(getHeight());
+        if (RobotContainer.debugMode) {
+            rightHeightPub.set(rightTalonFX.getPosition().getValueAsDouble());
+            leftHeightPub.set(leftTalonFX.getPosition().getValueAsDouble());
+            // topLimitPub.set(false);
+            // bottomLimitPub.set(bottomLimit.get());
+        }
+        // Set encoders based on if the elevator is at the top of the bottom
         // if (isAtTop()) {
-        //     leftTalonFX.setPosition(ELEVATOR_MAX_HEIGHT * ENCODER_ROTATIONS_TO_METERS_RATIO);
-        //     rightTalonFX.setPosition(ELEVATOR_MAX_HEIGHT * ENCODER_ROTATIONS_TO_METERS_RATIO);
+        //     leftTalonFX.setPosition(MAX_HEIGHT * ROTATIONS_PER_METER);
+        //     rightTalonFX.setPosition(MAX_HEIGHT * ROTATIONS_PER_METER);
         // }
         // if (isAtBottom()) {
         //     leftTalonFX.setPosition(0);
         //     rightTalonFX.setPosition(0);
-        // } TODO: check
+        // } //TODO: check
     }
 }

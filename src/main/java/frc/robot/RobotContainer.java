@@ -58,10 +58,10 @@ public class RobotContainer {
     /* Operator bindings */
 
     //elevator height commands
-    operatorController.triangle().onTrue(elevator.setHeightCommand(.33)); //L1
-    operatorController.circle().onTrue(elevator.setHeightCommand(.81)); //L2
-    operatorController.cross().onTrue(elevator.setHeightCommand(1.21)); //L3
-    operatorController.square().onTrue(elevator.setHeightCommand(1.83)); //4
+    operatorController.triangle().onTrue(Commands.run(() -> elevator.setHeightRegular(0.25))); //L1
+    operatorController.circle().onTrue(Commands.run(() -> elevator.setHeightRegular(0.5))); //L2
+    operatorController.cross().onTrue(Commands.run(() -> elevator.setHeightRegular(0.75))); //L3
+    operatorController.square().onTrue(Commands.run(() -> elevator.setHeightRegular(1))); //4
     
     //roller intake/outtake commands
     operatorController.R1().onTrue(rollers.intakeAlgaeCommand());
@@ -69,10 +69,10 @@ public class RobotContainer {
     operatorController.L1().onTrue(rollers.intakeCoralCommand());
     operatorController.L2().onTrue(rollers.outtakeCoralCommand());
 
-    operatorController.triangle().whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
-    operatorController.circle().whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
-    operatorController.cross().whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
-    operatorController.square().whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
+    operatorController.triangle().whileTrue(elevator.sysIdDynamic(Direction.kReverse));
+    operatorController.circle().whileTrue(elevator.sysIdDynamic(Direction.kForward));
+    operatorController.cross().whileTrue(elevator.sysIdQuasistatic(Direction.kReverse));
+    operatorController.square().whileTrue(elevator.sysIdQuasistatic(Direction.kForward));
 
     //SignalLogger.setPath("/media/sda1/");
     operatorController.L2().onTrue(Commands.runOnce(() -> SignalLogger.start()));
