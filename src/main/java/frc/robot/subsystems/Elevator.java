@@ -159,17 +159,18 @@ public class Elevator extends SubsystemBase {
         
         double voltage = Math.pow(-MathUtil.applyDeadband(RobotContainer.operatorController.getLeftY(), 0.04), 3) * 12;
 
-        accelerationLimiter.calculate(voltage);
+        voltage = accelerationLimiter.calculate(voltage);
 
         double percentHeight = this.getHeight() / MAX_DISPLACEMENT;
         System.out.println(voltage);
         System.out.println("Percent Height: " + percentHeight);
 
-        voltage = MathUtil.clamp(voltage, -(12 * (percentHeight) * (100.0 / SLOW_DOWN_ZONE)) - SLOWEST_SPEED /*lowest voltage allowed*/,
-         ( 12 * (1 - percentHeight) * (100.0 / SLOW_DOWN_ZONE)) + SLOWEST_SPEED) /*highest voltage allowed*/;
+        voltage = MathUtil.clamp(voltage, -(12 * Math.pow((percentHeight * (100.0 / SLOW_DOWN_ZONE)), 3.0) - SLOWEST_SPEED), /*lowest voltage allowed*/
+         (12 * ((1 - percentHeight) * (100.0 / SLOW_DOWN_ZONE))) + SLOWEST_SPEED) /*highest voltage allowed*/;
         //This clamps the voltage as it gets closer to the the top or the bottom. The slow down zone is the area at the top or the bottom when things.
         //The slowest speed will allow the elevator to still go up and down no mater what as long it has not hit the limit switch 
-        
+        //Puting it to the power of 3 makes the slowdown more noticable
+
         // speed
         // if (isAtTop() && voltage > 0) {
             // stop();
