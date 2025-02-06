@@ -6,7 +6,6 @@ import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.ControlRequest;
-import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.PositionTorqueCurrentFOC;
 import com.ctre.phoenix6.controls.PositionVoltage;
@@ -15,7 +14,6 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ElevatorFeedforward;
-import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTable;
@@ -23,7 +21,6 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.PIDCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.RobotContainer;
@@ -45,6 +42,8 @@ public class Elevator extends SubsystemBase {
     private final double STARTING_HEIGHT = 0.9718607; // (meters) - distance between top bar and ground (no extension)
     private final double MAX_HEIGHT = 1.4211 + STARTING_HEIGHT + 0.041; // (meters) - distance between top bar and ground (fully extended)
     private final double MAX_DISPLACEMENT = MAX_HEIGHT - STARTING_HEIGHT; // (meters) - distance bewteen max height and starting height
+    private final double SLOW_DOWN_ZONE = 7.0; //The percent at the top and bottom of the elevator out of the hight of the elevator extention in which the elevator will slow down to avoid crashing during manual control
+    private final double SLOWEST_SPEED = 0.3; //(IN VOLTAGE) The lowest speed the elevator will go when it thinks it is all the way at the top or bottom of the elevator and is trying to go farther but has not yet hit the limit switch during manual control
 
     private MotionMagicVoltage mm_req;
 
@@ -85,7 +84,7 @@ public class Elevator extends SubsystemBase {
             // bottomLimitPub = debug.getBooleanTopic("Elevator Bottom Limit").publish();
         }
 
-        leftTalonFX = new TalonFX(LEFT_MOTOR_ID, "rio"); //TODO: find ports
+        leftTalonFX = new TalonFX(LEFT_MOTOR_ID, "rio");
         rightTalonFX = new TalonFX(RIGHT_MOTOR_ID, "rio");
 
         slot0Configs = new Slot0Configs()
@@ -144,7 +143,7 @@ public class Elevator extends SubsystemBase {
         return (leftDisplacement + rightDisplacement) / 2.0;
     }
 
-    // public double getHeight() {
+    // public double getTotalHeight() {
     //     return getDisplacedHeight() + STARTING_HEIGHT;
     // }
 
@@ -154,7 +153,7 @@ public class Elevator extends SubsystemBase {
      * 
      */
     public void joystickControl() {
-        SlewRateLimiter accelerationLimiter = new SlewRateLimiter(4); //TODO: actually set this
+        SlewRateLimiter accelerationLimiter = new SlewRateLimiter(3); //TODO: actually set this
         // final MotionMagicVoltage request = new MotionMagicVoltage(0)
         // .withSlot(0);
         
@@ -166,8 +165,10 @@ public class Elevator extends SubsystemBase {
         System.out.println(voltage);
         System.out.println("Percent Height: " + percentHeight);
 
-        voltage = MathUtil.clamp(voltage, -(12 * (percentHeight) * (100.0 / 7.0)) - 0.1, ( 12 * (1 - percentHeight) * (100.0 / 7.0)) + 0.1);
-        //This clamps the voltage as it gets closer to the the top. 7 is because at 7% closer to the top is when it starts clamping. The 0.1 is so it can still always move slowly until limit switch
+        voltage = MathUtil.clamp(voltage, -(12 * (percentHeight) * (100.0 / SLOW_DOWN_ZONE)) - SLOWEST_SPEED /*lowest voltage allowed*/,
+         ( 12 * (1 - percentHeight) * (100.0 / SLOW_DOWN_ZONE)) + SLOWEST_SPEED) /*highest voltage allowed*/;
+        //This clamps the voltage as it gets closer to the the top or the bottom. The slow down zone is the area at the top or the bottom when things.
+        //The slowest speed will allow the elevator to still go up and down no mater what as long it has not hit the limit switch 
         
         // speed
         // if (isAtTop() && voltage > 0) {

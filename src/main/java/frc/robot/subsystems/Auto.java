@@ -86,6 +86,7 @@ public class Auto extends SubsystemBase {
     Alliance prevAlliance = Alliance.Blue;
 
     public static Field2d field = new Field2d();
+    
     public static int getOutput(int x) {
         if (x == 1) {
             return 3;
