@@ -8,9 +8,9 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.Elevator;
 
-public class BottomLEDs extends LEDs{
+public class LEDControl extends LEDs{
 
-    public BottomLEDs() {
+    public LEDControl() {
         super();
 
     }
@@ -24,21 +24,12 @@ public class BottomLEDs extends LEDs{
     // physical LED strip on the robot.
     // AddressableLEDBufferView m_right = ledBuffer.createView(60, 119).reversed();
 
-    public void rainbowProgress() {
-        final LEDPattern m_rainbow = LEDPattern.rainbow(255, 128);
-        // final LEDPattern progress = LEDPattern
-        //         .progressMaskLayer(() -> RobotContainer.elevator.getHeight() / Elevator.ELEVATOR_MAX_HEIGHT);
-        // LEDPattern pattern = m_rainbow.mask(progress);
-
-        pattern.applyTo(ledBuffer);
-        led.setData(ledBuffer);
-
         // for later, trying to make the rainbow scroll ->
         // Map<Number, Color> maskSteps = Map.of(0, Color.kWhite, 0.5, Color.kBlack);
         // LEDPattern mask =
         // LEDPattern.steps(maskSteps).scrollAtRelativeSpeed(Units.Percent.per(Units.Second).of(0.25));
 
-    }
+    
 
     public void progressBar() {
         // LEDPattern progess = LEDPattern.progressMaskLayer(() -> Elevator.getHeight()

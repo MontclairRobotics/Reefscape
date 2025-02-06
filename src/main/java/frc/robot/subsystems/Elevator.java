@@ -42,8 +42,8 @@ public class Elevator extends SubsystemBase {
     // Constants
     private final double METERS_PER_ROTATION = 36*5/1000.0 * (1.0/12.0);
     private final double ROTATIONS_PER_METER = 1/METERS_PER_ROTATION;
-    private final double STARTING_HEIGHT = 0.9718607; // (meters) - distance between top bar and ground (no extension)
-    private final double MAX_HEIGHT = 1.4211 + STARTING_HEIGHT + 0.041; // (meters) - distance between top bar and ground (fully extended)
+    private final static double STARTING_HEIGHT = 0.9718607; // (meters) - distance between top bar and ground (no extension)
+    public final static double MAX_HEIGHT = 1.4211 + STARTING_HEIGHT + 0.041; // (meters) - distance between top bar and ground (fully extended)
     private final double MAX_DISPLACEMENT = MAX_HEIGHT - STARTING_HEIGHT; // (meters) - distance bewteen max height and starting height
 
     private MotionMagicVoltage mm_req;
