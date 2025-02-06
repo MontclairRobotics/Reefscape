@@ -50,7 +50,7 @@ public class LEDs extends SubsystemBase{
         return pattern;
     }
 
-    public static LEDPattern breathingPattern(boolean onRed) {
+    public static LEDPattern breathingPattern(boolean onRed, boolean startUp) {
         LEDPattern base;
         boolean noAlliance = false;
         if(DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get() == Alliance.Red) {
@@ -62,7 +62,7 @@ public class LEDs extends SubsystemBase{
         }
         if(! noAlliance) {
             LEDPattern pattern = base.breathe(Units.Seconds.of(5));
-        } else {
+        } else if(startUP) {
             LEDPattern pattern = base.blink(Units.Second.of(0.3));
         }
         
@@ -71,7 +71,7 @@ public class LEDs extends SubsystemBase{
     
     public static LEDPattern progress(){
         LEDPattern base = LEDPattern.rainbow(255,255);
-        LEDPattern m_progress = LEDPattern.progressMaskLayer(() ->RobotContainer.elevator.getHeight() / Elevator.MAX_HEIGHT);
+        LEDPattern m_progress = LEDPattern.progressMaskLayer(() -> RobotContainer.elevator.getHeight() / Elevator.MAX_HEIGHT);
         return m_progress;
     }
     public static Command runPattern(LEDPattern pattern){
