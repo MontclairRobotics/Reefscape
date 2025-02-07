@@ -4,7 +4,10 @@
 
 package frc.robot;
 
+import static edu.wpi.first.units.Units.MetersPerSecond;
+
 import com.ctre.phoenix6.SignalLogger;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -18,6 +21,7 @@ import frc.robot.subsystems.Auto;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Rollers;
+import frc.robot.util.TunerConstants;
 import frc.robot.vision.Limelight;
 
 
@@ -39,6 +43,8 @@ public class RobotContainer {
 
   public static Auto auto = new Auto();
 
+  public static Telemetry telemetryLogger = new Telemetry(TunerConstants.kSpeedAt12Volts.in(MetersPerSecond));
+
   //Alliance
   public static boolean isBlueAlliance;
 
@@ -58,7 +64,7 @@ public class RobotContainer {
     /* Operator bindings */
 
     //elevator height commands
-    // operatorController.triangle().onTrue(Commands.run(() -> elevator.setHeightRegular(0.25))); //L1
+    operatorController.triangle().whileTrue(Commands.run(() -> elevator.setHeight(elevator.MAX_EXTENSION/2.0 + elevator.STARTING_HEIGHT), elevator)); //L1
     // operatorController.circle().onTrue(Commands.run(() -> elevator.setHeightRegular(0.5))); //L2
     // operatorController.cross().onTrue(Commands.run(() -> elevator.setHeightRegular(0.75))); //L3
     // operatorController.square().onTrue(Commands.run(() -> elevator.setHeightRegular(1))); //4
@@ -69,14 +75,27 @@ public class RobotContainer {
     operatorController.L1().onTrue(rollers.intakeCoralCommand());
     operatorController.L2().onTrue(rollers.outtakeCoralCommand());
 
-    operatorController.triangle().whileTrue(elevator.sysIdDynamic(Direction.kReverse));
-    operatorController.circle().whileTrue(elevator.sysIdDynamic(Direction.kForward));
-    operatorController.cross().whileTrue(elevator.sysIdQuasistatic(Direction.kReverse));
-    operatorController.square().whileTrue(elevator.sysIdQuasistatic(Direction.kForward));
+    // operatorController.triangle().whileTrue(elevator.sysIdDynamic(Direction.kReverse));
+    // operatorController.circle().whileTrue(elevator.sysIdDynamic(Direction.kForward));
+    // operatorController.cross().whileTrue(elevator.sysIdQuasistatic(Direction.kReverse));
+    // operatorController.square().whileTrue(elevator.sysIdQuasistatic(Direction.kForward));
+
+    operatorController.circle().whileTrue(Commands.sequence(
+      Commands.runOnce(() -> SignalLogger.start()),
+      elevator.sysIdDynamic(Direction.kForward).until(elevator::isAtTop),
+      elevator.sysIdDynamic(Direction.kReverse).until(elevator::isAtBottom),
+      elevator.sysIdQuasistatic(Direction.kForward).until(elevator::isAtTop),
+      elevator.sysIdQuasistatic(Direction.kReverse).until(elevator::isAtBottom),
+      Commands.runOnce(() -> SignalLogger.stop())
+    ).onlyWhile(() -> {
+      return elevator.isSysIDSafe();
+    }));
 
     //SignalLogger.setPath("/media/sda1/");
     operatorController.L2().onTrue(Commands.runOnce(() -> SignalLogger.start()));
     operatorController.R2().onTrue(Commands.runOnce(() -> SignalLogger.stop()));
+
+    operatorController.cross().onTrue(Commands.runOnce(() -> elevator.setNeutralMode(NeutralModeValue.Coast)).ignoringDisable(true)).onFalse(Commands.runOnce(() -> elevator.setNeutralMode(NeutralModeValue.Brake)).ignoringDisable(true));
 
     /* DRIVER BINDINGS */
 
@@ -99,6 +118,7 @@ public class RobotContainer {
     driverController.L1().onTrue(drivetrain.alignToAngleRobotRelativeCommand(Rotation2d.fromDegrees(30), false));
     driverController.R1().onTrue(drivetrain.alignToAngleRobotRelativeCommand(Rotation2d.fromDegrees(-30), false));
 
+    drivetrain.registerTelemetry(telemetryLogger::telemeterize);    
   }
 
   public Command getAutonomousCommand() {
