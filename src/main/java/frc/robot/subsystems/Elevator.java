@@ -335,11 +335,29 @@ public class Elevator extends SubsystemBase {
         System.out.println(voltage);
         System.out.println("Percent Height: " + percentHeight);
         System.out.println("Elevator ff Voltage: " + elevatorFeedforward.calculate(0));
+
+        if (voltage < 0) {
+            if (percentHeight <= 0.009) {
+                voltage = 0;
+            } else if (percentHeight <= 0.07) {
+                voltage = voltage + (12 * Math.pow((percentHeight * (100.0 / SLOW_DOWN_ZONE)), 3.0)) - SLOWEST_SPEED;
+            }
+        }
+        if (voltage > 0) {
+            if (percentHeight >= 0.991) {
+                voltage = 0;
+            } else if (percentHeight >= 0.93) {
+                voltage = voltage - (12 * Math.pow((percentHeight * (100.0 / SLOW_DOWN_ZONE)), 3.0)) - SLOWEST_SPEED;
+            }
+        }
+
         voltage = voltage + elevatorFeedforward.calculate(0);
 
-        voltage = MathUtil.clamp(voltage, -(12 * Math.pow((percentHeight * (100.0 / SLOW_DOWN_ZONE)), 3.0)
-                - SLOWEST_SPEED), /* lowest voltage allowed */
-                (12 * ((1 - percentHeight) * (100.0 / SLOW_DOWN_ZONE))) + SLOWEST_SPEED) /* highest voltage allowed */;
+        voltage = MathUtil.clamp(voltage, -12, 12);
+
+        // voltage = MathUtil.clamp(voltage, -(12 * Math.pow((percentHeight * (100.0 / SLOW_DOWN_ZONE)), 3.0)
+        //         - SLOWEST_SPEED), /* lowest voltage allowed */
+        //         (12 * ((1 - percentHeight) * (100.0 / SLOW_DOWN_ZONE))) + SLOWEST_SPEED) /* highest voltage allowed */;
         // This clamps the voltage as it gets closer to the the top or the bottom. The
         // slow down zone is the area at the top or the bottom when things.
         // The slowest speed will allow the elevator to still go up and down no mater
