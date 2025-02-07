@@ -15,7 +15,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
-import frc.robot.leds.BottomLEDs;
+import frc.robot.leds.LEDControl;
 import frc.robot.leds.LEDs;
 import frc.robot.subsystems.Auto;
 import frc.robot.subsystems.Drivetrain;
@@ -38,7 +38,7 @@ public class RobotContainer {
   public static Drivetrain drivetrain = new Drivetrain();
   public static Elevator elevator = new Elevator();
   public static Limelight limelight = new Limelight("Camera");
-  public static BottomLEDs BottomLEDs = new BottomLEDs();
+  public static LEDControl ledControl = new LEDControl();
   public static Rollers rollers = new Rollers();
 
   public static Auto auto = new Auto();
@@ -59,7 +59,7 @@ public class RobotContainer {
     /*     Default commands */
     drivetrain.setDefaultCommand(drivetrain.driveJoystickInputCommand());
     elevator.setDefaultCommand(elevator.joystickControlCommand());
-    BottomLEDs.setDefaultCommand(BottomLEDs.playPatternCommand(LEDs.m_scrollingRainbow));
+    ledControl.setDefaultCommand(ledControl.playPatternCommand(LEDs.m_scrollingRainbow));
 
     /* Operator bindings */
 

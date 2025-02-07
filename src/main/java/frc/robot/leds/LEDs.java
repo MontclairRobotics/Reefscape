@@ -4,7 +4,10 @@ import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.LEDPattern;
+import edu.wpi.first.wpilibj.LEDPattern.GradientType;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -20,8 +23,6 @@ public class LEDs extends SubsystemBase{
     public static final LEDPattern m_rainbow = LEDPattern.rainbow(255, 128);
     public static final Distance kLedSpacing = Units.Meters.of(1 / 100.0);
     public static final LEDPattern m_scrollingRainbow = m_rainbow.scrollAtAbsoluteSpeed(Units.MetersPerSecond.of(1), kLedSpacing);
-   // public static LEDPattern m_progress = LEDPattern.progressMaskLayer(() -> RobotContainer.elevator.getHeight() /
-    //Elevator.ELEVATOR_MAX_HEIGHT);
     // public static final LEDPattern m_progressbar = LEDs.progressBar(Color.kRed);
     static AddressableLED led;
     static AddressableLEDBuffer ledBuffer;
@@ -35,14 +36,46 @@ public class LEDs extends SubsystemBase{
             led.start();
         }
     public static void scrollingRainbowProgress() {
-        //LEDPattern mask = LEDPattern.progressMaskLayer(() -> RobotContainer.elevator.getHeight() / Elevator.ELEVATOR_MAX_HEIGHT);
-        //pattern = m_rainbow.mask(mask);
-        pattern.applyTo(ledBuffer);
-        led.setData(ledBuffer);
+        
     }
 
+    public static LEDPattern holding() {
+        LEDPattern objectInArm = LEDPattern.solid(Color.kBlue);
+        return objectInArm;
+    }
+
+    public static LEDPattern shot() {
+        LEDPattern shotGamPiece = LEDPattern.solid(Color.kGreen);
+        LEDPattern pattern = shotGamPiece.blink(Units.Seconds.of(1.5));
+        return pattern;
+    }
+
+    public static LEDPattern breathingPattern(boolean onRed, boolean startUp) {
+        LEDPattern base;
+        boolean noAlliance = false;
+        if(DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get() == Alliance.Red) {
+            base = LEDPattern.gradient(GradientType.kDiscontinuous,Color.kRed, Color.kDarkRed);
+        } else if(DriverStation.getAlliance().isPresent()) {
+            base = LEDPattern.gradient(GradientType.kDiscontinuous,Color.kBlue, Color.kDarkBlue);
+        } else {
+            base = LEDPattern.solid(Color.kFirstRed);
+        }
+        if(! noAlliance) {
+            LEDPattern pattern = base.breathe(Units.Seconds.of(5));
+        } else if(startUP) {
+            LEDPattern pattern = base.blink(Units.Second.of(0.3));
+        }
+        
+        return pattern;
+    }
+    
+    public static LEDPattern progress(){
+        LEDPattern base = LEDPattern.rainbow(255,255);
+        LEDPattern m_progress = LEDPattern.progressMaskLayer(() -> RobotContainer.elevator.getHeight() / Elevator.MAX_HEIGHT);
+        return m_progress;
+    }
     public static Command runPattern(LEDPattern pattern){
-        return Commands.run(() -> pattern.applyTo(ledBuffer), RobotContainer.BottomLEDs);
+        return Commands.run(() -> pattern.applyTo(ledBuffer), RobotContainer.ledControl);
     }
 
     public void periodic(){
