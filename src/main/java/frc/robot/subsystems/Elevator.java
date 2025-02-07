@@ -42,15 +42,15 @@ import frc.robot.util.Tunable;
 public class Elevator extends SubsystemBase {
 
     // Constants
-    private final double METERS_PER_ROTATION = 36*5/1000.0 * (1.0/12.0);
-    private final double ROTATIONS_PER_METER = 1.0/METERS_PER_ROTATION;
-    public final double STARTING_HEIGHT = 0.9718607; // (meters) - distance between top bar and ground (no extension)
-    public final double MAX_EXTENSION = 1.4189392089843749; // (meters) - distance bewteen max height and starting height
-    public final double MAX_HEIGHT = MAX_EXTENSION + STARTING_HEIGHT; // (meters) - distance between top bar and ground (fully extended)
-    private final double SLOW_DOWN_ZONE = 7.0; //The percent at the top and bottom of the elevator out of the hight of the elevator extention in which the elevator will slow down to avoid crashing during manual control
-    private final double SLOWEST_SPEED = 0.3; //(IN VOLTAGE) The lowest speed the elevator will go when it thinks it is all the way at the top or bottom of the elevator and is trying to go farther but has not yet hit the limit switch during manual control
-    public final double MAX_VELOCITY_RPS = 100;
-    public final double MAX_ACCEL_RPS = 200;
+    private static final double METERS_PER_ROTATION = 36*5/1000.0 * (1.0/12.0);
+    private static final double ROTATIONS_PER_METER = 1.0/METERS_PER_ROTATION;
+    public static final double STARTING_HEIGHT = 0.9718607; // (meters) - distance between top bar and ground (no extension)
+    public static final double MAX_EXTENSION = 1.4189392089843749; // (meters) - distance bewteen max height and starting height
+    public static final double MAX_HEIGHT = MAX_EXTENSION + STARTING_HEIGHT; // (meters) - distance between top bar and ground (fully extended)
+    private static final double SLOW_DOWN_ZONE = 7.0; //The percent at the top and bottom of the elevator out of the hight of the elevator extention in which the elevator will slow down to avoid crashing during manual control
+    private static final double SLOWEST_SPEED = 0.3; //(IN VOLTAGE) The lowest speed the elevator will go when it thinks it is all the way at the top or bottom of the elevator and is trying to go farther but has not yet hit the limit switch during manual control
+    public static final double MAX_VELOCITY_RPS = 100;
+    public static final double MAX_ACCEL_RPS = 200;
 
     private MotionMagicVoltage mm_req;
 
@@ -67,6 +67,8 @@ public class Elevator extends SubsystemBase {
 
     private Slot0Configs slot0Configs;
     private ElevatorFeedforward elevatorFeedforward;
+
+    SlewRateLimiter accelerationLimiter;
 
     double sysIDVoltage = 0; //TODO delete
     
@@ -116,6 +118,11 @@ public class Elevator extends SubsystemBase {
         elevatorFeedforward = new ElevatorFeedforward(slot0Configs.kS, slot0Configs.kG, slot0Configs.kV);
 
         pidController = new ProfiledPIDController(8.2697, 0, 0.068398, new Constraints(MAX_VELOCITY_RPS, MAX_ACCEL_RPS));
+
+        /* Doesn't actually limit acceleration (change in velocity), 
+        limits change in voltage, which is directly proportional to change in velocity */
+        accelerationLimiter = new SlewRateLimiter(5); //TODO: actually set this
+        
         //Configures Elevator with Slot 0 Configs ^^
         TalonFXConfiguration elevatorConfigs = new TalonFXConfiguration().withSlot0(slot0Configs);
 
@@ -232,7 +239,7 @@ public class Elevator extends SubsystemBase {
      * 
      */
     public void joystickControl() {
-        SlewRateLimiter accelerationLimiter = new SlewRateLimiter(3); //TODO: actually set this
+        
         // final MotionMagicVoltage request = new MotionMagicVoltage(0)
         // .withSlot(0);
         
@@ -324,6 +331,15 @@ public class Elevator extends SubsystemBase {
     
     public Command sysIdDynamic(SysIdRoutine.Direction direction) {
         return routine.dynamic(direction);
+    }
+
+    /**
+     * Resets the encoders to a rotation. USE CAREFULLY
+     * @param rotationValue
+     */
+    public void resetEncoders(double rotationValue) {
+        leftTalonFX.setPosition(rotationValue);
+        rightTalonFX.setPosition(rotationValue);
     }
 
     /**

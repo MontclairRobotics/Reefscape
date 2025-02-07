@@ -91,6 +91,8 @@ public class RobotContainer {
       return elevator.isSysIDSafe();
     }));
 
+    operatorController.touchpad().onTrue(Commands.runOnce(() -> elevator.resetEncoders(0)));
+
     //SignalLogger.setPath("/media/sda1/");
     operatorController.L2().onTrue(Commands.runOnce(() -> SignalLogger.start()));
     operatorController.R2().onTrue(Commands.runOnce(() -> SignalLogger.stop()));

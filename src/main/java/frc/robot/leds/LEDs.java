@@ -50,6 +50,8 @@ public class LEDs extends SubsystemBase{
         return pattern;
     }
 
+    // TODO This isn't implemented properly, you're returning the contents of the instance variable
+    // pattern, not the contants of the local variable created here
     public static LEDPattern breathingPattern(boolean onRed, boolean startUp) {
         LEDPattern base;
         boolean noAlliance = false;
@@ -62,7 +64,7 @@ public class LEDs extends SubsystemBase{
         }
         if(! noAlliance) {
             LEDPattern pattern = base.breathe(Units.Seconds.of(5));
-        } else if(startUP) {
+        } else if(startUp) {
             LEDPattern pattern = base.blink(Units.Second.of(0.3));
         }
         
