@@ -2,6 +2,7 @@ package frc.robot.subsystems;
 import frc.robot.RobotContainer;
 import frc.robot.util.TunerConstants;
 import frc.robot.util.TunerConstants.TunerSwerveDrivetrain;
+import frc.robot.util.simulation.MapleSimSwerveDrivetrain;
 
 import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Volts;
@@ -9,8 +10,10 @@ import static edu.wpi.first.units.Units.Volts;
 import java.util.function.Supplier;
 
 import com.ctre.phoenix6.SignalLogger;
+import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveModule.SteerRequestType;
+import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.PIDConstants;
@@ -25,10 +28,13 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
@@ -92,11 +98,18 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
             TunerConstants.odometryUpdateFrequency, 
             TunerConstants.odometryStandardDeviation, 
             TunerConstants.visionStandardDeviation, 
-            TunerConstants.FrontLeft, 
-            TunerConstants.FrontRight, 
-            TunerConstants.BackLeft, 
-            TunerConstants.BackRight
+            MapleSimSwerveDrivetrain.regulateModuleConstantsForSimulation(
+                new SwerveModuleConstants<?, ?, ?>[]{ 
+                    TunerConstants.FrontLeft, 
+                    TunerConstants.FrontRight, 
+                    TunerConstants.BackLeft, 
+                    TunerConstants.BackRight 
+                }
+            )
         );
+        if (Utils.isSimulation()) {
+            startSimThread();
+        }
 
         thetaController.setTolerance(1 * Math.PI / 180); //degrees converted to radians
         configurePathPlanner();
@@ -534,4 +547,29 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         //     });
         // }
     }
+
+    private Notifier m_simNotifier = null;
+    private MapleSimSwerveDrivetrain mapleSimSwerveDrivetrain = null;
+    @SuppressWarnings("unchecked")
+    private void startSimThread() {
+        mapleSimSwerveDrivetrain = new MapleSimSwerveDrivetrain(
+                Units.Seconds.of(0.002),
+                // TODO: modify the following constants according to your robot
+                Units.Pounds.of(60), // robot weight
+                Units.Inches.of(35.5), // bumper length
+                Units.Inches.of(35.5), // bumper width
+                DCMotor.getKrakenX60Foc(1), // drive motor type
+                DCMotor.getKrakenX60Foc(1), // steer motor type
+                1.2, // wheel COF
+                getModuleLocations(),
+                getPigeon2(),
+                getModules(),
+                TunerConstants.FrontLeft,
+                TunerConstants.FrontRight,
+                TunerConstants.BackLeft,
+                TunerConstants.BackRight);
+        /* Run simulation at a faster rate so PID gains behave more reasonably */
+        m_simNotifier = new Notifier(mapleSimSwerveDrivetrain::update);
+        m_simNotifier.startPeriodic(0.002);
+     }
 }
