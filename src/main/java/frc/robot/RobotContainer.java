@@ -6,7 +6,9 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.MetersPerSecond;
 
+import com.ctre.phoenix6.Orchestra;
 import com.ctre.phoenix6.SignalLogger;
+import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -21,6 +23,9 @@ import frc.robot.subsystems.Auto;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Rollers;
+import frc.robot.util.Elastic;
+import frc.robot.util.Elastic.Notification;
+import frc.robot.util.Elastic.Notification.NotificationLevel;
 import frc.robot.util.TunerConstants;
 import frc.robot.vision.Limelight;
 
@@ -40,10 +45,10 @@ public class RobotContainer {
   public static Limelight limelight = new Limelight("Camera");
   public static LEDControl ledControl = new LEDControl();
   public static Rollers rollers = new Rollers();
-
+  public static Orchestra orchestra = new Orchestra();
   public static Auto auto = new Auto();
 
-  public static Telemetry telemetryLogger = new Telemetry(TunerConstants.kSpeedAt12Volts.in(MetersPerSecond));
+  //public static Telemetry telemetryLogger = new Telemetry(TunerConstants.kSpeedAt12Volts.in(MetersPerSecond));
 
   //Alliance
   public static boolean isBlueAlliance;
@@ -55,7 +60,11 @@ public class RobotContainer {
   }
 
   private void configureBindings() {
-    
+
+    orchestra.addInstrument(elevator.leftTalonFX);
+    orchestra.addInstrument(elevator.rightTalonFX);
+    operatorController.R2().onTrue(playMusic("SevenNationArmy.chrp")).onFalse(stopMusic());
+
     /*     Default commands */
     drivetrain.setDefaultCommand(drivetrain.driveJoystickInputCommand());
     elevator.setDefaultCommand(elevator.joystickControlCommand());
@@ -70,10 +79,10 @@ public class RobotContainer {
     // operatorController.square().onTrue(Commands.run(() -> elevator.setHeightRegular(1))); //4
     
     //roller intake/outtake commands
-    operatorController.R1().onTrue(rollers.intakeAlgaeCommand());
-    operatorController.R2().onTrue(rollers.outtakeAlgaeCommand());
-    operatorController.L1().onTrue(rollers.intakeCoralCommand());
-    operatorController.L2().onTrue(rollers.outtakeCoralCommand());
+    // operatorController.R1().onTrue(rollers.intakeAlgaeCommand());
+    // operatorController.R2().onTrue(rollers.outtakeAlgaeCommand());
+    // operatorController.L1().onTrue(rollers.intakeCoralCommand());
+    // operatorController.L2().onTrue(rollers.outtakeCoralCommand());
 
     // operatorController.triangle().whileTrue(elevator.sysIdDynamic(Direction.kReverse));
     // operatorController.circle().whileTrue(elevator.sysIdDynamic(Direction.kForward));
@@ -94,8 +103,8 @@ public class RobotContainer {
     operatorController.touchpad().onTrue(Commands.runOnce(() -> elevator.resetEncoders(0)));
 
     //SignalLogger.setPath("/media/sda1/");
-    operatorController.L2().onTrue(Commands.runOnce(() -> SignalLogger.start()));
-    operatorController.R2().onTrue(Commands.runOnce(() -> SignalLogger.stop()));
+    // operatorController.L2().onTrue(Commands.runOnce(() -> SignalLogger.start()));
+    // operatorController.R2().onTrue(Commands.runOnce(() -> SignalLogger.stop()));
 
     operatorController.cross().onTrue(Commands.runOnce(() -> elevator.setNeutralMode(NeutralModeValue.Coast)).ignoringDisable(true)).onFalse(Commands.runOnce(() -> elevator.setNeutralMode(NeutralModeValue.Brake)).ignoringDisable(true));
 
@@ -120,7 +129,32 @@ public class RobotContainer {
     driverController.L1().onTrue(drivetrain.alignToAngleRobotRelativeCommand(Rotation2d.fromDegrees(30), false));
     driverController.R1().onTrue(drivetrain.alignToAngleRobotRelativeCommand(Rotation2d.fromDegrees(-30), false));
 
-    drivetrain.registerTelemetry(telemetryLogger::telemeterize);    
+   // drivetrain.registerTelemetry(telemetryLogger::telemeterize);    
+  }
+
+  /* MUSIC */
+  public void loadMusic(String filepath) {
+    //attempt to load music
+    var status = orchestra.loadMusic(filepath);
+    //send error if it doesn't load
+    if(!status.isOK()) {
+      Elastic.sendNotification(new Notification(
+        NotificationLevel.WARNING, "Music not loading",
+        "",
+        5000
+      ));
+    }
+  }
+
+  public Command playMusic(String filepath) {
+    return Commands.runOnce(() -> {
+      loadMusic(filepath);
+      orchestra.play();
+    });
+  }
+
+  public Command stopMusic() {
+    return Commands.runOnce(() -> orchestra.stop());
   }
 
   public Command getAutonomousCommand() {
