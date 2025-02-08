@@ -337,13 +337,9 @@ public class Elevator extends SubsystemBase {
      * 
      */
     public void joystickControl() {
-
-        // final MotionMagicVoltage request = new MotionMagicVoltage(0)
-        // .withSlot(0);
-
         double voltage = Math.pow(-MathUtil.applyDeadband(RobotContainer.operatorController.getLeftY(), 0.04), 3) * 12;
 
-        // voltage = accelerationLimiter.calculate(voltage);
+        voltage = accelerationLimiter.calculate(voltage);
 
         double percentHeight = this.getExtension() / MAX_EXTENSION;
         // System.out.println(voltage);
@@ -354,20 +350,18 @@ public class Elevator extends SubsystemBase {
             if (percentHeight <= 0.004) {
                 voltage = 0;
                 accelerationLimiter.reset(0);
-                System.out.println("At bottom!---------------------");
             } else if (percentHeight <= 0.07) {
-                System.out.println("Adding " + ((12 * Math.pow((percentHeight * (100.0 / SLOW_DOWN_ZONE)), 3.0)) - SLOWEST_SPEED));
-                voltage = Math.max(voltage, (-12 * Math.pow((percentHeight * (100.0 / SLOW_DOWN_ZONE)), 3.0)) - SLOWEST_SPEED);
+                voltage = Math.max(voltage, (-12 * Math.pow((percentHeight * (100.0 / SLOW_DOWN_ZONE)), 3.2)) - SLOWEST_SPEED);
             }
         }
-        // if (voltage > 0) {
-        //     if (percentHeight >= 0.996) {
-        //         voltage = 0;
-        //         accelerationLimiter.reset(0);
-        //     } else if (percentHeight >= 0.93) {
-        //         voltage = Math.min(voltage, (12 * Math.pow((percentHeight * (100.0 / SLOW_DOWN_ZONE)), 3.0)) + SLOWEST_SPEED);
-        //     }
-        // }
+        if (voltage > 0) {
+            if (percentHeight >= 0.996) {
+                voltage = 0;
+                accelerationLimiter.reset(0);
+            } else if (percentHeight >= 0.93) {
+                voltage = Math.min(voltage, (12 * Math.pow((percentHeight * (100.0 / SLOW_DOWN_ZONE)), 3.2)) + SLOWEST_SPEED);
+            }
+        }
 
         voltage = voltage + elevatorFeedforward.calculate(0);
 
