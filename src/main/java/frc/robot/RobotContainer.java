@@ -73,7 +73,7 @@ public class RobotContainer {
     /* Operator bindings */
 
     //elevator height commands
-    operatorController.triangle().whileTrue(Commands.run(() -> elevator.setHeight(elevator.MAX_EXTENSION/2.0 + elevator.STARTING_HEIGHT), elevator)); //L1
+    operatorController.triangle().whileTrue(Commands.run(() -> elevator.setHeight(1.7), elevator)); //L1 //66.93 inches
     // operatorController.circle().onTrue(Commands.run(() -> elevator.setHeightRegular(0.5))); //L2
     // operatorController.cross().onTrue(Commands.run(() -> elevator.setHeightRegular(0.75))); //L3
     // operatorController.square().onTrue(Commands.run(() -> elevator.setHeightRegular(1))); //4
