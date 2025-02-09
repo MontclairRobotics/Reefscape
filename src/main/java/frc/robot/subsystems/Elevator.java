@@ -339,7 +339,7 @@ public class Elevator extends SubsystemBase {
     public void joystickControl() {
         double voltage = Math.pow(-MathUtil.applyDeadband(RobotContainer.operatorController.getLeftY(), 0.04), 3) * 12;
 
-        voltage = accelerationLimiter.calculate(voltage);
+        // voltage = accelerationLimiter.calculate(voltage);
 
         double percentHeight = this.getExtension() / MAX_EXTENSION;
         // System.out.println(voltage);
