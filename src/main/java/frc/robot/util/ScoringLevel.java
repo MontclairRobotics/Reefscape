@@ -1,15 +1,17 @@
 package frc.robot.util;
 
 public enum ScoringLevel {
-    L4 (0),
-    L3 (0),
-    L2 (0),
-    L1 (0);
+    L4 (0,0),
+    L3 (0,0),
+    L2 (0,0),
+    L1 (0,0);
 
     private double height;
+    private double angle;
 
-    ScoringLevel(double height) {
+    ScoringLevel(double height, double angle) {
         this.height = height;
+        this.angle = angle;
     }
 
     public ScoringLevel fromInt(int x){
@@ -22,7 +24,7 @@ public enum ScoringLevel {
         return null;
     }
 
-    public ScoringLevel fromString(String s){
+    public static ScoringLevel fromString(String s){
         switch(s) {
             case "4": return L4;
             case "3": return L3;
@@ -34,6 +36,10 @@ public enum ScoringLevel {
 
     public double getHeight() {
         return height;
+    }
+
+    public double getAngle() {
+        return angle;
     }
 
 }

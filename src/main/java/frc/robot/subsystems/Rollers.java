@@ -12,9 +12,9 @@ public class Rollers extends SubsystemBase {
     private SparkMax rightMotor;
     private SparkMax leftMotor;
     public final double CORAL_INTAKE_SPEED = 1;
-    public final double CORAL_OUTTAKE_SPEED = 1;
+    public final double CORAL_OUTTAKE_SPEED = -1;
     public final double ALGAE_INTAKE_SPEED = 0.5;
-    public final double ALGAE_OUTTAKE_SPEED = 0.5;
+    public final double ALGAE_OUTTAKE_SPEED = -0.5;
     private BreakBeam breakBeam = new BreakBeam(0, false);
 
     public Rollers() {
@@ -40,6 +40,11 @@ public class Rollers extends SubsystemBase {
         leftMotor.stopMotor();
     }
 
+    public Command autoShoot() {
+        return Commands.run(() -> setSpeed(ALGAE_OUTTAKE_SPEED))
+        .withTimeout(0.2);
+    }
+    
     public Command intakeAlgaeCommand() {
         return Commands.run(() -> setSpeed(ALGAE_INTAKE_SPEED), this)
                 .until(() -> hasObject())
@@ -47,7 +52,7 @@ public class Rollers extends SubsystemBase {
     }
 
     public Command outtakeAlgaeCommand() {
-        return Commands.run(() -> setSpeed(-ALGAE_OUTTAKE_SPEED), this)
+        return Commands.run(() -> setSpeed(ALGAE_OUTTAKE_SPEED), this)
                 .onlyWhile(() -> hasObject())
                 .finallyDo(() -> stopMotors());
     }
@@ -59,7 +64,7 @@ public class Rollers extends SubsystemBase {
     }
 
     public Command outtakeCoralCommand() {
-        return Commands.run(() -> setSpeed(-CORAL_OUTTAKE_SPEED), this)
+        return Commands.run(() -> setSpeed(CORAL_OUTTAKE_SPEED), this)
                 .onlyWhile(() -> hasObject())
                 .finallyDo(() -> stopMotors());
     }

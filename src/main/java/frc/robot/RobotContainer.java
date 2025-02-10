@@ -10,6 +10,7 @@ import com.ctre.phoenix6.Orchestra;
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.pathplanner.lib.auto.NamedCommands;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -60,6 +61,18 @@ public class RobotContainer {
   }
 
   private void configureBindings() {
+
+    /* NAMED COMMANDS */
+        NamedCommands.registerCommand(
+            "elevator", 
+            elevator.setHeightCommand(auto.autoElevatorHeight)
+        );
+
+        //TODO: Make this actually move the arm
+        NamedCommands.registerCommand(
+            "arm",
+            Commands.none()
+        );
 
     orchestra.addInstrument(elevator.leftTalonFX);
     orchestra.addInstrument(elevator.rightTalonFX);
