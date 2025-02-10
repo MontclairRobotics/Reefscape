@@ -1,5 +1,6 @@
 package frc.robot.subsystems;
 
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 import edu.wpi.first.math.controller.ProfiledPIDController;
@@ -44,6 +45,9 @@ public class Wrist extends SubsystemBase {
         largeWristAngle = encoder.getDistance();
         smallWristAngle = (largeWristAngle * (30.0/14.0)) + 30;
         updatePID();
-        
+        if(encoder.getDistance() > 180 || 360 > encoder.getDistance()){
+            wristMotor.stopMotor();
+        }
+        SmartDashboard.putNumber("Wrist Angle", (largeWristAngle + smallWristAngle));
     }
 }
