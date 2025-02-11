@@ -112,21 +112,21 @@ public class Auto extends SubsystemBase {
     }
 
     public Auto() {
-            new Thread(() -> {
-                while (true) {
-                    String newAutoString = stringSub.get("");
-                    if (!newAutoString.equals(prevAutoString)) {
-                        System.out.println("Received Auto String: " + newAutoString);
-                        prevAutoString = newAutoString;
-                        validateAndCreatePaths(newAutoString);
-                    }
-                    try {
-                        Thread.sleep(500); // Check for updates every 500ms
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+        new Thread(() -> {
+            while (true) {
+                String newAutoString = stringSub.get("");
+                if (!newAutoString.equals(prevAutoString)) {
+                    System.out.println("Received Auto String: " + newAutoString);
+                    prevAutoString = newAutoString;
+                    validateAndCreatePaths(newAutoString);
                 }
-            }).start();
+                try {
+                    Thread.sleep(500); 
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
         autoTopic.setRetained(true); // Should be retained?
         stringEnt.set("");
         progressBarEnt.set(0);
@@ -261,10 +261,15 @@ public class Auto extends SubsystemBase {
             Command path1Cmd = Commands.none();
             Command path2Cmd = Commands.none();
             //S1 B 1 1 A 1
-
+try{
+    if(autoElevatorHeight == 0 || autoArmAngle == 0){
+        throw new IllegalStateException("Something is null");
+    }
            autoElevatorHeight = ScoringLevel.fromString(third).getHeight();
            autoArmAngle = ScoringLevel.fromString(third).getAngle(); //TODO: SET THIS!!!!
+}catch(Exception e){
 
+}
 
 
             /* adds command to from pickup location to scoring location */
