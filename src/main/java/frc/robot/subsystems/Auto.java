@@ -5,9 +5,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import com.pathplanner.lib.auto.NamedCommands;
 
 import com.pathplanner.lib.auto.AutoBuilder;
-import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.commands.FollowPathCommand;
 import com.pathplanner.lib.config.ModuleConfig;
 import com.pathplanner.lib.config.RobotConfig;
@@ -55,7 +55,10 @@ import frc.robot.util.Elastic.Notification.NotificationLevel;
 import frc.robot.util.PoseUtils;
 
 public class Auto extends SubsystemBase {
-
+        //variables to set the correct height and angle
+        public double autoElevatorHeight = 0;
+        public double autoArmAngle = 0;
+    
     public int estimatedScore = 3;
     private String prevAutoString = "";
     private double prevProgressBar = 0;
@@ -67,11 +70,6 @@ public class Auto extends SubsystemBase {
 
     private boolean isUsingProgressBar;
     private Pose2d poseOnField;
-
-
-    //variables to set the correct height and angle
-    public double autoElevatorHeight = 0;
-    public double autoArmAngle = 0;
 
     NetworkTableInstance inst = NetworkTableInstance.getDefault();
     NetworkTable auto = inst.getTable("Auto");
@@ -88,12 +86,12 @@ public class Auto extends SubsystemBase {
 
     StringTopic feedbackTopic = auto.getStringTopic("Auto Feedback");
     StringPublisher feedbackPub = feedbackTopic.publish();
-
+    StringSubscriber stringSub = autoTopic.subscribe("");
     Alliance prevAlliance = Alliance.Blue;
 
     public static Field2d field = new Field2d();
     
-    public static int getOutput(int x) {
+    public static int mapCoralLevels(int x) {
         if (x == 1) {
             return 3;
         } else if (x == 2) {
@@ -114,7 +112,7 @@ public class Auto extends SubsystemBase {
     }
 
     public Auto() {
-        
+
         autoTopic.setRetained(true); // Should be retained?
         stringEnt.set("");
         progressBarEnt.set(0);
@@ -138,7 +136,7 @@ public class Auto extends SubsystemBase {
     
             if (coralLevels.contains(coralLevelStr)) {
                 try {
-                    int coralLevel = getOutput(Integer.parseInt(coralLevelStr));
+                    int coralLevel = mapCoralLevels(Integer.parseInt(coralLevelStr));
                     estimatedScore += coralLevel; 
                 } catch (NumberFormatException e) {
                     setFeedback("Error: Invalid coral level '" + coralLevelStr + "' at index " + (i + 1), NotificationLevel.ERROR);
@@ -249,22 +247,21 @@ public class Auto extends SubsystemBase {
             Command path1Cmd = Commands.none();
             Command path2Cmd = Commands.none();
             //S1 B 1 1 A 1
+try{
+    if(autoElevatorHeight == 0 || autoArmAngle == 0){
+        throw new IllegalStateException("Something is null");
+    }
+           autoElevatorHeight = ScoringLevel.fromString(third).getHeight();
+           autoArmAngle = ScoringLevel.fromString(third).getAngle(); //TODO: SET THIS!!!!
+}catch(Exception e){
 
-            /*
-             * Setting where the elevator and arm need to go for a specific scoring level
-             * 
-             */
-            autoElevatorHeight = ScoringLevel.fromString(third).getHeight();
-            autoArmAngle = ScoringLevel.fromString(third).getAngle(); //TODO: SET THIS!!!!
+}
 
 
-
-    
             /* adds command to from pickup location to scoring location */
             String pathName;
             String middleChar = "-";
             boolean firstPath = false;
-
             if (first != null && second != null) {
                 if (Character.isLowerCase(first.charAt(0)) || Character.isLowerCase(second.charAt(0))) {
                     middleChar = "_";
@@ -349,24 +346,16 @@ public class Auto extends SubsystemBase {
             //TODO we may need some way to identify whether we are going to a pickup zone or a scoring zone.
             //right now there is no disinction
 
-            /* 
-             * adds command form scoring location to next pickup location 
-             * TODO: add named commands so that the elevator and arm go to the right angle
-             */
+            /* ADDS SCORING COMMAND */
+            autoCommand.addCommands(Commands.none()); // change this to score whatever level you want to score
+
+            /* adds command form scoring location to next pickup location */
             autoCommand.addCommands(path1Cmd);
 
-            /* 
-             * This is the command to score the coral, which is added after the first path has finished
-             * The elevator should be raised already; and the arm should be at the correct scoring angle
-             */
-            autoCommand.addCommands(RobotContainer.rollers.autoShoot()); 
+            /* ADDS AN INTAKING COMMAND */
+            autoCommand.addCommands(Commands.none()); // change this to intaking command
 
-            /* 
-             * This parallels an intaking command with a command to drive to the coral station
-             * It will FINISH whenever we have a gamepiece, so we will not leave the coral station until we 
-             * have a gamepiece
-             */
-            autoCommand.addCommands(Commands.parallel(path2Cmd, RobotContainer.rollers.intakeAlgaeCommand())); //TODO work out when these should be added?
+            autoCommand.addCommands(path2Cmd); //TODO work out when these should be added?
 
         }
 
