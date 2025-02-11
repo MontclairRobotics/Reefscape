@@ -91,7 +91,7 @@ public class Auto extends SubsystemBase {
 
     public static Field2d field = new Field2d();
     
-    public static int getOutput(int x) {
+    public static int mapCoralLevels(int x) {
         if (x == 1) {
             return 3;
         } else if (x == 2) {
@@ -112,21 +112,7 @@ public class Auto extends SubsystemBase {
     }
 
     public Auto() {
-        new Thread(() -> {
-            while (true) {
-                String newAutoString = stringSub.get("");
-                if (!newAutoString.equals(prevAutoString)) {
-                    System.out.println("Received Auto String: " + newAutoString);
-                    prevAutoString = newAutoString;
-                    validateAndCreatePaths(newAutoString);
-                }
-                try {
-                    Thread.sleep(500); 
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }).start();
+
         autoTopic.setRetained(true); // Should be retained?
         stringEnt.set("");
         progressBarEnt.set(0);
@@ -150,7 +136,7 @@ public class Auto extends SubsystemBase {
     
             if (coralLevels.contains(coralLevelStr)) {
                 try {
-                    int coralLevel = getOutput(Integer.parseInt(coralLevelStr));
+                    int coralLevel = mapCoralLevels(Integer.parseInt(coralLevelStr));
                     estimatedScore += coralLevel; 
                 } catch (NumberFormatException e) {
                     setFeedback("Error: Invalid coral level '" + coralLevelStr + "' at index " + (i + 1), NotificationLevel.ERROR);
