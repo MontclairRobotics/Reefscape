@@ -37,10 +37,12 @@ import edu.wpi.first.wpilibj.simulation.ElevatorSim;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.Robot;
 import frc.robot.RobotContainer;
 import frc.robot.util.Elastic;
 
@@ -227,10 +229,10 @@ public class Elevator extends SubsystemBase {
                     12, //TODO check, should be 1/12?
                     ELEVATOR_MASS,
                     ELEVATOR_PULLEY_RADIUS,
-                    0,
+                    STARTING_HEIGHT,
                     ELEVATOR_MAX_HEIGHT,
                     false,
-                    0,
+                    STARTING_HEIGHT,
                     // new double[] {0.01, 0.01}
                     new double[] { 0.0, 0.0 });
         }
@@ -306,7 +308,10 @@ public class Elevator extends SubsystemBase {
      *         if the difference is two much it will send a warning using elastic
      */
     public double getExtension() {
-        return getExtensionRotations() * METERS_PER_ROTATION;
+        if (Robot.isReal()) {
+            return getExtensionRotations() * METERS_PER_ROTATION;
+        }
+        return elevatorSim.getPositionMeters();
     }
 
     public double getHeight() {
@@ -346,22 +351,22 @@ public class Elevator extends SubsystemBase {
         // System.out.println("Percent Height: " + percentHeight);
         // System.out.println("Elevator ff Voltage: " + elevatorFeedforward.calculate(0));
 
-        if (voltage < 0) {
-            if (percentHeight <= 0.004) {
-                voltage = 0;
-                accelerationLimiter.reset(0);
-            } else if (percentHeight <= 0.07) {
-                voltage = Math.max(voltage, (-12 * Math.pow((percentHeight * (100.0 / SLOW_DOWN_ZONE)), 3.2)) - SLOWEST_SPEED);
-            }
-        }
-        if (voltage > 0) {
-            if (percentHeight >= 0.996) {
-                voltage = 0;
-                accelerationLimiter.reset(0);
-            } else if (percentHeight >= 0.93) {
-                voltage = Math.min(voltage, (12 * Math.pow((percentHeight * (100.0 / SLOW_DOWN_ZONE)), 3.2)) + SLOWEST_SPEED);
-            }
-        }
+        // if (voltage < 0) {
+        //     if (percentHeight <= 0.004) {
+        //         voltage = 0;
+        //         accelerationLimiter.reset(0);
+        //     } else if (percentHeight <= 0.07) {
+        //         voltage = Math.max(voltage, (-12 * Math.pow((percentHeight * (100.0 / SLOW_DOWN_ZONE)), 3.2)) - SLOWEST_SPEED);
+        //     }
+        // }
+        // if (voltage > 0) {
+        //     if (percentHeight >= 0.996) {
+        //         voltage = 0;
+        //         accelerationLimiter.reset(0);
+        //     } else if (percentHeight >= 0.93) {
+        //         voltage = Math.min(voltage, (12 * Math.pow((percentHeight * (100.0 / SLOW_DOWN_ZONE)), 3.2)) + SLOWEST_SPEED);
+        //     }
+        // }
 
         voltage = voltage + elevatorFeedforward.calculate(0);
 
@@ -531,6 +536,7 @@ public class Elevator extends SubsystemBase {
         var leftTalonFXSim = leftTalonFX.getSimState();
         var rightTalonFXSim = rightTalonFX.getSimState();
 
+        // System.out.println(RobotController.getBatteryVoltage());
         // Set their supply voltage
         leftTalonFXSim.setSupplyVoltage(RobotController.getBatteryVoltage());
         rightTalonFXSim.setSupplyVoltage(RobotController.getBatteryVoltage());
@@ -538,14 +544,15 @@ public class Elevator extends SubsystemBase {
         // Read their actual voltage (simulated)
         var leftMotorVoltage = leftTalonFXSim.getMotorVoltage();
         var rightMotorVoltage = rightTalonFXSim.getMotorVoltage();
-        var voltage = (leftMotorVoltage + rightMotorVoltage) / 2;
+        System.out.println(leftMotorVoltage);
+        double voltage = (leftMotorVoltage + rightMotorVoltage) / 2;
         simVoltagePub.set(voltage);
         // System.out.println("simVoltage: " + leftMotorVoltage);
 
         // Update Sim
         // NeutralOut means stopped motor and since our motors are in brake mode,
         // elevator shouldn't move
-        if (leftTalonFX.getControlMode().getValue() != ControlModeValue.NeutralOut) {
+        if (true) {
             elevatorSim.setInput(voltage);
             elevatorSim.update(0.02);
 
@@ -571,6 +578,8 @@ public class Elevator extends SubsystemBase {
             elevatorMechanism.setLength(
                     ELEVATOR_VISUALIZATION_MIN_HEIGHT + (ELEVATOR_MAX_HEIGHT / elevatorSim.getPositionMeters())
                             * (ELEVATOR_VISUALIZATION_MAX_HEIGHT - ELEVATOR_VISUALIZATION_MIN_HEIGHT));
+            elevatorMechanism.setLength(STARTING_HEIGHT + elevatorSim.getPositionMeters());
+            SmartDashboard.putData("Elevator Mechanism", mechanism);
         }
 
     }

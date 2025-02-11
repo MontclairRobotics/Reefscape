@@ -49,7 +49,7 @@ public class RobotContainer {
   public static Orchestra orchestra = new Orchestra();
   public static Auto auto = new Auto();
 
-  //public static Telemetry telemetryLogger = new Telemetry(TunerConstants.kSpeedAt12Volts.in(MetersPerSecond));
+  public static Telemetry telemetryLogger = new Telemetry(TunerConstants.kSpeedAt12Volts.in(MetersPerSecond));
 
   //Alliance
   public static boolean isBlueAlliance;
@@ -142,7 +142,7 @@ public class RobotContainer {
     driverController.L1().onTrue(drivetrain.alignToAngleRobotRelativeCommand(Rotation2d.fromDegrees(30), false));
     driverController.R1().onTrue(drivetrain.alignToAngleRobotRelativeCommand(Rotation2d.fromDegrees(-30), false));
 
-   // drivetrain.registerTelemetry(telemetryLogger::telemeterize);    
+   drivetrain.registerTelemetry(telemetryLogger::telemeterize);    
   }
 
   /* MUSIC */
