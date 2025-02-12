@@ -23,6 +23,7 @@ import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.math.util.Units;
@@ -60,7 +61,9 @@ import frc.robot.util.Tunable;
 public class Elevator extends SubsystemBase {
 
     // Constants
-    private static final double METERS_PER_ROTATION = 36 * 5 / 1000.0 * (1.0 / 12.0);
+    private static final double GEAR_RATIO = 1.0 / 12.0;
+    private static final double PULLEY_CIRCUMFERENCE = 36 * 5 / 1000.0; // 36 teeth * 5mm per tooth
+    private static final double METERS_PER_ROTATION = PULLEY_CIRCUMFERENCE * GEAR_RATIO;
     private static final double ROTATIONS_PER_METER = 1.0 / METERS_PER_ROTATION;
     public static final double STARTING_HEIGHT = 0.98;//0.9718607; // (meters) - distance between top bar and ground (no
                                                             // extension)
@@ -78,17 +81,9 @@ public class Elevator extends SubsystemBase {
     public static final double MAX_VELOCITY_RPS = 100;
     public static final double MAX_ACCEL_RPS = 200;
 
+    public static final double MASS = Units.lbsToKilograms(8);
 
-    public static final double ELEVATOR_PULLEY_RADIUS = Units.inchesToMeters(0.9175);
-
-    // public static final double ELEVATOR_MAX_HEIGHT = Units.inchesToMeters(46.246); 
-    public static final double STAGE3_TO_2_HEIGHT = Units.inchesToMeters(23.743); 
-
-
-    public static final double ELEVATOR_MASS = Units.lbsToKilograms(10);
-
-    public static final double ELEVATOR_VISUALIZATION_MIN_HEIGHT = 1.0; // In canvas units
-    public static final double ELEVATOR_VISUALIZATION_MAX_HEIGHT = 3.0; // In canvas units
+    public static final double STAGE2_MAX_HEIGHT = STARTING_HEIGHT + Units.inchesToMeters(23.743); 
 
     private MotionMagicVoltage mm_req;
 
@@ -228,23 +223,16 @@ public class Elevator extends SubsystemBase {
         if (Utils.isSimulation()) {
             elevatorSim = new ElevatorSim(
                     DCMotor.getKrakenX60Foc(2),
-                    12, //TODO check, should be 1/12?
-                    ELEVATOR_MASS,
-                    ELEVATOR_PULLEY_RADIUS,
-                    STARTING_HEIGHT,
-                    MAX_HEIGHT,
+                    1/GEAR_RATIO, //TODO check, should be 1/12?
+                    MASS,
+                    PULLEY_CIRCUMFERENCE / (2.0 * Math.PI),
+                    0,
+                    MAX_EXTENSION,
                     true,
-                    STARTING_HEIGHT,
+                    0,
                     // new double[] {0.01, 0.01}
                     new double[] { 0.0, 0.0 });
         }
-
-        // Visualization
-        mechanism = new Mechanism2d(4, 4);
-        rootMechanism = mechanism.getRoot("ElevatorBottom", 2, 0);
-        elevatorMechanism = rootMechanism
-                .append(new MechanismLigament2d("Elevator", STARTING_HEIGHT, 90));
-
     }
 
     /*
@@ -473,6 +461,7 @@ public class Elevator extends SubsystemBase {
      * @param height meters, the distance from top bar to floor
      */
     public void setHeight(double height) {
+        // System.out.println("setHeight: " + height);
         double displacement = height - STARTING_HEIGHT;
         if (displacement > MAX_EXTENSION) {
             Elastic.sendNotification(new Notification(
@@ -488,10 +477,11 @@ public class Elevator extends SubsystemBase {
         }
 
         displacement = MathUtil.clamp(displacement, 0, MAX_EXTENSION);
+        // System.out.println("displacement: " + displacement);
         double rotations = displacement * ROTATIONS_PER_METER; // Converts meters to rotations
-        System.out.println("Target rotations: " + rotations);
+        // System.out.println("Target rotations: " + rotations);
 
-        setPointPub.set(rotations * METERS_PER_ROTATION);
+        setPointPub.set(STARTING_HEIGHT + rotations * METERS_PER_ROTATION);
 
         leftTalonFX.setControl(mm_req.withPosition(rotations).withSlot(0).withEnableFOC(true));
     }
@@ -506,7 +496,33 @@ public class Elevator extends SubsystemBase {
     }
 
     public Command setHeightCommand(double height) {
+        System.out.println("setHeightCommand: " + height);
         return Commands.run(() -> setHeight(height), this);
+    }
+
+    public Command setAutoHeightCommand() {
+        System.out.println("setAutoHeightCommand");
+        var command = new Command() {
+            double height = -1;
+            @Override
+            public void initialize() {
+                System.out.println("Auto Height initialize");
+                height = -1;
+            }
+            @Override
+            public void execute() {
+                if (height == -1) {
+
+                    height = RobotContainer.auto.elevatorHeights.get(RobotContainer.auto.elevatorHeightIndex++);
+                    System.out.println("Auto Heights: " + RobotContainer.auto.elevatorHeights);
+                    System.out.println("Auto Height: " + height);
+                    System.out.println("Auto Height Index: " + RobotContainer.auto.elevatorHeightIndex);
+                }
+                setHeight(height);
+            }
+        };
+        command.addRequirements(this);
+        return command;
     }
 
     @Override
@@ -528,6 +544,15 @@ public class Elevator extends SubsystemBase {
         // leftTalonFX.setPosition(0);
         // rightTalonFX.setPosition(0);
         // } //TODO: check
+
+
+        // Visualization
+        // Set positions of the stages for visualization
+        // Stage 2 doesn't move until stage 3 is max'd out
+        double height = getHeight();
+        stage2PosePub.set(new Pose3d(-0.103, 0, 0.14 + Math.max(0, height-STAGE2_MAX_HEIGHT), Rotation3d.kZero));
+        // stage2PosePub.set(new Pose3d(0, 0, 0 + Math.max(0, height-STAGE2_MAX_HEIGHT), Rotation3d.kZero));
+        stage3PosePub.set(new Pose3d(-0.103, 0, 0.165 + height - STARTING_HEIGHT, Rotation3d.kZero));
     }
 
     // ---------------------------------------------------------
@@ -549,6 +574,7 @@ public class Elevator extends SubsystemBase {
         var leftMotorVoltage = leftTalonFXSim.getMotorVoltage();
         var rightMotorVoltage = rightTalonFXSim.getMotorVoltage();
         var voltage = (leftMotorVoltage + rightMotorVoltage) / 2;
+        // var voltage = leftMotorVoltage;
 
         simVoltagePub.set(voltage);
         // System.out.println("simVoltage: " + leftMotorVoltage);
@@ -556,38 +582,28 @@ public class Elevator extends SubsystemBase {
         // Update Sim
         // NeutralOut means stopped motor and since our motors are in brake mode,
         // elevator shouldn't move
-        // if (true) {
-        elevatorSim.setInput(voltage);
-        elevatorSim.update(0.02);
+        // if (leftTalonFX.getControlMode().getValue() != ControlModeValue.NeutralOut) {
+        if (true) {
+            elevatorSim.setInput(voltage);
+            elevatorSim.update(0.02);
 
-        // Update position of motors
-        double simMeters = MathUtil.clamp(elevatorSim.getPositionMeters(), 0, MAX_HEIGHT);
-        simHeightPub.set(simMeters);
-        simRotationsPub.set((simMeters - STARTING_HEIGHT) * ROTATIONS_PER_METER);
-        leftTalonFXSim.setRawRotorPosition((simMeters - STARTING_HEIGHT) * ROTATIONS_PER_METER);
-        rightTalonFXSim.setRawRotorPosition((simMeters - STARTING_HEIGHT) * ROTATIONS_PER_METER);
+            // Update position of motors
+            double simMeters = MathUtil.clamp(elevatorSim.getPositionMeters(), 0, MAX_EXTENSION);
+            simHeightPub.set(elevatorSim.getPositionMeters());
+            simRotationsPub.set(simMeters * ROTATIONS_PER_METER);
+            leftTalonFXSim.setRawRotorPosition(simMeters * ROTATIONS_PER_METER);
+            rightTalonFXSim.setRawRotorPosition(simMeters * ROTATIONS_PER_METER);
 
-        // Update velocity of motors
-        simVelocityPub.set(elevatorSim.getVelocityMetersPerSecond() * ROTATIONS_PER_METER);
-        leftTalonFXSim
-                .setRotorVelocity(elevatorSim.getVelocityMetersPerSecond() * ROTATIONS_PER_METER);
-        rightTalonFXSim
-                .setRotorVelocity(elevatorSim.getVelocityMetersPerSecond() * ROTATIONS_PER_METER);
+            // Update velocity of motors
+            simVelocityPub.set(elevatorSim.getVelocityMetersPerSecond() * ROTATIONS_PER_METER);
+            leftTalonFXSim
+                    .setRotorVelocity(elevatorSim.getVelocityMetersPerSecond() * ROTATIONS_PER_METER);
+            rightTalonFXSim
+                    .setRotorVelocity(elevatorSim.getVelocityMetersPerSecond() * ROTATIONS_PER_METER);
 
-        // Simulate limit switches
-        topLimit.set(elevatorSim.getPositionMeters() >= MAX_HEIGHT);
-        bottomLimit.set(elevatorSim.getPositionMeters() <= 0);
-
-        // Update 2D mechanism
-        // elevatorMechanism.setLength(
-        //         ELEVATOR_VISUALIZATION_MIN_HEIGHT + (MAX_HEIGHT / elevatorSim.getPositionMeters())
-        //                 * (ELEVATOR_VISUALIZATION_MAX_HEIGHT - ELEVATOR_VISUALIZATION_MIN_HEIGHT));
-
-        elevatorMechanism.setLength(elevatorSim.getPositionMeters());
-
-        SmartDashboard.putData("Elevator Mechanism", mechanism);
+            // Simulate limit switches
+            topLimit.set(elevatorSim.getPositionMeters() >= MAX_HEIGHT-0.01);
+            bottomLimit.set(elevatorSim.getPositionMeters() <= 0.01);
+        }
     }
-
-    // }
-
 }

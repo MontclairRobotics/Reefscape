@@ -11,6 +11,7 @@ import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.pathplanner.lib.auto.NamedCommands;
+import com.pathplanner.lib.events.EventTrigger;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -25,6 +26,7 @@ import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Rollers;
 import frc.robot.util.Elastic;
+import frc.robot.util.ScoringLevel;
 import frc.robot.util.Elastic.Notification;
 import frc.robot.util.Elastic.Notification.NotificationLevel;
 import frc.robot.util.TunerConstants;
@@ -63,16 +65,19 @@ public class RobotContainer {
   private void configureBindings() {
 
     /* NAMED COMMANDS */
-        NamedCommands.registerCommand(
-            "elevator", 
-            elevator.setHeightCommand(auto.autoElevatorHeight)
-        );
+        // NamedCommands.registerCommand(
+        //     "elevator", 
+        //     elevator.setHeightCommand(auto.autoElevatorHeight)
+        // );
 
-        //TODO: Make this actually move the arm
-        NamedCommands.registerCommand(
-            "arm",
-            Commands.none()
-        );
+        // //TODO: Make this actually move the arm
+        // NamedCommands.registerCommand(
+        //     "arm",
+        //     Commands.none()
+        // );
+    new EventTrigger("elevatorDown").onTrue(elevator.setHeightCommand(Elevator.STARTING_HEIGHT));
+    new EventTrigger("elevatorUp").onTrue(elevator.setAutoHeightCommand());
+
 
     orchestra.addInstrument(elevator.leftTalonFX);
     orchestra.addInstrument(elevator.rightTalonFX);
@@ -86,10 +91,10 @@ public class RobotContainer {
     /* Operator bindings */
 
     //elevator height commands
-    operatorController.triangle().whileTrue(Commands.run(() -> elevator.setHeight(1.7), elevator)); //L1 //66.93 inches
-    // operatorController.circle().onTrue(Commands.run(() -> elevator.setHeightRegular(0.5))); //L2
-    // operatorController.cross().onTrue(Commands.run(() -> elevator.setHeightRegular(0.75))); //L3
-    // operatorController.square().onTrue(Commands.run(() -> elevator.setHeightRegular(1))); //4
+    operatorController.triangle().onTrue(elevator.setHeightCommand(ScoringLevel.L1.getHeight())); //L1 //66.93 inches
+    operatorController.circle().onTrue(elevator.setHeightCommand(ScoringLevel.L2.getHeight())); //L2
+    operatorController.cross().onTrue(elevator.setHeightCommand(ScoringLevel.L3.getHeight())); //L2
+    operatorController.square().onTrue(elevator.setHeightCommand(ScoringLevel.L4.getHeight())); //L2
     
     //roller intake/outtake commands
     // operatorController.R1().onTrue(rollers.intakeAlgaeCommand());
@@ -102,16 +107,16 @@ public class RobotContainer {
     // operatorController.cross().whileTrue(elevator.sysIdQuasistatic(Direction.kReverse));
     // operatorController.square().whileTrue(elevator.sysIdQuasistatic(Direction.kForward));
 
-    operatorController.circle().whileTrue(Commands.sequence(
-      Commands.runOnce(() -> SignalLogger.start()),
-      elevator.sysIdDynamic(Direction.kForward).until(elevator::isAtTop),
-      elevator.sysIdDynamic(Direction.kReverse).until(elevator::isAtBottom),
-      elevator.sysIdQuasistatic(Direction.kForward).until(elevator::isAtTop),
-      elevator.sysIdQuasistatic(Direction.kReverse).until(elevator::isAtBottom),
-      Commands.runOnce(() -> SignalLogger.stop())
-    ).onlyWhile(() -> {
-      return elevator.isSysIDSafe();
-    }));
+    // operatorController.circle().whileTrue(Commands.sequence(
+    //   Commands.runOnce(() -> SignalLogger.start()),
+    //   elevator.sysIdDynamic(Direction.kForward).until(elevator::isAtTop),
+    //   elevator.sysIdDynamic(Direction.kReverse).until(elevator::isAtBottom),
+    //   elevator.sysIdQuasistatic(Direction.kForward).until(elevator::isAtTop),
+    //   elevator.sysIdQuasistatic(Direction.kReverse).until(elevator::isAtBottom),
+    //   Commands.runOnce(() -> SignalLogger.stop())
+    // ).onlyWhile(() -> {
+    //   return elevator.isSysIDSafe();
+    // }));
 
     operatorController.touchpad().onTrue(Commands.runOnce(() -> elevator.resetEncoders(0)));
 
@@ -119,7 +124,7 @@ public class RobotContainer {
     // operatorController.L2().onTrue(Commands.runOnce(() -> SignalLogger.start()));
     // operatorController.R2().onTrue(Commands.runOnce(() -> SignalLogger.stop()));
 
-    operatorController.cross().onTrue(Commands.runOnce(() -> elevator.setNeutralMode(NeutralModeValue.Coast)).ignoringDisable(true)).onFalse(Commands.runOnce(() -> elevator.setNeutralMode(NeutralModeValue.Brake)).ignoringDisable(true));
+    // operatorController.cross().onTrue(Commands.runOnce(() -> elevator.setNeutralMode(NeutralModeValue.Coast)).ignoringDisable(true)).onFalse(Commands.runOnce(() -> elevator.setNeutralMode(NeutralModeValue.Brake)).ignoringDisable(true));
 
     /* DRIVER BINDINGS */
 

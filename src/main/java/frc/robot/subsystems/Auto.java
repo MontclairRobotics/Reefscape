@@ -11,6 +11,7 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.commands.FollowPathCommand;
 import com.pathplanner.lib.config.ModuleConfig;
 import com.pathplanner.lib.config.RobotConfig;
+import com.pathplanner.lib.path.EventMarker;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.path.PathPoint;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
@@ -58,6 +59,9 @@ public class Auto extends SubsystemBase {
         //variables to set the correct height and angle
         public double autoElevatorHeight = 0;
         public double autoArmAngle = 0;
+
+    public ArrayList<Double> elevatorHeights = new ArrayList<>();
+    public int elevatorHeightIndex = 0;
     
     public int estimatedScore = 3;
     private String prevAutoString = "";
@@ -229,6 +233,9 @@ public class Auto extends SubsystemBase {
             // Possibly make this return just a simple path so we get the leave bonus
         }
 
+        elevatorHeights = new ArrayList<>();
+        elevatorHeightIndex = 0;
+
         SequentialCommandGroup autoCommand = new SequentialCommandGroup();
 
         autoCommand.addCommands(Commands.none()); // TODO Pose init command
@@ -247,16 +254,14 @@ public class Auto extends SubsystemBase {
             Command path1Cmd = Commands.none();
             Command path2Cmd = Commands.none();
             //S1 B 1 1 A 1
-try{
-    if(autoElevatorHeight == 0 || autoArmAngle == 0){
-        throw new IllegalStateException("Something is null");
-    }
-           autoElevatorHeight = ScoringLevel.fromString(third).getHeight();
-           autoArmAngle = ScoringLevel.fromString(third).getAngle(); //TODO: SET THIS!!!!
-}catch(Exception e){
 
-}
+            autoElevatorHeight = ScoringLevel.fromString(third).getHeight();
+            autoArmAngle = ScoringLevel.fromString(third).getAngle(); //TODO: SET THIS!!!!
 
+            elevatorHeights.add(ScoringLevel.fromString(third).getHeight());
+            if (fourth != null) {
+                elevatorHeights.add(ScoringLevel.INTAKE.getHeight());
+            }
 
             /* adds command to from pickup location to scoring location */
             String pathName;
@@ -278,6 +283,13 @@ try{
                     // Load the path you want to follow using its name in the GUI
 
                     PathPlannerPath path = PathPlannerPath.fromPathFile(pathName);
+                    // for (int j=0; j<path.getEventMarkers().size(); j++) {
+                    //     EventMarker marker = path.getEventMarkers().get(j);
+                    //     if (marker.triggerName().equals("elevator")) {
+                    //         path.getEventMarkers().set(j, new EventMarker("elevator", marker.position(), marker.endPosition(), RobotContainer.elevator.setHeightCommand(ScoringLevel.fromString(third).getHeight())));
+                    //         path.getEventMarkers().set(j, new EventMarker("elevator" + ScoringLevel.fromString(third).name(), marker.position(), marker.endPosition()));
+                    //     }
+                    // }
 
                     // Store path to be drawn on dashboard
                     // Create a path following command using AutoBuilder. This will also trigger
@@ -340,19 +352,21 @@ try{
             }
             ScoringLevel.L4.getHeight();
 
+
+            // autoCommand.addCommands(Commands.parallel(RobotContainer.elevator.setHeightCommand(Elevator.STARTING_HEIGHT), path1Cmd));
+            // autoCommand.addCommands(Commands.parallel(RobotContainer.elevator.setHeightCommand(Elevator.STARTING_HEIGHT), path2Cmd));
             
-
-
             //TODO we may need some way to identify whether we are going to a pickup zone or a scoring zone.
             //right now there is no disinction
 
-            /* ADDS SCORING COMMAND */
+            // /* ADDS SCORING COMMAND */
             autoCommand.addCommands(Commands.none()); // change this to score whatever level you want to score
 
-            /* adds command form scoring location to next pickup location */
+            // /* adds command form scoring location to next pickup location */
             autoCommand.addCommands(path1Cmd);
+            
 
-            /* ADDS AN INTAKING COMMAND */
+            // /* ADDS AN INTAKING COMMAND */
             autoCommand.addCommands(Commands.none()); // change this to intaking command
 
             autoCommand.addCommands(path2Cmd); //TODO work out when these should be added?

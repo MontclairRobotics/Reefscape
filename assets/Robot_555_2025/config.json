@@ -1,0 +1,44 @@
+{
+  "name": "555 20205",
+  "disableSimplification": false,
+  "rotations": [
+    { "axis": "x", "degrees": 90 },
+    { "axis": "z", "degrees": -90 }
+  ],
+  "position": [ 0, 0, 0],
+  "cameras": [],
+  "components": [
+    {
+        "zeroedRotations": [
+
+            { "axis": "x", "degrees": 90 },
+            { "axis": "z", "degrees": -90 }
+        ],
+        "zeroedPosition": [ 0.103, 0, -0.14 ]
+    },
+    {
+      "zeroedRotations": [
+
+          { "axis": "x", "degrees": 90 },
+          { "axis": "z", "degrees": -90 }
+      ],
+      "zeroedPosition": [ 0.103, 0, -0.165 ]
+    },
+    {
+      "zeroedRotations": [
+
+          { "axis": "x", "degrees": 90 },
+          { "axis": "z", "degrees": -90 }
+      ],
+      "zeroedPosition": [ -0.121, 0, -0.937 ]
+    },
+    {
+      "zeroedRotations": [
+
+          { "axis": "x", "degrees": 90 },
+          { "axis": "z", "degrees": -90 }
+      ],
+      "zeroedPosition": [ -0.221, 0, -1.015 ]
+    }
+  ]
+}

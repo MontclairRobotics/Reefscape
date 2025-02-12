@@ -1,10 +1,11 @@
 package frc.robot.util;
 
 public enum ScoringLevel {
-    L4 (0,0),
-    L3 (0,0),
-    L2 (0,0),
-    L1 (0,0);
+    L4 (2.3,0),
+    L3 (1.9,0),
+    L2 (1.3,0),
+    L1 (1.0,0),
+    INTAKE(1.05, 0);
 
     private double height;
     private double angle;
