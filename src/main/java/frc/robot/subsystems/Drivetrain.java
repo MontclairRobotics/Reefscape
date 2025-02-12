@@ -114,8 +114,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         thetaController.setTolerance(1 * Math.PI / 180); //degrees converted to radians
         configurePathPlanner();
 
-        NetworkTableInstance inst = NetworkTableInstance.getDefault();
-        NetworkTable teleop = inst.getTable("Teleoperated");
+        resetPose(new Pose2d(3, 3, Rotation2d.fromDegrees(0)));
         
     }
 

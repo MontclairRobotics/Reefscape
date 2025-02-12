@@ -16,6 +16,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.ControlModeValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
+import com.ctre.phoenix6.sim.ChassisReference;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ElevatorFeedforward;
@@ -80,12 +81,11 @@ public class Elevator extends SubsystemBase {
 
     public static final double ELEVATOR_PULLEY_RADIUS = Units.inchesToMeters(0.9175);
 
-    public static final double ELEVATOR_MAX_HEIGHT = Units.inchesToMeters(46.246); 
+    // public static final double ELEVATOR_MAX_HEIGHT = Units.inchesToMeters(46.246); 
     public static final double STAGE3_TO_2_HEIGHT = Units.inchesToMeters(23.743); 
 
-    public static final double ELEVATOR_MAX_VELOCITY = 1.0; // IN METERS PER SECOND
 
-    public static final double ELEVATOR_MASS = Units.lbsToKilograms(20);
+    public static final double ELEVATOR_MASS = Units.lbsToKilograms(10);
 
     public static final double ELEVATOR_VISUALIZATION_MIN_HEIGHT = 1.0; // In canvas units
     public static final double ELEVATOR_VISUALIZATION_MAX_HEIGHT = 3.0; // In canvas units
@@ -196,7 +196,9 @@ public class Elevator extends SubsystemBase {
         CurrentLimitsConfigs currentLimitConfigs = new CurrentLimitsConfigs().withStatorCurrentLimit(80).withSupplyCurrentLimit(40);
         // Configures Elevator with Slot 0 Configs ^^
         TalonFXConfiguration leftElevatorConfigs = new TalonFXConfiguration().withSlot0(slot0Configs).withCurrentLimits(currentLimitConfigs);
-        leftElevatorConfigs.Feedback.SensorToMechanismRatio = 1/0.75;
+        if (Robot.isReal()) {
+            leftElevatorConfigs.Feedback.SensorToMechanismRatio = 1/0.75;
+        }
         TalonFXConfiguration rightElevatorConfigs = new TalonFXConfiguration().withSlot0(slot0Configs).withCurrentLimits(currentLimitConfigs);
 
         // set Motion Magic settings
@@ -230,8 +232,8 @@ public class Elevator extends SubsystemBase {
                     ELEVATOR_MASS,
                     ELEVATOR_PULLEY_RADIUS,
                     STARTING_HEIGHT,
-                    ELEVATOR_MAX_HEIGHT,
-                    false,
+                    MAX_HEIGHT,
+                    true,
                     STARTING_HEIGHT,
                     // new double[] {0.01, 0.01}
                     new double[] { 0.0, 0.0 });
@@ -239,9 +241,9 @@ public class Elevator extends SubsystemBase {
 
         // Visualization
         mechanism = new Mechanism2d(4, 4);
-        rootMechanism = mechanism.getRoot("ElevatorBottom", 0, 2);
+        rootMechanism = mechanism.getRoot("ElevatorBottom", 2, 0);
         elevatorMechanism = rootMechanism
-                .append(new MechanismLigament2d("Elevator", ELEVATOR_VISUALIZATION_MIN_HEIGHT, 90));
+                .append(new MechanismLigament2d("Elevator", STARTING_HEIGHT, 90));
 
     }
 
@@ -509,7 +511,7 @@ public class Elevator extends SubsystemBase {
 
     @Override
     public void periodic() {
-        heightPub.set(getExtension());
+        heightPub.set(getHeight());
         percentHeightPub.set(getExtension()/MAX_EXTENSION);
         if (RobotContainer.debugMode) {
             rightHeightPub.set(rightTalonFX.getPosition().getValueAsDouble());
@@ -536,7 +538,9 @@ public class Elevator extends SubsystemBase {
         var leftTalonFXSim = leftTalonFX.getSimState();
         var rightTalonFXSim = rightTalonFX.getSimState();
 
-        // System.out.println(RobotController.getBatteryVoltage());
+        // Make both motors spin the same direction (inverts don't matter in sim)
+        rightTalonFXSim.Orientation = ChassisReference.Clockwise_Positive;
+
         // Set their supply voltage
         leftTalonFXSim.setSupplyVoltage(RobotController.getBatteryVoltage());
         rightTalonFXSim.setSupplyVoltage(RobotController.getBatteryVoltage());
@@ -544,44 +548,46 @@ public class Elevator extends SubsystemBase {
         // Read their actual voltage (simulated)
         var leftMotorVoltage = leftTalonFXSim.getMotorVoltage();
         var rightMotorVoltage = rightTalonFXSim.getMotorVoltage();
-        System.out.println(leftMotorVoltage);
-        double voltage = (leftMotorVoltage + rightMotorVoltage) / 2;
+        var voltage = (leftMotorVoltage + rightMotorVoltage) / 2;
+
         simVoltagePub.set(voltage);
         // System.out.println("simVoltage: " + leftMotorVoltage);
 
         // Update Sim
         // NeutralOut means stopped motor and since our motors are in brake mode,
         // elevator shouldn't move
-        if (true) {
-            elevatorSim.setInput(voltage);
-            elevatorSim.update(0.02);
+        // if (true) {
+        elevatorSim.setInput(voltage);
+        elevatorSim.update(0.02);
 
-            // Update position of motors
-            double simMeters = MathUtil.clamp(elevatorSim.getPositionMeters(), 0, ELEVATOR_MAX_HEIGHT);
-            simHeightPub.set(simMeters);
-            simRotationsPub.set(simMeters * ROTATIONS_PER_METER);
-            leftTalonFXSim.setRawRotorPosition(simMeters * ROTATIONS_PER_METER);
-            rightTalonFXSim.setRawRotorPosition(simMeters * ROTATIONS_PER_METER);
+        // Update position of motors
+        double simMeters = MathUtil.clamp(elevatorSim.getPositionMeters(), 0, MAX_HEIGHT);
+        simHeightPub.set(simMeters);
+        simRotationsPub.set((simMeters - STARTING_HEIGHT) * ROTATIONS_PER_METER);
+        leftTalonFXSim.setRawRotorPosition((simMeters - STARTING_HEIGHT) * ROTATIONS_PER_METER);
+        rightTalonFXSim.setRawRotorPosition((simMeters - STARTING_HEIGHT) * ROTATIONS_PER_METER);
 
-            // Update velocity of motors
-            simVelocityPub.set(elevatorSim.getVelocityMetersPerSecond() * ROTATIONS_PER_METER);
-            leftTalonFXSim
-                    .setRotorVelocity(elevatorSim.getVelocityMetersPerSecond() * ROTATIONS_PER_METER);
-            rightTalonFXSim
-                    .setRotorVelocity(elevatorSim.getVelocityMetersPerSecond() * ROTATIONS_PER_METER);
+        // Update velocity of motors
+        simVelocityPub.set(elevatorSim.getVelocityMetersPerSecond() * ROTATIONS_PER_METER);
+        leftTalonFXSim
+                .setRotorVelocity(elevatorSim.getVelocityMetersPerSecond() * ROTATIONS_PER_METER);
+        rightTalonFXSim
+                .setRotorVelocity(elevatorSim.getVelocityMetersPerSecond() * ROTATIONS_PER_METER);
 
-            // Simulate limit switches
-            topLimit.set(elevatorSim.getPositionMeters() >= ELEVATOR_MAX_HEIGHT);
-            bottomLimit.set(elevatorSim.getPositionMeters() <= 0);
+        // Simulate limit switches
+        topLimit.set(elevatorSim.getPositionMeters() >= MAX_HEIGHT);
+        bottomLimit.set(elevatorSim.getPositionMeters() <= 0);
 
-            // Update 2D mechanism
-            elevatorMechanism.setLength(
-                    ELEVATOR_VISUALIZATION_MIN_HEIGHT + (ELEVATOR_MAX_HEIGHT / elevatorSim.getPositionMeters())
-                            * (ELEVATOR_VISUALIZATION_MAX_HEIGHT - ELEVATOR_VISUALIZATION_MIN_HEIGHT));
-            elevatorMechanism.setLength(STARTING_HEIGHT + elevatorSim.getPositionMeters());
-            SmartDashboard.putData("Elevator Mechanism", mechanism);
-        }
+        // Update 2D mechanism
+        // elevatorMechanism.setLength(
+        //         ELEVATOR_VISUALIZATION_MIN_HEIGHT + (MAX_HEIGHT / elevatorSim.getPositionMeters())
+        //                 * (ELEVATOR_VISUALIZATION_MAX_HEIGHT - ELEVATOR_VISUALIZATION_MIN_HEIGHT));
 
+        elevatorMechanism.setLength(elevatorSim.getPositionMeters());
+
+        SmartDashboard.putData("Elevator Mechanism", mechanism);
     }
+
+    // }
 
 }
