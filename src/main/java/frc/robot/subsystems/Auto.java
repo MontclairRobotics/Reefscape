@@ -48,17 +48,17 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.RobotContainer;
-import frc.robot.util.ScoringLevel;
+import frc.robot.util.ArmPosition;
 import frc.robot.util.Elastic;
 import frc.robot.util.Elastic.Notification;
 import frc.robot.util.Elastic.Notification.NotificationLevel;
 import frc.robot.util.PoseUtils;
 
 public class Auto extends SubsystemBase {
-        //variables to set the correct height and angle
-        public double autoElevatorHeight = 0;
-        public double autoArmAngle = 0;
-    
+    // variables to set the correct height and angle
+    public double autoElevatorHeight = 0;
+    public double autoArmAngle = 0;
+
     public int estimatedScore = 3;
     private String prevAutoString = "";
     private double prevProgressBar = 0;
@@ -90,7 +90,7 @@ public class Auto extends SubsystemBase {
     Alliance prevAlliance = Alliance.Blue;
 
     public static Field2d field = new Field2d();
-    
+
     public static int mapCoralLevels(int x) {
         if (x == 1) {
             return 3;
@@ -123,29 +123,32 @@ public class Auto extends SubsystemBase {
         timeStampTopic.setRetained(true);
         timeStampPub.set(0);
     }
+
     public int calculateEstimatedScore(int estimatedScore) {
         estimatedScore = 3;
-        
+
         for (int i = 2; i < prevAutoString.length(); i += 3) {
-            if (i + 1 >= prevAutoString.length()) { 
-                setFeedback("Error: Auto string is too short for a scoring level at index " + i, NotificationLevel.ERROR);
+            if (i + 1 >= prevAutoString.length()) {
+                setFeedback("Error: Auto string is too short for a scoring level at index " + i,
+                        NotificationLevel.ERROR);
                 return estimatedScore;
             }
-    
+
             String coralLevelStr = prevAutoString.substring(i + 1, i + 2);
-    
+
             if (coralLevels.contains(coralLevelStr)) {
                 try {
                     int coralLevel = mapCoralLevels(Integer.parseInt(coralLevelStr));
-                    estimatedScore += coralLevel; 
+                    estimatedScore += coralLevel;
                 } catch (NumberFormatException e) {
-                    setFeedback("Error: Invalid coral level '" + coralLevelStr + "' at index " + (i + 1), NotificationLevel.ERROR);
+                    setFeedback("Error: Invalid coral level '" + coralLevelStr + "' at index " + (i + 1),
+                            NotificationLevel.ERROR);
                 }
             }
         }
         return estimatedScore;
     }
-    
+
     /* ArrayLists to hold the values of various waypoints */
     private ArrayList<String> startingLocations = new ArrayList<String>(
             Arrays.asList("S1", "S2", "S3", "S4", "S5"));
@@ -179,7 +182,9 @@ public class Auto extends SubsystemBase {
 
             /* Checks if we are going to a valid scoring location */
             if (!scoringLocations.contains(first)) {
-                setFeedback("Character " + (i + 1) + ": " + autoString.charAt(i) + " is not a scoring location, when it should be!",
+                setFeedback(
+                        "Character " + (i + 1) + ": " + autoString.charAt(i)
+                                + " is not a scoring location, when it should be!",
                         NotificationLevel.ERROR);
                 return false;
             }
@@ -191,7 +196,9 @@ public class Auto extends SubsystemBase {
             }
             /* Checks if the pickup location we want to score at is valid */
             if (third != null && !pickupLocations.contains(third)) {
-                setFeedback("Character " + (i + 3) + ": " + autoString.charAt(i + 2) + " is not a valid pickup location, when it should be!",
+                setFeedback(
+                        "Character " + (i + 3) + ": " + autoString.charAt(i + 2)
+                                + " is not a valid pickup location, when it should be!",
                         NotificationLevel.ERROR);
                 return false;
             }
@@ -212,12 +219,13 @@ public class Auto extends SubsystemBase {
 
             for (int j = 0; j < posList.length; j++) {
                 posList[j] = PoseUtils.flipPoseAlliance(posList[j]);
-                allPosesList.add(posList[j]); //adds the pose to an ArrayList that stores all of the auto poses
+                allPosesList.add(posList[j]); // adds the pose to an ArrayList that stores all of the auto poses
             }
-            // Trajectory traj = TrajectoryGenerator.generateTrajectory(path.getPathPoses(), new TrajectoryConfig(Drivetrain.MAX_SPEED, Drivetrain.FORWARD_ACCEL));
+            // Trajectory traj = TrajectoryGenerator.generateTrajectory(path.getPathPoses(),
+            // new TrajectoryConfig(Drivetrain.MAX_SPEED, Drivetrain.FORWARD_ACCEL));
             field.getObject("obj" + i).setPoses(posList);
             // field.getObject("obj" + i).setTrajectory(traj);
-            for(PathPoint point: points) {
+            for (PathPoint point : points) {
                 allPathPoints.add(point);
             }
         }
@@ -246,17 +254,16 @@ public class Auto extends SubsystemBase {
 
             Command path1Cmd = Commands.none();
             Command path2Cmd = Commands.none();
-            //S1 B 1 1 A 1
-try{
-    if(autoElevatorHeight == 0 || autoArmAngle == 0){
-        throw new IllegalStateException("Something is null");
-    }
-           autoElevatorHeight = ScoringLevel.fromString(third).getHeight();
-           autoArmAngle = ScoringLevel.fromString(third).getAngle(); //TODO: SET THIS!!!!
-}catch(Exception e){
+            // S1 B 1 1 A 1
+            try {
+                if (autoElevatorHeight == 0 || autoArmAngle == 0) {
+                    throw new IllegalStateException("Something is null");
+                }
+                autoElevatorHeight = ArmPosition.fromString(third).getHeight();
+                // autoArmAngle = ArmPosition.fromString(third).getAngle(); // TODO: SET THIS!!!!
+            } catch (Exception e) {
 
-}
-
+            }
 
             /* adds command to from pickup location to scoring location */
             String pathName;
@@ -271,8 +278,10 @@ try{
                     pathName = "S" + pathName;
                     firstPath = true;
                 }
-                pathName = i == 1 ? "S" + first + middleChar + second : first + middleChar + second; // makes sure it accounts starting
-                                                                                    // path having an "S"
+                pathName = i == 1 ? "S" + first + middleChar + second : first + middleChar + second; // makes sure it
+                                                                                                     // accounts
+                                                                                                     // starting
+                // path having an "S"
 
                 try {
                     // Load the path you want to follow using its name in the GUI
@@ -291,10 +300,9 @@ try{
                             RobotContainer.drivetrain.resetPose(pose);
                         }));
 
-                        //TODO this can be deleted, is here for testing purposes
+                        // TODO this can be deleted, is here for testing purposes
                         RobotContainer.drivetrain.resetPose(pose);
                     }
-
 
                     // TODO needs to be .generateTrajectory()? maybe only if the ideal one doesn't
                     // exist?
@@ -309,7 +317,7 @@ try{
             }
 
             if (second != null && fourth != null) {
-                    middleChar = "-";
+                middleChar = "-";
                 if (Character.isLowerCase(third.charAt(0)) || Character.isLowerCase(fourth.charAt(0))) {
                     middleChar = "_";
                 }
@@ -334,17 +342,14 @@ try{
                 }
             }
 
-            
             if (third != null) {
-                autoCommand.addCommands(Commands.none()); //Elevator target height command
+                autoCommand.addCommands(Commands.none()); // Elevator target height command
             }
-            ScoringLevel.L4.getHeight();
+            ArmPosition.L4.getHeight();
 
-            
-
-
-            //TODO we may need some way to identify whether we are going to a pickup zone or a scoring zone.
-            //right now there is no disinction
+            // TODO we may need some way to identify whether we are going to a pickup zone
+            // or a scoring zone.
+            // right now there is no disinction
 
             /* ADDS SCORING COMMAND */
             autoCommand.addCommands(Commands.none()); // change this to score whatever level you want to score
@@ -355,7 +360,7 @@ try{
             /* ADDS AN INTAKING COMMAND */
             autoCommand.addCommands(Commands.none()); // change this to intaking command
 
-            autoCommand.addCommands(path2Cmd); //TODO work out when these should be added?
+            autoCommand.addCommands(path2Cmd); // TODO work out when these should be added?
 
         }
 
@@ -374,7 +379,7 @@ try{
     public void clearField() {
         pathList.clear();
         allPosesList.clear();
-        for (int i  = 0; i < 100; i++) {
+        for (int i = 0; i < 100; i++) {
             FieldObject2d obj = field.getObject("obj" + i);
             obj.setTrajectory(new Trajectory());
         }
@@ -383,18 +388,21 @@ try{
     public void addRobotPoseProgressBar() {
         isUsingProgressBar = true;
         int index = (int) (
-            //multiplies progress from 0 to 1 by the number of poses in our auto paths altogether to get an index
-            MathUtil.clamp(progressBarEnt.getAsDouble(), 0, 1) * (allPosesList.size()-1)
-        ); //casts as int to get nearest pose
+        // multiplies progress from 0 to 1 by the number of poses in our auto paths
+        // altogether to get an index
+        MathUtil.clamp(progressBarEnt.getAsDouble(), 0, 1) * (allPosesList.size() - 1)); // casts as int to get nearest
+                                                                                         // pose
 
-        // int index = (int) (progressBarEntry.getAsDouble() * (allPathPoints.size()-1));
-        //sets the robotPose on the field to that pose
-        if(index >= 0 && allPosesList.size() > 0) {
+        // int index = (int) (progressBarEntry.getAsDouble() *
+        // (allPathPoints.size()-1));
+        // sets the robotPose on the field to that pose
+        if (index >= 0 && allPosesList.size() > 0) {
             Pose2d pose = allPosesList.get(index);
             field.setRobotPose(pose);
             poseOnField = pose;
             // PathPoint point = allPathPoints.get(index);
-            // field.setRobotPose(point.position.getX(), point.position.getY(), point.rotationTarget.rotation());
+            // field.setRobotPose(point.position.getX(), point.position.getY(),
+            // point.rotationTarget.rotation());
         }
     }
 
@@ -404,55 +412,56 @@ try{
 
     public void displayTimestampSeconds() {
         double time = 0;
-        
+
         try {
             if (pathList == null || pathList.isEmpty()) {
                 throw new IllegalStateException("Path list is empty or null.");
             }
-    
+
             RobotConfig config = new RobotConfig(
-                61, 
-                6.883, 
-                new ModuleConfig(0.047, 5.092, 1.2, DCMotor.getKrakenX60Foc(1), 6.120, 2), 
-                0.616
-            );
-    
+                    61,
+                    6.883,
+                    new ModuleConfig(0.047, 5.092, 1.2, DCMotor.getKrakenX60Foc(1), 6.120, 2),
+                    0.616);
+
             PathPlannerPath path = pathList.get(0);
             if (path == null) {
                 throw new IllegalStateException("First path in pathList is null.");
             }
-    
+
             System.out.println(path);
-    
-            PathPlannerTrajectory traj = new PathPlannerTrajectory(path, new ChassisSpeeds(), path.getInitialHeading(), config);
+
+            PathPlannerTrajectory traj = new PathPlannerTrajectory(path, new ChassisSpeeds(), path.getInitialHeading(),
+                    config);
             if (traj == null) {
                 throw new IllegalStateException("First path in pathList is null.");
             }
             List<PathPlannerTrajectoryState> trajStates = traj.getStates();
-                //System.out.println("Total Time: " + time);
+            // System.out.println("Total Time: " + time);
             // for(double t=0; t<.2; t +=.01) {
-            //     System.out.println(t + "  Timed Pose: " + traj.sample(t).pose);
-            //     System.out.println("Current Robot Pose: " + poseOnField);
-            //     if(traj.sample(t).pose.nearest(allPosesList).equals(poseOnField)) {
-            //         foundMatchPose = true;
-            //         time = t;
-            //         //System.out.println("Time: " + t + "\tfoundMatchPose: " + foundMatchPose);
-            //     } 
+            // System.out.println(t + " Timed Pose: " + traj.sample(t).pose);
+            // System.out.println("Current Robot Pose: " + poseOnField);
+            // if(traj.sample(t).pose.nearest(allPosesList).equals(poseOnField)) {
+            // foundMatchPose = true;
+            // time = t;
+            // //System.out.println("Time: " + t + "\tfoundMatchPose: " + foundMatchPose);
+            // }
             // }
             if (trajStates == null || trajStates.isEmpty()) {
                 throw new IllegalStateException("Trajectory states are empty or null.");
             }
-    
+
             time += trajStates.get(trajStates.size() - 1).timeSeconds;
-    
+
             for (PathPlannerTrajectoryState state : trajStates) {
                 System.out.println("Time " + state.timeSeconds + "\t" + state.pose);
             }
-    
+
             timeStampPub.set(time);
-            System.out.println("Time: " + time);   
+            System.out.println("Time: " + time);
         } catch (IndexOutOfBoundsException e) {
-            System.err.println("Error: Attempted to access an invalid index in pathList or trajStates. " + e.getMessage());
+            System.err.println(
+                    "Error: Attempted to access an invalid index in pathList or trajStates. " + e.getMessage());
         } catch (NullPointerException e) {
             System.err.println("Error: Encountered a null reference. " + e.getMessage());
         } catch (IllegalStateException e) {
@@ -460,28 +469,26 @@ try{
         } catch (IllegalArgumentException e) {
             System.err.println("Error: " + e.getMessage());
             e.printStackTrace();
-        }catch (ClassCastException ex5) {  
-            System.out.println("\n Exception Generated: "  
-                +  
-                ex5.getMessage());  
-            ex5.printStackTrace();  
-        }catch (NegativeArraySizeException ex2) {  
-            System.out.println("\n Exception Generated: "  
-                +  
-                ex2.getMessage());  
-            ex2.printStackTrace();  
-        }catch (ArrayStoreException ex6) {  
-            System.out.println("\n Exception Generated: "  
-                +  
-                ex6.getMessage());  
-            ex6.printStackTrace();  
-        }  
-        catch (Exception e) {
+        } catch (ClassCastException ex5) {
+            System.out.println("\n Exception Generated: "
+                    +
+                    ex5.getMessage());
+            ex5.printStackTrace();
+        } catch (NegativeArraySizeException ex2) {
+            System.out.println("\n Exception Generated: "
+                    +
+                    ex2.getMessage());
+            ex2.printStackTrace();
+        } catch (ArrayStoreException ex6) {
+            System.out.println("\n Exception Generated: "
+                    +
+                    ex6.getMessage());
+            ex6.printStackTrace();
+        } catch (Exception e) {
             System.err.println("Unexpected error: " + e.getMessage());
             e.printStackTrace();
         }
     }
-    
 
     public Command getAutoCommand() {
         return autoCmd;
@@ -508,8 +515,7 @@ try{
                 validateAndCreatePaths(autoString);
                 addRobotPoseProgressBar();
                 displayTimestampSeconds();
-            }
-            else if (alliance.isPresent() && alliance.get() != prevAlliance) {
+            } else if (alliance.isPresent() && alliance.get() != prevAlliance) {
                 System.out.println(" 2 -> Running auto sequencer & Command Builder");
                 prevAlliance = alliance.get();
                 validateAndCreatePaths(autoString);
@@ -517,17 +523,16 @@ try{
                 displayTimestampSeconds();
             }
 
-            if(progressBarEnt.getAsDouble() != prevProgressBar) {
+            if (progressBarEnt.getAsDouble() != prevProgressBar) {
                 prevProgressBar = progressBarEnt.getAsDouble();
                 addRobotPoseProgressBar();
                 displayTimestampSeconds();
-            } 
-            
+            }
 
         }
 
         if ((DriverStation.isAutonomous() || DriverStation.isDisabled()) && !isUsingProgressBar) {
-            //System.out.println("setting the robot pose auto periodic");
+            // System.out.println("setting the robot pose auto periodic");
             field.setRobotPose(RobotContainer.drivetrain.getRobotPose());
         }
     }

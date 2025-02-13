@@ -45,6 +45,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Robot;
 import frc.robot.RobotContainer;
+import frc.robot.util.ArmPosition;
 import frc.robot.util.Elastic;
 
 import com.ctre.phoenix6.controls.VoltageOut;
@@ -62,8 +63,9 @@ public class Elevator extends SubsystemBase {
     // Constants
     private static final double METERS_PER_ROTATION = 36 * 5 / 1000.0 * (1.0 / 12.0);
     private static final double ROTATIONS_PER_METER = 1.0 / METERS_PER_ROTATION;
-    public static final double STARTING_HEIGHT = 0.98;//0.9718607; // (meters) - distance between top bar and ground (no
-                                                            // extension)
+    public static final double STARTING_HEIGHT = 0.98;// 0.9718607; // (meters) - distance between top bar and ground
+                                                      // (no
+                                                      // extension)
     public static final double MAX_EXTENSION = 1.4189392089843749; // (meters) - distance bewteen max height and
                                                                    // starting height
     public static final double MAX_HEIGHT = MAX_EXTENSION + STARTING_HEIGHT; // (meters) - distance between top bar and
@@ -78,12 +80,11 @@ public class Elevator extends SubsystemBase {
     public static final double MAX_VELOCITY_RPS = 100;
     public static final double MAX_ACCEL_RPS = 200;
 
-
     public static final double ELEVATOR_PULLEY_RADIUS = Units.inchesToMeters(0.9175);
 
-    // public static final double ELEVATOR_MAX_HEIGHT = Units.inchesToMeters(46.246); 
-    public static final double STAGE3_TO_2_HEIGHT = Units.inchesToMeters(23.743); 
-
+    // public static final double ELEVATOR_MAX_HEIGHT =
+    // Units.inchesToMeters(46.246);
+    public static final double STAGE3_TO_2_HEIGHT = Units.inchesToMeters(23.743);
 
     public static final double ELEVATOR_MASS = Units.lbsToKilograms(10);
 
@@ -105,6 +106,8 @@ public class Elevator extends SubsystemBase {
 
     private Slot0Configs slot0Configs;
     private ElevatorFeedforward elevatorFeedforward;
+
+    private double extensionSetpointMeters = 0; // tracks extension setpoint, not from ground
 
     SlewRateLimiter accelerationLimiter;
 
@@ -129,7 +132,7 @@ public class Elevator extends SubsystemBase {
     private StructPublisher<Pose3d> stage2PosePub;
     private StructPublisher<Pose3d> stage3PosePub;
 
-        // -------------------------------------------------------------
+    // -------------------------------------------------------------
     // SIMULATION
     private ElevatorSim elevatorSim;
     private DoublePublisher simHeightPub;
@@ -158,12 +161,12 @@ public class Elevator extends SubsystemBase {
         stage2PosePub = elevatorTable.getStructTopic("Stage2Pose", Pose3d.struct).publish();
         stage3PosePub = elevatorTable.getStructTopic("Stage3Pose", Pose3d.struct).publish();
 
-            if (Utils.isSimulation()) {
-                simHeightPub = elevatorTable.getDoubleTopic("Simulated/Height").publish();
-                simRotationsPub = elevatorTable.getDoubleTopic("Simulated/Rotations").publish();
-                simVelocityPub = elevatorTable.getDoubleTopic("Simulated/Velocity").publish();
-                simVoltagePub = elevatorTable.getDoubleTopic("Simulated/Voltage").publish();
-            }
+        if (Utils.isSimulation()) {
+            simHeightPub = elevatorTable.getDoubleTopic("Simulated/Height").publish();
+            simRotationsPub = elevatorTable.getDoubleTopic("Simulated/Rotations").publish();
+            simVelocityPub = elevatorTable.getDoubleTopic("Simulated/Velocity").publish();
+            simVoltagePub = elevatorTable.getDoubleTopic("Simulated/Voltage").publish();
+        }
 
         if (RobotContainer.debugMode) {
             leftHeightPub = elevatorTable.getDoubleTopic("Elevator Left Height").publish();
@@ -193,13 +196,16 @@ public class Elevator extends SubsystemBase {
          */
         accelerationLimiter = new SlewRateLimiter(5); // TODO: actually set this
 
-        CurrentLimitsConfigs currentLimitConfigs = new CurrentLimitsConfigs().withStatorCurrentLimit(80).withSupplyCurrentLimit(40);
+        CurrentLimitsConfigs currentLimitConfigs = new CurrentLimitsConfigs().withStatorCurrentLimit(80)
+                .withSupplyCurrentLimit(40);
         // Configures Elevator with Slot 0 Configs ^^
-        TalonFXConfiguration leftElevatorConfigs = new TalonFXConfiguration().withSlot0(slot0Configs).withCurrentLimits(currentLimitConfigs);
+        TalonFXConfiguration leftElevatorConfigs = new TalonFXConfiguration().withSlot0(slot0Configs)
+                .withCurrentLimits(currentLimitConfigs);
         if (Robot.isReal()) {
-            leftElevatorConfigs.Feedback.SensorToMechanismRatio = 1/0.75;
+            leftElevatorConfigs.Feedback.SensorToMechanismRatio = 1 / 0.75;
         }
-        TalonFXConfiguration rightElevatorConfigs = new TalonFXConfiguration().withSlot0(slot0Configs).withCurrentLimits(currentLimitConfigs);
+        TalonFXConfiguration rightElevatorConfigs = new TalonFXConfiguration().withSlot0(slot0Configs)
+                .withCurrentLimits(currentLimitConfigs);
 
         // set Motion Magic settings
         var motionMagicConfigs = new MotionMagicConfigs();
@@ -228,7 +234,7 @@ public class Elevator extends SubsystemBase {
         if (Utils.isSimulation()) {
             elevatorSim = new ElevatorSim(
                     DCMotor.getKrakenX60Foc(2),
-                    12, //TODO check, should be 1/12?
+                    12, // TODO check, should be 1/12?
                     ELEVATOR_MASS,
                     ELEVATOR_PULLEY_RADIUS,
                     STARTING_HEIGHT,
@@ -320,18 +326,22 @@ public class Elevator extends SubsystemBase {
         return getExtension() + STARTING_HEIGHT;
     }
 
+
+    public boolean atSetpoint() {
+        return Math.abs(extensionSetpointMeters - getExtension()) < Units.inchesToMeters(1); // TODO find threshold
+    }
+
     public double getExtensionRotations() {
         double leftDisplacement = (leftTalonFX.getPosition().getValueAsDouble());
         double rightDisplacement = (rightTalonFX.getPosition().getValueAsDouble());
-        // if (Math.abs(leftDisplacement - rightDisplacement) < 0.06) { //TODO: lower
-        // when things get more reliable
-        // Elastic.sendNotification(new Notification(
-        // NotificationLevel.WARNING, "Elevator Height Mismatch",
-        // "The two elevator encoders give different values :(", 5000));
-        // }
+        if (Math.abs(leftDisplacement - rightDisplacement) < 0.2) { // TODO: lower
+            // when things get more reliable
+            Elastic.sendNotification(new Notification(
+                    NotificationLevel.WARNING, "Elevator Height Mismatch",
+                    "The two elevator encoders give different values :(", 5000));
+        }
 
-        // return (leftDisplacement + rightDisplacement) / 2.0;
-        return leftDisplacement;
+        return (leftDisplacement + rightDisplacement) / 2.0;
     }
 
     // public double getTotalHeight() {
@@ -344,40 +354,47 @@ public class Elevator extends SubsystemBase {
      * 
      */
     public void joystickControl() {
+        extensionSetpointMeters = getExtension(); // TODO needed? Worried atSetpoint will misbehave, though it shouldn't
+                                                  // ever be used unless PID control is running
         double voltage = Math.pow(-MathUtil.applyDeadband(RobotContainer.operatorController.getLeftY(), 0.04), 3) * 12;
 
         // voltage = accelerationLimiter.calculate(voltage);
 
-        double percentHeight = this.getExtension() / MAX_EXTENSION;
+        double percentExtension = this.getExtension() / MAX_EXTENSION;
         // System.out.println(voltage);
         // System.out.println("Percent Height: " + percentHeight);
-        // System.out.println("Elevator ff Voltage: " + elevatorFeedforward.calculate(0));
+        // System.out.println("Elevator ff Voltage: " +
+        // elevatorFeedforward.calculate(0));
 
-        // if (voltage < 0) {
-        //     if (percentHeight <= 0.004) {
-        //         voltage = 0;
-        //         accelerationLimiter.reset(0);
-        //     } else if (percentHeight <= 0.07) {
-        //         voltage = Math.max(voltage, (-12 * Math.pow((percentHeight * (100.0 / SLOW_DOWN_ZONE)), 3.2)) - SLOWEST_SPEED);
-        //     }
-        // }
-        // if (voltage > 0) {
-        //     if (percentHeight >= 0.996) {
-        //         voltage = 0;
-        //         accelerationLimiter.reset(0);
-        //     } else if (percentHeight >= 0.93) {
-        //         voltage = Math.min(voltage, (12 * Math.pow((percentHeight * (100.0 / SLOW_DOWN_ZONE)), 3.2)) + SLOWEST_SPEED);
-        //     }
-        // }
+        if (voltage < 0) {
+            if (percentExtension <= 0.004) {
+                voltage = 0;
+                accelerationLimiter.reset(0);
+            } else if (percentExtension <= 0.07) {
+                voltage = Math.max(voltage, (-12 * Math.pow((percentExtension * (100.0 /
+                        SLOW_DOWN_ZONE)), 3.2)) - SLOWEST_SPEED);
+            }
+        }
+        if (voltage > 0) {
+            if (percentExtension >= 0.996) {
+                voltage = 0;
+                accelerationLimiter.reset(0);
+            } else if (percentExtension >= 0.93) {
+                voltage = Math.min(voltage, (12 * Math.pow((percentExtension * (100.0 /
+                        SLOW_DOWN_ZONE)), 3.2)) + SLOWEST_SPEED);
+            }
+        }
 
         voltage = voltage + elevatorFeedforward.calculate(0);
 
         voltage = MathUtil.clamp(voltage, -12, 12);
         voltagePub.set(voltage);
 
-        // voltage = MathUtil.clamp(voltage, -(12 * Math.pow((percentHeight * (100.0 / SLOW_DOWN_ZONE)), 3.0)
-        //         - SLOWEST_SPEED), /* lowest voltage allowed */
-        //         (12 * ((1 - percentHeight) * (100.0 / SLOW_DOWN_ZONE))) + SLOWEST_SPEED) /* highest voltage allowed */;
+        // voltage = MathUtil.clamp(voltage, -(12 * Math.pow((percentHeight * (100.0 /
+        // SLOW_DOWN_ZONE)), 3.0)
+        // - SLOWEST_SPEED), /* lowest voltage allowed */
+        // (12 * ((1 - percentHeight) * (100.0 / SLOW_DOWN_ZONE))) + SLOWEST_SPEED) /*
+        // highest voltage allowed */;
         // This clamps the voltage as it gets closer to the the top or the bottom. The
         // slow down zone is the area at the top or the bottom when things.
         // The slowest speed will allow the elevator to still go up and down no mater
@@ -467,29 +484,41 @@ public class Elevator extends SubsystemBase {
     }
 
     /**
-     * Sets height of the elevator in meters between 0 and the Max height of the
+     * Sets height of the elevator in meters between 0 and the max height of the
      * elevator
      * 
-     * @param height meters, the distance from top bar to floor
+     * @param extension meters, the distance from top bar to floor
      */
     public void setHeight(double height) {
-        double displacement = height - STARTING_HEIGHT;
-        if (displacement > MAX_EXTENSION) {
+        double extension = height - STARTING_HEIGHT;
+        setExtension(extension);
+    }
+
+    /**
+     * Sets extension of the elevator in meters between 0 and the max extension of
+     * the
+     * elevator
+     * 
+     * @param extension meters, the distance from top bar to starting location of
+     *                  top bar
+     */
+    public void setExtension(double extension) {
+        extensionSetpointMeters = extension;
+        if (extension > MAX_EXTENSION) {
             Elastic.sendNotification(new Notification(
                     NotificationLevel.WARNING, "Setting the elevator height outside of range",
                     "Somebody is messing up the button setting in robot container by setting the height to higher the range",
                     5000));
         }
-        if (displacement < 0) {
+        if (extension < 0) {
             Elastic.sendNotification(new Notification(
                     NotificationLevel.WARNING, "Setting the elevator height outside of range",
                     "Somebody is messing up the button setting in robot container by setting the height to lower than 0 (who is doing this???! WTF??)",
                     5000));
         }
 
-        displacement = MathUtil.clamp(displacement, 0, MAX_EXTENSION);
-        double rotations = displacement * ROTATIONS_PER_METER; // Converts meters to rotations
-        System.out.println("Target rotations: " + rotations);
+        extension = MathUtil.clamp(extension, 0, MAX_EXTENSION);
+        double rotations = extension * ROTATIONS_PER_METER; // Converts meters to rotations
 
         setPointPub.set(rotations * METERS_PER_ROTATION);
 
@@ -505,14 +534,22 @@ public class Elevator extends SubsystemBase {
         return Commands.runOnce(() -> stop());
     }
 
+    public Command setExtensionCommand(double extension) {
+        return Commands.run(() -> setExtension(extension), this);
+    }
+
     public Command setHeightCommand(double height) {
         return Commands.run(() -> setHeight(height), this);
+    }
+
+    public Command setScoringHeight(ArmPosition pos) {
+        return setExtensionCommand(pos.getHeight());
     }
 
     @Override
     public void periodic() {
         heightPub.set(getHeight());
-        percentHeightPub.set(getExtension()/MAX_EXTENSION);
+        percentHeightPub.set(getExtension() / MAX_EXTENSION);
         if (RobotContainer.debugMode) {
             rightHeightPub.set(rightTalonFX.getPosition().getValueAsDouble());
             leftHeightPub.set(leftTalonFX.getPosition().getValueAsDouble());
@@ -580,8 +617,9 @@ public class Elevator extends SubsystemBase {
 
         // Update 2D mechanism
         // elevatorMechanism.setLength(
-        //         ELEVATOR_VISUALIZATION_MIN_HEIGHT + (MAX_HEIGHT / elevatorSim.getPositionMeters())
-        //                 * (ELEVATOR_VISUALIZATION_MAX_HEIGHT - ELEVATOR_VISUALIZATION_MIN_HEIGHT));
+        // ELEVATOR_VISUALIZATION_MIN_HEIGHT + (MAX_HEIGHT /
+        // elevatorSim.getPositionMeters())
+        // * (ELEVATOR_VISUALIZATION_MAX_HEIGHT - ELEVATOR_VISUALIZATION_MIN_HEIGHT));
 
         elevatorMechanism.setLength(elevatorSim.getPositionMeters());
 

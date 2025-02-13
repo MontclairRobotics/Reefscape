@@ -20,6 +20,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.RobotContainer;
+import frc.robot.util.ArmPosition;
 import frc.robot.util.Elastic;
 import frc.robot.util.Elastic.Notification;
 import frc.robot.util.Elastic.Notification.NotificationLevel;
@@ -70,7 +71,7 @@ public class Arm extends SubsystemBase {
 
         SparkMaxConfig cfg = new SparkMaxConfig();
         cfg
-            .smartCurrentLimit(50)
+            .smartCurrentLimit(50) //TODO find stall limit
             .idleMode(IdleMode.kBrake)
             .inverted(false)
             .voltageCompensation(12); //TODO needed?
@@ -85,6 +86,10 @@ public class Arm extends SubsystemBase {
         largeRotPub = wristTable.getDoubleTopic("Large Wrist Angle Rotations").publish();
         smallRotPub = wristTable.getDoubleTopic("Small Wrist Angle Rotations").publish();
         setpointPub = wristTable.getDoubleTopic("PID Setpoint - Small Angle Rotations").publish();
+    }
+
+    public boolean atSetpoint() {
+        return pidController.atGoal();
     }
 
     public void stopMotor() {
@@ -133,25 +138,25 @@ public class Arm extends SubsystemBase {
 
         voltage = accelLimiter.calculate(voltage);
 
-        double percentHeight = getEndpointAngle().getRotations() / (MAX_ANGLE.getRotations() - MIN_ANGLE.getRotations());
+        double percentRot = getEndpointAngle().getRotations() / (MAX_ANGLE.getRotations() - MIN_ANGLE.getRotations());
         // System.out.println(voltage);
         // System.out.println("Percent Height: " + percentHeight);
         // System.out.println("Elevator ff Voltage: " + elevatorFeedforward.calculate(0));
 
         if (voltage < 0) {
-            if (percentHeight <= 0.004) {
+            if (percentRot <= 0.004) {
                 voltage = 0;
                 accelLimiter.reset(0);
-            } else if (percentHeight <= 0.07) {
-                voltage = Math.max(voltage, (-12 * Math.pow((percentHeight * (100.0 / SLOW_DOWN_ZONE)), 3.2)) - SLOWEST_SPEED);
+            } else if (percentRot <= 0.07) {
+                voltage = Math.max(voltage, (-12 * Math.pow((percentRot * (100.0 / SLOW_DOWN_ZONE)), 3.2)) - SLOWEST_SPEED);
             }
         }
         if (voltage > 0) {
-            if (percentHeight >= 0.996) {
+            if (percentRot >= 0.996) {
                 voltage = 0;
                 accelLimiter.reset(0);
-            } else if (percentHeight >= 0.93) {
-                voltage = Math.min(voltage, (12 * Math.pow((percentHeight * (100.0 / SLOW_DOWN_ZONE)), 3.2)) + SLOWEST_SPEED);
+            } else if (percentRot >= 0.93) {
+                voltage = Math.min(voltage, (12 * Math.pow((percentRot * (100.0 / SLOW_DOWN_ZONE)), 3.2)) + SLOWEST_SPEED);
             }
         }
         voltage = MathUtil.clamp(voltage, -12, 12);
@@ -184,11 +189,15 @@ public class Arm extends SubsystemBase {
     }
 
     public Command joystickControlCommand() {
-        return Commands.run(() -> joystickControl(), this);
+        return Commands.run(this::joystickControl, this);
     }
 
     public Command setIdleModeCommand(IdleMode mode) {
         return Commands.runOnce(() -> setIdleMode(mode)).ignoringDisable(true);
+    }
+
+    public Command goToLocationCommand(ArmPosition pos) {
+        return goToAngleCommand(pos.getAngle());
     }
 
 }

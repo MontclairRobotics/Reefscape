@@ -20,13 +20,16 @@ import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.leds.LEDControl;
 import frc.robot.leds.LEDs;
+import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.Auto;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Rollers;
+import frc.robot.util.ArmPosition;
 import frc.robot.util.Elastic;
 import frc.robot.util.Elastic.Notification;
 import frc.robot.util.Elastic.Notification.NotificationLevel;
+import frc.robot.util.GamePiece;
 import frc.robot.util.TunerConstants;
 import frc.robot.vision.Limelight;
 
@@ -47,6 +50,7 @@ public class RobotContainer {
   public static LEDControl ledControl = new LEDControl();
   public static Rollers rollers = new Rollers();
   public static Orchestra orchestra = new Orchestra();
+  public static Arm arm = new Arm();
   public static Auto auto = new Auto();
 
   public static Telemetry telemetryLogger = new Telemetry(TunerConstants.kSpeedAt12Volts.in(MetersPerSecond));
@@ -80,12 +84,24 @@ public class RobotContainer {
 
     /*     Default commands */
     drivetrain.setDefaultCommand(drivetrain.driveJoystickInputCommand());
-    elevator.setDefaultCommand(elevator.joystickControlCommand());
+    elevator.setDefaultCommand(Commands.run(() -> {
+      ArmPosition pos = ArmPosition.getDefaultForPiece(rollers.getHeldPiece());
+        elevator.setScoringHeight(pos);
+      }
+    ));
+
+    arm.setDefaultCommand(Commands.run(() -> {
+      ArmPosition pos = ArmPosition.getDefaultForPiece(rollers.getHeldPiece());
+        arm.goToLocationCommand(pos);
+      }
+    ));
+
     ledControl.setDefaultCommand(ledControl.playPatternCommand(LEDs.m_scrollingRainbow));
 
     /* Operator bindings */
 
     //elevator height commands
+    operatorController.L1().whileTrue(elevator.joystickControlCommand()).whileTrue(arm.joystickControlCommand());
     operatorController.triangle().whileTrue(Commands.run(() -> elevator.setHeight(1.7), elevator)); //L1 //66.93 inches
     // operatorController.circle().onTrue(Commands.run(() -> elevator.setHeightRegular(0.5))); //L2
     // operatorController.cross().onTrue(Commands.run(() -> elevator.setHeightRegular(0.75))); //L3
