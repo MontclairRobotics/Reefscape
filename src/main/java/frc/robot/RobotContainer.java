@@ -21,14 +21,16 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.leds.LEDControl;
 import frc.robot.leds.LEDs;
 import frc.robot.subsystems.Auto;
-import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Rollers;
+import frc.robot.subsystems.Drive.DriveState;
+import frc.robot.subsystems.Drive.Drivetrain;
 import frc.robot.util.Elastic;
 import frc.robot.util.Elastic.Notification;
 import frc.robot.util.Elastic.Notification.NotificationLevel;
 import frc.robot.util.TunerConstants;
 import frc.robot.vision.Limelight;
+import static frc.robot.subsystems.Drive.DriveState.*;
 
 
 public class RobotContainer {
@@ -125,8 +127,8 @@ public class RobotContainer {
 
     //Robot relative
     driverController.L2()
-      .onTrue(drivetrain.toRobotRelativeCommand())
-      .onFalse(drivetrain.toFieldRelativeCommand());
+      .onTrue(DriveState.toRobotRelative())
+      .onFalse(DriveState.toFieldRelative());
     //90 degree buttons
     driverController.triangle()
       .onTrue(drivetrain.alignToAngleFieldRelativeCommand(Rotation2d.fromDegrees(0), false));
@@ -137,7 +139,7 @@ public class RobotContainer {
     driverController.circle()
       .onTrue(drivetrain.alignToAngleFieldRelativeCommand(Rotation2d.fromDegrees(270), false)); 
     //zero gyro
-    driverController.touchpad().onTrue(drivetrain.zeroGyroCommand());
+    driverController.touchpad().onTrue(DriveState.zeroGyroCommand());
     //for testing robot relative angles
     driverController.L1().onTrue(drivetrain.alignToAngleRobotRelativeCommand(Rotation2d.fromDegrees(30), false));
     driverController.R1().onTrue(drivetrain.alignToAngleRobotRelativeCommand(Rotation2d.fromDegrees(-30), false));

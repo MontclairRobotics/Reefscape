@@ -48,6 +48,8 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.RobotContainer;
+import frc.robot.subsystems.Drive.DriveState;
+import frc.robot.subsystems.Drive.Drivetrain;
 import frc.robot.util.ScoringLevel;
 import frc.robot.util.Elastic;
 import frc.robot.util.Elastic.Notification;
@@ -528,7 +530,7 @@ try{
 
         if ((DriverStation.isAutonomous() || DriverStation.isDisabled()) && !isUsingProgressBar) {
             //System.out.println("setting the robot pose auto periodic");
-            field.setRobotPose(RobotContainer.drivetrain.getRobotPose());
+            field.setRobotPose(DriveState.getRobotPose());
         }
     }
 }

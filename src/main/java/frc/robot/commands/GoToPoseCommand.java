@@ -10,7 +10,8 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.RobotContainer;
-import frc.robot.subsystems.Drivetrain;
+import frc.robot.subsystems.Drive.DriveState;
+import frc.robot.subsystems.Drive.Drivetrain;
 import frc.robot.util.TunerConstants;
 
 public class GoToPoseCommand extends Command {
@@ -31,19 +32,19 @@ public class GoToPoseCommand extends Command {
     public GoToPoseCommand(Pose2d pose) {
         addRequirements(RobotContainer.drivetrain);
         xController = new ProfiledPIDController(5, 0, 0, new TrapezoidProfile.Constraints(
-                TunerConstants.kSpeedAt12Volts.in(Units.MetersPerSecond), Drivetrain.FORWARD_ACCEL));
+                TunerConstants.kSpeedAt12Volts.in(Units.MetersPerSecond), Drivetrain.FORWARD_ACCEL_LIMIT));
         yController = new ProfiledPIDController(5, 0, 0, new TrapezoidProfile.Constraints(
-                TunerConstants.kSpeedAt12Volts.in(Units.MetersPerSecond), Drivetrain.SIDE_ACCEL));
+                TunerConstants.kSpeedAt12Volts.in(Units.MetersPerSecond), Drivetrain.SIDE_ACCEL_LIMIT));
         thetaController = new ProfiledPIDController(RobotContainer.drivetrain.thetaController.getP(),
                 RobotContainer.drivetrain.thetaController.getI(), RobotContainer.drivetrain.thetaController.getD(),
-                new TrapezoidProfile.Constraints(Drivetrain.MAX_ROT_SPEED, Drivetrain.ROT_ACCEL));
+                new TrapezoidProfile.Constraints(Drivetrain.MAX_ROT_SPEED, Drivetrain.ROT_ACCEL_LIMIT));
         thetaController.enableContinuousInput(-180, 180);
         targetPose = pose;
     }
 
     @Override
     public void execute() {
-        ChassisSpeeds speeds = RobotContainer.drivetrain.getCurrentSpeeds();
+        ChassisSpeeds speeds = DriveState.getCurrentSpeeds();
         double xSpeed = xController.calculate(speeds.vxMetersPerSecond);
         double ySpeed = yController.calculate(speeds.vyMetersPerSecond);
         double omegaSpeed = thetaController.calculate(speeds.omegaRadiansPerSecond);
