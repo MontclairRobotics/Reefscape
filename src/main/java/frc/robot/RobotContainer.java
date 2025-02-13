@@ -84,17 +84,21 @@ public class RobotContainer {
 
     /*     Default commands */
     drivetrain.setDefaultCommand(drivetrain.driveJoystickInputCommand());
-    elevator.setDefaultCommand(Commands.run(() -> {
-      ArmPosition pos = ArmPosition.getDefaultForPiece(rollers.getHeldPiece());
-        elevator.setScoringHeight(pos);
-      }
-    ));
+    // elevator.setDefaultCommand(Commands.run(() -> {
+    //   ArmPosition pos = ArmPosition.getDefaultForPiece(rollers.getHeldPiece());
+    //   System.out.println(pos.getHeight());
+    //     elevator.setScoringLevel(pos);
+    //   }
+    // , elevator));
+    elevator.setDefaultCommand(
+      RobotContainer.elevator.setExtensionCommand(0)
+    );
 
     arm.setDefaultCommand(Commands.run(() -> {
       ArmPosition pos = ArmPosition.getDefaultForPiece(rollers.getHeldPiece());
-        arm.goToLocationCommand(pos);
+        arm.setWristLocation(pos);
       }
-    ));
+    , arm));
 
     ledControl.setDefaultCommand(ledControl.playPatternCommand(LEDs.m_scrollingRainbow));
 

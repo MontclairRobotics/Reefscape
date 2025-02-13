@@ -57,8 +57,8 @@ public class Arm extends SubsystemBase {
     public Arm() {
         TrapezoidProfile.Constraints constraints = new TrapezoidProfile.Constraints(MAX_VELOCITY, MAX_ACCELERATION);
         wristMotor = new SparkMax(-1, MotorType.kBrushless);
-        j1Encoder = new DutyCycleEncoder(-1, 1 * ENCODER_TO_LARGE_ANGLE, -1); // 1st number is port, 2nd is range in this case 1 rotation per rotation, 3rd number is offset (whatever number you have to add so it reads zero degrees when horizontal)
-        j2Encoder = new DutyCycleEncoder(-1, 1, -1); // 1st # is port, 2nd is ratio to rotations of mechanism (1 here), 3rd is initial offset (TODO to be measured)
+        j1Encoder = new DutyCycleEncoder(0, 1 * ENCODER_TO_LARGE_ANGLE, -1); // 1st number is port, 2nd is range in this case 1 rotation per rotation, 3rd number is offset (whatever number you have to add so it reads zero degrees when horizontal)
+        j2Encoder = new DutyCycleEncoder(1, 1, -1); // 1st # is port, 2nd is ratio to rotations of mechanism (1 here), 3rd is initial offset (TODO to be measured)
         pidController = new ProfiledPIDController(0.0, 0.0, 0.0, constraints);
         
         if (!j1Encoder.isConnected()) {
@@ -131,6 +131,10 @@ public class Arm extends SubsystemBase {
         wristVoltage = MathUtil.clamp(wristVoltage, -12, 12);
         // TODO do we need feedforward? If so we have to figure out the equation
         wristMotor.setVoltage(wristVoltage);
+    }
+
+    public void setWristLocation(ArmPosition pos) {
+        setWristAngle(pos.getAngle());
     }
 
     public void joystickControl() {

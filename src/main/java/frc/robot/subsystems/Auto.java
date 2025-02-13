@@ -364,7 +364,7 @@ public class Auto extends SubsystemBase {
                                 Commands.sequence(
                                         Commands.waitSeconds(waitTime),
                                         Commands.parallel(
-                                                RobotContainer.elevator.setScoringHeight(armPos),
+                                                RobotContainer.elevator.setScoringHeightCommand(armPos),
                                                 RobotContainer.arm.goToLocationCommand(armPos)))));
 
                     } else {
@@ -378,7 +378,7 @@ public class Auto extends SubsystemBase {
                               
             // Bring elevator and arm to driving position after scoring
             autoCommand.addCommands(Commands.parallel(
-                    RobotContainer.elevator.setScoringHeight(ArmPosition.DrivingNone),
+                    RobotContainer.elevator.setScoringHeightCommand(ArmPosition.DrivingNone),
                     RobotContainer.arm.goToLocationCommand(ArmPosition.DrivingNone)));
 
             if (path2 != null) {
@@ -393,7 +393,7 @@ public class Auto extends SubsystemBase {
                                 Commands.sequence(
                                         Commands.waitSeconds(waitTime),
                                         Commands.parallel(
-                                                RobotContainer.elevator.setScoringHeight(ArmPosition.Intake),
+                                                RobotContainer.elevator.setScoringHeightCommand(ArmPosition.Intake),
                                                 RobotContainer.arm.goToLocationCommand(ArmPosition.Intake)))));
 
                     } else {
@@ -409,7 +409,7 @@ public class Auto extends SubsystemBase {
 
             // Set elevator and arm to driving position after intaking
             autoCommand.addCommands(Commands.parallel(
-                    RobotContainer.elevator.setScoringHeight(ArmPosition.DrivingNone),
+                    RobotContainer.elevator.setScoringHeightCommand(ArmPosition.DrivingNone),
                     RobotContainer.arm.goToLocationCommand(ArmPosition.DrivingNone)));
 
         }

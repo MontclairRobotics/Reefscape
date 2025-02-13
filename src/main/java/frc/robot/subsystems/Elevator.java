@@ -23,6 +23,7 @@ import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.math.util.Units;
@@ -84,7 +85,10 @@ public class Elevator extends SubsystemBase {
 
     // public static final double ELEVATOR_MAX_HEIGHT =
     // Units.inchesToMeters(46.246);
-    public static final double STAGE3_TO_2_HEIGHT = Units.inchesToMeters(23.743);
+
+    public static final double STAGE2_MAX_HEIGHT = STARTING_HEIGHT + Units.inchesToMeters(23.743);
+
+    // public static final double STAGE3_TO_2_HEIGHT = Units.inchesToMeters(23.743);
 
     public static final double ELEVATOR_MASS = Units.lbsToKilograms(10);
 
@@ -239,10 +243,10 @@ public class Elevator extends SubsystemBase {
                     12, // TODO check, should be 1/12?
                     ELEVATOR_MASS,
                     ELEVATOR_PULLEY_RADIUS,
-                    STARTING_HEIGHT,
-                    MAX_HEIGHT,
+                    0,
+                    MAX_EXTENSION,
                     true,
-                    STARTING_HEIGHT,
+                    0,
                     // new double[] {0.01, 0.01}
                     new double[] { 0.0, 0.0 });
         }
@@ -496,6 +500,10 @@ public class Elevator extends SubsystemBase {
         setExtension(extension);
     }
 
+    public void setScoringLevel(ArmPosition pos) {
+        setExtension(pos.getHeight());
+    }
+
     /**
      * Sets extension of the elevator in meters between 0 and the max extension of
      * the
@@ -544,8 +552,8 @@ public class Elevator extends SubsystemBase {
         return Commands.run(() -> setHeight(height), this);
     }
 
-    public Command setScoringHeight(ArmPosition pos) {
-        return setExtensionCommand(pos.getHeight());
+    public Command setScoringHeightCommand(ArmPosition pos) {
+        return Commands.run(() -> setScoringLevel(pos), this);
     }
 
     @Override
@@ -567,6 +575,10 @@ public class Elevator extends SubsystemBase {
         // leftTalonFX.setPosition(0);
         // rightTalonFX.setPosition(0);
         // } //TODO: check
+        double height = getHeight();
+        stage2PosePub.set(new Pose3d(-0.103, 0, 0.14 + Math.max(0, height-STAGE2_MAX_HEIGHT), Rotation3d.kZero));
+        // stage2PosePub.set(new Pose3d(0, 0, 0 + Math.max(0, height-STAGE2_MAX_HEIGHT), Rotation3d.kZero));
+        stage3PosePub.set(new Pose3d(-0.103, 0, 0.165 + height - STARTING_HEIGHT, Rotation3d.kZero));
     }
 
     // ---------------------------------------------------------
