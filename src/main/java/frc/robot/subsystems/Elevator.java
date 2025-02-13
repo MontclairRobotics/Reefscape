@@ -88,6 +88,8 @@ public class Elevator extends SubsystemBase {
 
     public static final double ELEVATOR_MASS = Units.lbsToKilograms(10);
 
+    public static final double ELEVATOR_RAISE_TIME = 2;
+
     public static final double ELEVATOR_VISUALIZATION_MIN_HEIGHT = 1.0; // In canvas units
     public static final double ELEVATOR_VISUALIZATION_MAX_HEIGHT = 3.0; // In canvas units
 

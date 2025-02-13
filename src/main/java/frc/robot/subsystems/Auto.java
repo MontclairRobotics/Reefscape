@@ -69,12 +69,9 @@ public class Auto extends SubsystemBase {
     private Command autoCmd = Commands.none();
 
     private boolean isUsingProgressBar;
-    private Pose2d poseOnField;
 
     NetworkTableInstance inst = NetworkTableInstance.getDefault();
     NetworkTable auto = inst.getTable("Auto");
-
-    boolean foundMatchPose = false;
 
     StringTopic autoTopic = auto.getStringTopic("Auto String");
     StringEntry stringEnt = autoTopic.getEntry("");
@@ -239,8 +236,6 @@ public class Auto extends SubsystemBase {
 
         SequentialCommandGroup autoCommand = new SequentialCommandGroup();
 
-        autoCommand.addCommands(Commands.none()); // TODO Pose init command
-
         // S1 B3 1
         // TODO: write the rest of this
         for (int i = 1; i < autoString.length(); i += 3) {
@@ -260,7 +255,8 @@ public class Auto extends SubsystemBase {
                     throw new IllegalStateException("Something is null");
                 }
                 autoElevatorHeight = ArmPosition.fromString(third).getHeight();
-                // autoArmAngle = ArmPosition.fromString(third).getAngle(); // TODO: SET THIS!!!!
+                // autoArmAngle = ArmPosition.fromString(third).getAngle(); // TODO: SET
+                // THIS!!!!
             } catch (Exception e) {
 
             }
@@ -269,7 +265,9 @@ public class Auto extends SubsystemBase {
             String pathName;
             String middleChar = "-";
             boolean firstPath = false;
-            if (first != null && second != null) {
+            PathPlannerPath path1 = null;
+            boolean path1Exists = first != null && second != null;
+            if (path1Exists) {
                 if (Character.isLowerCase(first.charAt(0)) || Character.isLowerCase(second.charAt(0))) {
                     middleChar = "_";
                 }
@@ -282,19 +280,18 @@ public class Auto extends SubsystemBase {
                                                                                                      // accounts
                                                                                                      // starting
                 // path having an "S"
-
                 try {
                     // Load the path you want to follow using its name in the GUI
 
-                    PathPlannerPath path = PathPlannerPath.fromPathFile(pathName);
+                    path1 = PathPlannerPath.fromPathFile(pathName);
 
                     // Store path to be drawn on dashboard
                     // Create a path following command using AutoBuilder. This will also trigger
                     // event markers.
-                    path1Cmd = AutoBuilder.followPath(path);
+                    path1Cmd = AutoBuilder.followPath(path1);
 
                     if (firstPath) {
-                        Optional<Pose2d> opPose = path.getStartingHolonomicPose();
+                        Optional<Pose2d> opPose = path1.getStartingHolonomicPose();
                         Pose2d pose = opPose.isPresent() ? PoseUtils.flipPoseAlliance(opPose.get()) : new Pose2d();
                         autoCommand.addCommands(Commands.runOnce(() -> {
                             RobotContainer.drivetrain.resetPose(pose);
@@ -306,7 +303,7 @@ public class Auto extends SubsystemBase {
 
                     // TODO needs to be .generateTrajectory()? maybe only if the ideal one doesn't
                     // exist?
-                    pathList.add(path);
+                    pathList.add(path1);
                 } catch (Exception e) {
                     DriverStation.reportError("Big oops: " + e.getMessage(), e.getStackTrace());
                     setFeedback("Path " + pathName + " not found!", NotificationLevel.ERROR);
@@ -316,7 +313,9 @@ public class Auto extends SubsystemBase {
                 }
             }
 
-            if (second != null && fourth != null) {
+            boolean path2Exists = second != null && fourth != null;
+            PathPlannerPath path2 = null;
+            if (path2Exists) {
                 middleChar = "-";
                 if (Character.isLowerCase(third.charAt(0)) || Character.isLowerCase(fourth.charAt(0))) {
                     middleChar = "_";
@@ -325,16 +324,16 @@ public class Auto extends SubsystemBase {
                 try {
                     // Load the 2nd path you want to follow using its name in the GUI
 
-                    PathPlannerPath path = PathPlannerPath.fromPathFile(pathName);
+                    path2 = PathPlannerPath.fromPathFile(pathName);
 
                     // Store path to be drawn on dashboard
                     // Create a path following command using AutoBuilder. This will also trigger
                     // event markers.
-                    path2Cmd = AutoBuilder.followPath(path);
+                    path2Cmd = AutoBuilder.followPath(path2);
 
                     // TODO needs to be .generateTrajectory()? maybe only if the ideal one doesn't
                     // exist?
-                    pathList.add(path);
+                    pathList.add(path2);
                 } catch (Exception e) {
                     DriverStation.reportError("Big oops: " + e.getMessage(), e.getStackTrace());
                     setFeedback("Path " + pathName + " not found!", NotificationLevel.ERROR);
@@ -342,25 +341,76 @@ public class Auto extends SubsystemBase {
                 }
             }
 
+            /* ADDS SCORING COMMAND */
+            ArmPosition armPos = ArmPosition.DrivingNone;
             if (third != null) {
-                autoCommand.addCommands(Commands.none()); // Elevator target height command
+                armPos = ArmPosition.fromString(third); // Elevator target height command
             }
-            ArmPosition.L4.getHeight();
 
             // TODO we may need some way to identify whether we are going to a pickup zone
             // or a scoring zone.
             // right now there is no disinction
 
-            /* ADDS SCORING COMMAND */
-            autoCommand.addCommands(Commands.none()); // change this to score whatever level you want to score
-
             /* adds command form scoring location to next pickup location */
-            autoCommand.addCommands(path1Cmd);
+            if (third != null && path1 != null) {
+                Optional<PathPlannerTrajectory> opTraj;
+                try {
+                    opTraj = path1.getIdealTrajectory(RobotConfig.fromGUISettings());
+                    if (opTraj.isPresent()) {
+                        double pathTime = opTraj.get().getTotalTimeSeconds();
+                        double waitTime = pathTime - Elevator.ELEVATOR_RAISE_TIME;
+                        autoCommand.addCommands(Commands.parallel(
+                                path1Cmd,
+                                Commands.sequence(
+                                        Commands.waitSeconds(waitTime),
+                                        Commands.parallel(
+                                                RobotContainer.elevator.setScoringHeight(armPos),
+                                                RobotContainer.arm.goToLocationCommand(armPos)))));
+
+                    } else {
+                        System.out.println("Ideal Trajectory failed to load, skipping path");
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            autoCommand.addCommands(RobotContainer.rollers.outtakeCoralCommand().withTimeout(0.3)); // add command to
+                              
+            // Bring elevator and arm to driving position after scoring
+            autoCommand.addCommands(Commands.parallel(
+                    RobotContainer.elevator.setScoringHeight(ArmPosition.DrivingNone),
+                    RobotContainer.arm.goToLocationCommand(ArmPosition.DrivingNone)));
+
+            if (path2 != null) {
+                Optional<PathPlannerTrajectory> opTraj;
+                try {
+                    opTraj = path2.getIdealTrajectory(RobotConfig.fromGUISettings());
+                    if (opTraj.isPresent()) {
+                        double pathTime = opTraj.get().getTotalTimeSeconds();
+                        double waitTime = pathTime - Elevator.ELEVATOR_RAISE_TIME;
+                        autoCommand.addCommands(Commands.parallel(
+                                path1Cmd,
+                                Commands.sequence(
+                                        Commands.waitSeconds(waitTime),
+                                        Commands.parallel(
+                                                RobotContainer.elevator.setScoringHeight(ArmPosition.Intake),
+                                                RobotContainer.arm.goToLocationCommand(ArmPosition.Intake)))));
+
+                    } else {
+                        System.out.println("Ideal Trajectory failed to load, skipping path");
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
 
             /* ADDS AN INTAKING COMMAND */
-            autoCommand.addCommands(Commands.none()); // change this to intaking command
+            autoCommand.addCommands(RobotContainer.rollers.intakeCoralCommand());
 
-            autoCommand.addCommands(path2Cmd); // TODO work out when these should be added?
+            // Set elevator and arm to driving position after intaking
+            autoCommand.addCommands(Commands.parallel(
+                    RobotContainer.elevator.setScoringHeight(ArmPosition.DrivingNone),
+                    RobotContainer.arm.goToLocationCommand(ArmPosition.DrivingNone)));
 
         }
 
@@ -385,6 +435,10 @@ public class Auto extends SubsystemBase {
         }
     }
 
+    /**
+     * Moves the robot pose in the auto dashboard so that it moves along the inputed
+     * auto based on an input from
+     */
     public void addRobotPoseProgressBar() {
         isUsingProgressBar = true;
         int index = (int) (
@@ -399,20 +453,17 @@ public class Auto extends SubsystemBase {
         if (index >= 0 && allPosesList.size() > 0) {
             Pose2d pose = allPosesList.get(index);
             field.setRobotPose(pose);
-            poseOnField = pose;
+            // poseOnField = pose; //TODO check if I can delete this
             // PathPoint point = allPathPoints.get(index);
             // field.setRobotPose(point.position.getX(), point.position.getY(),
             // point.rotationTarget.rotation());
         }
     }
 
-    public boolean doPosesMatch(Pose2d p1, Pose2d p2) {
-        return false;
-    }
-
     public void displayTimestampSeconds() {
         double time = 0;
 
+        // TODO why does this use exceptions and everything else uses notifications?
         try {
             if (pathList == null || pathList.isEmpty()) {
                 throw new IllegalStateException("Path list is empty or null.");
@@ -437,7 +488,8 @@ public class Auto extends SubsystemBase {
                 throw new IllegalStateException("First path in pathList is null.");
             }
             List<PathPlannerTrajectoryState> trajStates = traj.getStates();
-            // System.out.println("Total Time: " + time);
+            // System.out.println("Total Time: " + time); //TODO ask Rafael if I can delete
+            // this
             // for(double t=0; t<.2; t +=.01) {
             // System.out.println(t + " Timed Pose: " + traj.sample(t).pose);
             // System.out.println("Current Robot Pose: " + poseOnField);

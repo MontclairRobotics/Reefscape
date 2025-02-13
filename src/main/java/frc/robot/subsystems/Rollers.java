@@ -48,13 +48,8 @@ public class Rollers extends SubsystemBase {
         leftMotor.stopMotor();
     }
 
-    public Command autoShoot() {
-        return Commands.run(() -> setSpeed(ALGAE_OUTTAKE_SPEED))
-                .withTimeout(0.2);
-    }
-
     public Command intakeAlgaeCommand() {
-        return Commands.run(() -> setSpeed(ALGAE_INTAKE_SPEED), this)
+        return Commands.run(() -> setSpeed(ALGAE_INTAKE_SPEED, 0), this)
                 .finallyDo(() -> {
                     stopMotors();
                     this.heldPiece = GamePiece.Algae;
@@ -62,7 +57,7 @@ public class Rollers extends SubsystemBase {
     }
 
     public Command outtakeAlgaeCommand() {
-        return Commands.run(() -> setSpeed(ALGAE_OUTTAKE_SPEED), this)
+        return Commands.run(() -> setSpeed(ALGAE_OUTTAKE_SPEED, 0), this)
                 .finallyDo(() -> {
                     stopMotors();
                     this.heldPiece = GamePiece.None;

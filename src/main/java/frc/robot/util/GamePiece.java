@@ -6,7 +6,7 @@ import edu.wpi.first.wpilibj.util.Color;
 public enum GamePiece {
     Coral(Color.kWhite),
     Algae(Color.kSeaGreen),
-    None(Color.kBeige);
+    None(Color.kBeige); // TODO this should be alliance color?
 
     private Color color;
 

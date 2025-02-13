@@ -8,11 +8,14 @@ public enum ArmPosition {
     L3 (0,Rotation2d.fromDegrees(0)),
     L2 (0,Rotation2d.fromDegrees(0)),
     L1 (0,Rotation2d.fromDegrees(0)),
+    Intake(0, Rotation2d.fromDegrees(0)),
     Processor(0, Rotation2d.fromDegrees(0)),
     Net(0, Rotation2d.fromDegrees(0)),
     DrivingAlgae(0, Rotation2d.fromDegrees(0)),
     DrivingCoral(0, Rotation2d.fromDegrees(0)),
-    DrivingNone(0, Rotation2d.fromDegrees(0));
+    DrivingNone(0, Rotation2d.fromDegrees(0)),
+    L1Algae(0, Rotation2d.fromDegrees(0)),
+    L2Algae(0, Rotation2d.fromDegrees(0));
 
     private double height;
     private Rotation2d angle;
