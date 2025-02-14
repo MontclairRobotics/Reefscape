@@ -259,6 +259,15 @@ public class Elevator extends SubsystemBase {
 
     }
 
+    /**
+     * 
+     * @param pos the Arm Position to raise to
+     * @return the amount of estimated time, in seconds, that it will take to raise the elevator
+     */
+    public double getRaiseTime(ArmPosition pos) {
+        double displacement = Math.abs((getExtension() - pos.getHeight())/MAX_EXTENSION);
+        return Math.pow(displacement,0.3) + 0.6*displacement + 0.6;
+    }
     /*
      * Sets the elevator target to a height in meters off of the floor
      * NOT relative to the starting position
@@ -612,11 +621,11 @@ public class Elevator extends SubsystemBase {
         elevatorSim.update(0.02);
 
         // Update position of motors
-        double simMeters = MathUtil.clamp(elevatorSim.getPositionMeters(), 0, MAX_HEIGHT);
-        simHeightPub.set(simMeters);
-        simRotationsPub.set((simMeters - STARTING_HEIGHT) * ROTATIONS_PER_METER);
-        leftTalonFXSim.setRawRotorPosition((simMeters - STARTING_HEIGHT) * ROTATIONS_PER_METER);
-        rightTalonFXSim.setRawRotorPosition((simMeters - STARTING_HEIGHT) * ROTATIONS_PER_METER);
+        double simMeters = MathUtil.clamp(elevatorSim.getPositionMeters(), 0, MAX_EXTENSION);
+        simHeightPub.set(elevatorSim.getPositionMeters());
+        simRotationsPub.set((simMeters) * ROTATIONS_PER_METER);
+        leftTalonFXSim.setRawRotorPosition((simMeters) * ROTATIONS_PER_METER);
+        rightTalonFXSim.setRawRotorPosition((simMeters) * ROTATIONS_PER_METER);
 
         // Update velocity of motors
         simVelocityPub.set(elevatorSim.getVelocityMetersPerSecond() * ROTATIONS_PER_METER);
@@ -635,7 +644,7 @@ public class Elevator extends SubsystemBase {
         // elevatorSim.getPositionMeters())
         // * (ELEVATOR_VISUALIZATION_MAX_HEIGHT - ELEVATOR_VISUALIZATION_MIN_HEIGHT));
 
-        elevatorMechanism.setLength(elevatorSim.getPositionMeters());
+        // elevatorMechanism.setLength(elevatorSim.getPositionMeters());
 
         SmartDashboard.putData("Elevator Mechanism", mechanism);
     }

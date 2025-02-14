@@ -1,5 +1,6 @@
 package frc.robot.subsystems;
 
+import java.security.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -55,11 +56,14 @@ import frc.robot.util.Elastic.Notification.NotificationLevel;
 import frc.robot.util.PoseUtils;
 
 public class Auto extends SubsystemBase {
-    // variables to set the correct height and angle
-    public double autoElevatorHeight = 0;
-    public double autoArmAngle = 0;
+    // variables to set the correct height and angle TODO: not needed?
+    // public double autoElevatorHeight = 0;
+    // public double autoArmAngle = 0;
 
-    public int estimatedScore = 3;
+    private final double SCORING_TIMEOUT = 0.3;
+    private final double INTAKE_TIMEOUT = 0.3;
+
+    public int estimatedScore = 3; //3 because leave bonus!
     private String prevAutoString = "";
     private double prevProgressBar = 0;
     private ArrayList<PathPlannerPath> pathList = new ArrayList<PathPlannerPath>();
@@ -67,6 +71,8 @@ public class Auto extends SubsystemBase {
     private ArrayList<PathPoint> allPathPoints = new ArrayList<PathPoint>();
 
     private Command autoCmd = Commands.none();
+
+    private double timeSeconds = 0; //time the auto routine will take
 
     private boolean isUsingProgressBar;
 
@@ -229,6 +235,9 @@ public class Auto extends SubsystemBase {
     }
 
     public Command buildAutoCommand(String autoString) {
+
+        timeSeconds = 0;
+
         if (!isAutoStringValid(autoString)) {
             return Commands.none();
             // Possibly make this return just a simple path so we get the leave bonus
@@ -247,53 +256,64 @@ public class Auto extends SubsystemBase {
             String fourth = i < autoString.length() - 3 ? autoString.substring(i + 3, i + 4) : null; // next pickup
                                                                                                      // location
 
-            Command path1Cmd = Commands.none();
-            Command path2Cmd = Commands.none();
-            // S1 B 1 1 A 1
-            try {
-                if (autoElevatorHeight == 0 || autoArmAngle == 0) {
-                    throw new IllegalStateException("Something is null");
-                }
-                autoElevatorHeight = ArmPosition.fromString(third).getHeight();
-                // autoArmAngle = ArmPosition.fromString(third).getAngle(); // TODO: SET
-                // THIS!!!!
-            } catch (Exception e) {
+            //pure driving commands to be added
+            Command path1Cmd = Commands.none(); //path towards scoring location
+            Command path2Cmd = Commands.none(); //path towards intake location
 
-            }
+            // try {
+            //     if (autoElevatorHeight == 0 || autoArmAngle == 0) {
+            //         throw new IllegalStateException("Something is null");
+            //     }
+            //     autoElevatorHeight = ArmPosition.fromString(third).getHeight();
+            //     // autoArmAngle = ArmPosition.fromString(third).getAngle(); // TODO: SET
+            //     // THIS!!!!
+            // } catch (Exception e) {
 
-            /* adds command to from pickup location to scoring location */
-            String pathName;
-            String middleChar = "-";
-            boolean firstPath = false;
+            // }
+
+            String pathName; //String name so that you can access the path file
+            String middleChar = "-"; //Stores the character connecting the two waypoints
+            boolean firstPath = false; //If its the first path in auto
             PathPlannerPath path1 = null;
-            boolean path1Exists = first != null && second != null;
+
+
+            /* ------------------------------- FIRST PATH ------------------------------------- */
+
+
+            boolean path1Exists = first != null && second != null; //Whether or not we have a valid path
+
             if (path1Exists) {
+                //If either character is lowercase, the character connecting them will be a "_"
                 if (Character.isLowerCase(first.charAt(0)) || Character.isLowerCase(second.charAt(0))) {
                     middleChar = "_";
                 }
+                //Constructing the path string 
                 pathName = first + middleChar + second;
+                //Adds an S to denote a starting location, if we are at the first path
                 if (i == 1) {
                     pathName = "S" + pathName;
                     firstPath = true;
                 }
-                pathName = i == 1 ? "S" + first + middleChar + second : first + middleChar + second; // makes sure it
-                                                                                                     // accounts
-                                                                                                     // starting
-                // path having an "S"
+
+                //creates the path name!
+                pathName = i == 1 ? "S" + first + middleChar + second : first + middleChar + second; 
+
+
                 try {
                     // Load the path you want to follow using its name in the GUI
-
                     path1 = PathPlannerPath.fromPathFile(pathName);
 
                     // Store path to be drawn on dashboard
                     // Create a path following command using AutoBuilder. This will also trigger
                     // event markers.
-                    path1Cmd = AutoBuilder.followPath(path1);
+                    path1Cmd = Commands.parallel(Commands.print("Running path 1"), AutoBuilder.followPath(path1));
 
+                    //resets pose to the starting pose if we are at the first path!
                     if (firstPath) {
                         Optional<Pose2d> opPose = path1.getStartingHolonomicPose();
                         Pose2d pose = opPose.isPresent() ? PoseUtils.flipPoseAlliance(opPose.get()) : new Pose2d();
                         autoCommand.addCommands(Commands.runOnce(() -> {
+                            System.out.println("resetting auto pose");
                             RobotContainer.drivetrain.resetPose(pose);
                         }));
 
@@ -304,6 +324,7 @@ public class Auto extends SubsystemBase {
                     // TODO needs to be .generateTrajectory()? maybe only if the ideal one doesn't
                     // exist?
                     pathList.add(path1);
+
                 } catch (Exception e) {
                     DriverStation.reportError("Big oops: " + e.getMessage(), e.getStackTrace());
                     setFeedback("Path " + pathName + " not found!", NotificationLevel.ERROR);
@@ -312,6 +333,8 @@ public class Auto extends SubsystemBase {
                     return Commands.none();
                 }
             }
+
+            /* -------------------- SECOND PATH ----------------------------  */
 
             boolean path2Exists = second != null && fourth != null;
             PathPlannerPath path2 = null;
@@ -329,7 +352,7 @@ public class Auto extends SubsystemBase {
                     // Store path to be drawn on dashboard
                     // Create a path following command using AutoBuilder. This will also trigger
                     // event markers.
-                    path2Cmd = AutoBuilder.followPath(path2);
+                    path2Cmd = Commands.parallel(AutoBuilder.followPath(path2), Commands.print("Running path 2"));
 
                     // TODO needs to be .generateTrajectory()? maybe only if the ideal one doesn't
                     // exist?
@@ -341,15 +364,12 @@ public class Auto extends SubsystemBase {
                 }
             }
 
-            /* ADDS SCORING COMMAND */
+            //Default armPos is none (which is 0)
             ArmPosition armPos = ArmPosition.DrivingNone;
+            //if we have a scoring location, set the arm position to that scoring location!
             if (third != null) {
-                armPos = ArmPosition.fromString(third); // Elevator target height command
+                armPos = ArmPosition.fromString(third); 
             }
-
-            // TODO we may need some way to identify whether we are going to a pickup zone
-            // or a scoring zone.
-            // right now there is no disinction
 
             /* adds command form scoring location to next pickup location */
             if (third != null && path1 != null) {
@@ -357,15 +377,23 @@ public class Auto extends SubsystemBase {
                 try {
                     opTraj = path1.getIdealTrajectory(RobotConfig.fromGUISettings());
                     if (opTraj.isPresent()) {
-                        double pathTime = opTraj.get().getTotalTimeSeconds();
-                        double waitTime = pathTime - Elevator.ELEVATOR_RAISE_TIME;
+                        double pathTime = opTraj.get().getTotalTimeSeconds(); //time path will take
+                        double raiseTime = RobotContainer.elevator.getRaiseTime(armPos); //time elevator will take to rise
+                        double waitTime = pathTime - raiseTime; //how much time we should wait before raising elevator
+                        timeSeconds += pathTime;
+                        //runs the path command along with a command that waits to raise the elevator
                         autoCommand.addCommands(Commands.parallel(
-                                path1Cmd,
+                            path1Cmd,
                                 Commands.sequence(
-                                        Commands.waitSeconds(waitTime),
-                                        Commands.parallel(
-                                                RobotContainer.elevator.setScoringHeightCommand(armPos),
-                                                RobotContainer.arm.goToLocationCommand(armPos)))));
+                                    Commands.waitSeconds(waitTime),
+                                    Commands.parallel(
+                                        Commands.print("Starting elevator command path 1"),
+                                        RobotContainer.elevator.setScoringHeightCommand(armPos).withTimeout(raiseTime)
+                                        //RobotContainer.arm.goToLocationCommand(armPos)
+                                    ),
+                                    Commands.print("Finished elevator command path 1")
+                                )    
+                        ));
 
                     } else {
                         System.out.println("Ideal Trajectory failed to load, skipping path");
@@ -374,27 +402,46 @@ public class Auto extends SubsystemBase {
                     e.printStackTrace();
                 }
             }
-            autoCommand.addCommands(RobotContainer.rollers.outtakeCoralCommand().withTimeout(0.3)); // add command to
-                              
-            // Bring elevator and arm to driving position after scoring
-            autoCommand.addCommands(Commands.parallel(
-                    RobotContainer.elevator.setScoringHeightCommand(ArmPosition.DrivingNone),
-                    RobotContainer.arm.goToLocationCommand(ArmPosition.DrivingNone)));
+
+            //Command to shoot!!!
+            
+            autoCommand.addCommands(RobotContainer.rollers.outtakeCoralCommand().withTimeout(SCORING_TIMEOUT)); // add command to
+            timeSeconds += SCORING_TIMEOUT;
+            
+            //TODO: not needed
+            // // Bring elevator and arm to driving position after scoring
+            // autoCommand.addCommands(Commands.parallel(
+            //         Commands.print("Setting elevator to default position after scoring"),
+            //         RobotContainer.elevator.setScoringHeightCommand(ArmPosition.DrivingNone).withTimeout(1)
+            //         //RobotContainer.arm.goToLocationCommand(ArmPosition.DrivingNone)
+            //         ));
+
+
+            //Path 2 command group
 
             if (path2 != null) {
                 Optional<PathPlannerTrajectory> opTraj;
                 try {
                     opTraj = path2.getIdealTrajectory(RobotConfig.fromGUISettings());
                     if (opTraj.isPresent()) {
-                        double pathTime = opTraj.get().getTotalTimeSeconds();
-                        double waitTime = pathTime - Elevator.ELEVATOR_RAISE_TIME;
+                        double pathTime = opTraj.get().getTotalTimeSeconds(); 
+                        timeSeconds += pathTime;
+                        double waitTime = pathTime - Elevator.ELEVATOR_RAISE_TIME; //TODO: not needed, we want to immediately set elevator height
+                        armPos = ArmPosition.Intake; //SETS ARM POSITION
+                        double raiseTime = RobotContainer.elevator.getRaiseTime(armPos); //time needed to raise the elevator, for timeout
                         autoCommand.addCommands(Commands.parallel(
-                                path1Cmd,
-                                Commands.sequence(
-                                        Commands.waitSeconds(waitTime),
-                                        Commands.parallel(
-                                                RobotContainer.elevator.setScoringHeightCommand(ArmPosition.Intake),
-                                                RobotContainer.arm.goToLocationCommand(ArmPosition.Intake)))));
+                            path2Cmd,
+                            Commands.sequence(
+                                //Commands.waitSeconds(waitTime),
+                                Commands.parallel(
+                                    Commands.print("Running elevator Command path 2"),
+                                    RobotContainer.elevator.setScoringHeightCommand(armPos).withTimeout(raiseTime)
+                                    //.withTimeout(raiseTime) TODO: timeout needed?
+                                    //RobotContainer.arm.goToLocationCommand(ArmPosition.Intake)
+                                ),
+                                Commands.print("Finishing path 2 elevator command")
+                            )
+                        ));
 
                     } else {
                         System.out.println("Ideal Trajectory failed to load, skipping path");
@@ -405,12 +452,16 @@ public class Auto extends SubsystemBase {
             }
 
             /* ADDS AN INTAKING COMMAND */
-            autoCommand.addCommands(RobotContainer.rollers.intakeCoralCommand());
+            autoCommand.addCommands(RobotContainer.rollers.intakeCoralCommand().withTimeout(INTAKE_TIMEOUT));
+            timeSeconds += INTAKE_TIMEOUT;
 
+            //TODO: not needed
             // Set elevator and arm to driving position after intaking
-            autoCommand.addCommands(Commands.parallel(
-                    RobotContainer.elevator.setScoringHeightCommand(ArmPosition.DrivingNone),
-                    RobotContainer.arm.goToLocationCommand(ArmPosition.DrivingNone)));
+            // autoCommand.addCommands(Commands.parallel(
+            //         Commands.print("Setting elevator to default position after intaking"),
+            //         RobotContainer.elevator.setScoringHeightCommand(ArmPosition.DrivingNone).withTimeout(RobotContainer.elevator.getRaiseTime(ArmPosition.DrivingNone))
+            //         //RobotContainer.arm.goToLocationCommand(ArmPosition.DrivingNone)
+            //         ));
 
         }
 
@@ -461,85 +512,9 @@ public class Auto extends SubsystemBase {
     }
 
     public void displayTimestampSeconds() {
-        double time = 0;
-
-        // TODO why does this use exceptions and everything else uses notifications?
-        try {
-            if (pathList == null || pathList.isEmpty()) {
-                throw new IllegalStateException("Path list is empty or null.");
-            }
-
-            RobotConfig config = new RobotConfig(
-                    61,
-                    6.883,
-                    new ModuleConfig(0.047, 5.092, 1.2, DCMotor.getKrakenX60Foc(1), 6.120, 2),
-                    0.616);
-
-            PathPlannerPath path = pathList.get(0);
-            if (path == null) {
-                throw new IllegalStateException("First path in pathList is null.");
-            }
-
-            System.out.println(path);
-
-            PathPlannerTrajectory traj = new PathPlannerTrajectory(path, new ChassisSpeeds(), path.getInitialHeading(),
-                    config);
-            if (traj == null) {
-                throw new IllegalStateException("First path in pathList is null.");
-            }
-            List<PathPlannerTrajectoryState> trajStates = traj.getStates();
-            // System.out.println("Total Time: " + time); //TODO ask Rafael if I can delete
-            // this
-            // for(double t=0; t<.2; t +=.01) {
-            // System.out.println(t + " Timed Pose: " + traj.sample(t).pose);
-            // System.out.println("Current Robot Pose: " + poseOnField);
-            // if(traj.sample(t).pose.nearest(allPosesList).equals(poseOnField)) {
-            // foundMatchPose = true;
-            // time = t;
-            // //System.out.println("Time: " + t + "\tfoundMatchPose: " + foundMatchPose);
-            // }
-            // }
-            if (trajStates == null || trajStates.isEmpty()) {
-                throw new IllegalStateException("Trajectory states are empty or null.");
-            }
-
-            time += trajStates.get(trajStates.size() - 1).timeSeconds;
-
-            for (PathPlannerTrajectoryState state : trajStates) {
-                System.out.println("Time " + state.timeSeconds + "\t" + state.pose);
-            }
-
-            timeStampPub.set(time);
-            System.out.println("Time: " + time);
-        } catch (IndexOutOfBoundsException e) {
-            System.err.println(
-                    "Error: Attempted to access an invalid index in pathList or trajStates. " + e.getMessage());
-        } catch (NullPointerException e) {
-            System.err.println("Error: Encountered a null reference. " + e.getMessage());
-        } catch (IllegalStateException e) {
-            System.err.println("Error: " + e.getMessage());
-        } catch (IllegalArgumentException e) {
-            System.err.println("Error: " + e.getMessage());
-            e.printStackTrace();
-        } catch (ClassCastException ex5) {
-            System.out.println("\n Exception Generated: "
-                    +
-                    ex5.getMessage());
-            ex5.printStackTrace();
-        } catch (NegativeArraySizeException ex2) {
-            System.out.println("\n Exception Generated: "
-                    +
-                    ex2.getMessage());
-            ex2.printStackTrace();
-        } catch (ArrayStoreException ex6) {
-            System.out.println("\n Exception Generated: "
-                    +
-                    ex6.getMessage());
-            ex6.printStackTrace();
-        } catch (Exception e) {
-            System.err.println("Unexpected error: " + e.getMessage());
-            e.printStackTrace();
-        }
+        double time = timeSeconds;
+        double rounded = Math.round(time * 10.0) / 10.0;
+        timeStampPub.set(rounded);
     }
 
     public Command getAutoCommand() {

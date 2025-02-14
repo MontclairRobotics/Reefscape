@@ -4,8 +4,8 @@ import edu.wpi.first.math.geometry.Rotation2d;
 
 // height should be extension of elevator in meters
 public enum ArmPosition {
-    L4 (0,Rotation2d.fromDegrees(0)),
-    L3 (0,Rotation2d.fromDegrees(0)),
+    L4 (1,Rotation2d.fromDegrees(0)),
+    L3 (0.5,Rotation2d.fromDegrees(0)),
     L2 (0,Rotation2d.fromDegrees(0)),
     L1 (0,Rotation2d.fromDegrees(0)),
     Intake(0, Rotation2d.fromDegrees(0)),
