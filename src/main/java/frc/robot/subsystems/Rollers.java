@@ -27,6 +27,20 @@ public class Rollers extends SubsystemBase {
     public GamePiece getHeldPiece() {
         return heldPiece;
     }
+    public boolean hasCoral() {
+        if (getHeldPiece() == GamePiece.Coral){
+            return true;
+        }else{
+            return false;
+        }
+    }
+    public boolean hasAlgae() {
+        if (getHeldPiece() == GamePiece.Algae){
+            return true;
+        }else{
+            return false;
+        }
+    }
 
     // TODO need to be debounced? probably not?
     public boolean isStalled() {

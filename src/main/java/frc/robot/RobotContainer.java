@@ -14,6 +14,7 @@ import com.pathplanner.lib.auto.NamedCommands;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
@@ -61,9 +62,20 @@ public class RobotContainer {
   public RobotContainer() {
     DriverStation.silenceJoystickConnectionWarning(true);
     configureBindings();
+    setRumble();
 
   }
-
+    public void setRumble() {
+      Rollers rollers = new Rollers();
+      if(rollers.hasCoral() || rollers.hasAlgae()){
+        driverController.setRumble(GenericHID.RumbleType.kLeftRumble, 1);
+        driverController.setRumble(GenericHID.RumbleType.kRightRumble, 1);
+        operatorController.setRumble(GenericHID.RumbleType.kLeftRumble, 1);
+        operatorController.setRumble(GenericHID.RumbleType.kRightRumble, 1);
+        testingController.setRumble(GenericHID.RumbleType.kLeftRumble, 1);
+        testingController.setRumble(GenericHID.RumbleType.kRightRumble, 1);
+  }
+}
   private void configureBindings() {
 
     orchestra.addInstrument(elevator.leftTalonFX);
