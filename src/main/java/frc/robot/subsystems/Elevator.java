@@ -207,9 +207,6 @@ public class Elevator extends SubsystemBase {
         // Configures Elevator with Slot 0 Configs ^^
         TalonFXConfiguration leftElevatorConfigs = new TalonFXConfiguration().withSlot0(slot0Configs)
                 .withCurrentLimits(currentLimitConfigs);
-        if (Robot.isReal()) {
-            leftElevatorConfigs.Feedback.SensorToMechanismRatio = 1 / 0.75;
-        }
         TalonFXConfiguration rightElevatorConfigs = new TalonFXConfiguration().withSlot0(slot0Configs)
                 .withCurrentLimits(currentLimitConfigs);
 
