@@ -98,7 +98,7 @@ public class RobotContainer {
 
     arm.setDefaultCommand(arm.joystickControlCommand());
    // elevator.setDefaultCommand(elevator.joystickControlCommand());
-    operatorController.square().whileTrue(arm.goToAngleCommand(Rotation2d.fromDegrees(90)));
+    operatorController.square().whileTrue(arm.goToAngleCommand(Rotation2d.fromDegrees(30)));
 
     ledControl.setDefaultCommand(ledControl.playPatternCommand(LEDs.m_scrollingRainbow));
 
