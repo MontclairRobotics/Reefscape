@@ -21,6 +21,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.leds.LEDControl;
 import frc.robot.leds.LEDs;
+import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.Auto;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Elevator;
@@ -45,6 +46,7 @@ public class RobotContainer {
   //Subsystems
   public static Drivetrain drivetrain = new Drivetrain();
   public static Elevator elevator = new Elevator();
+  public static Arm arm = new Arm();
   public static Limelight limelight = new Limelight("Camera");
   public static LEDControl ledControl = new LEDControl();
   public static Rollers rollers = new Rollers();
@@ -78,23 +80,27 @@ public class RobotContainer {
     new EventTrigger("elevatorDown").onTrue(elevator.setHeightCommand(Elevator.STARTING_HEIGHT));
     new EventTrigger("elevatorUp").onTrue(elevator.setAutoHeightCommand());
 
-
     orchestra.addInstrument(elevator.leftTalonFX);
     orchestra.addInstrument(elevator.rightTalonFX);
     operatorController.R2().onTrue(playMusic("SevenNationArmy.chrp")).onFalse(stopMusic());
 
     /*     Default commands */
     drivetrain.setDefaultCommand(drivetrain.driveJoystickInputCommand());
-    elevator.setDefaultCommand(elevator.joystickControlCommand());
+    // elevator.setDefaultCommand(elevator.joystickControlCommand());
+    arm.setDefaultCommand(arm.joystickControlCommand());
     ledControl.setDefaultCommand(ledControl.playPatternCommand(LEDs.m_scrollingRainbow));
 
     /* Operator bindings */
 
     //elevator height commands
-    operatorController.triangle().onTrue(elevator.setHeightCommand(ScoringLevel.L1.getHeight())); //L1 //66.93 inches
-    operatorController.circle().onTrue(elevator.setHeightCommand(ScoringLevel.L2.getHeight())); //L2
-    operatorController.cross().onTrue(elevator.setHeightCommand(ScoringLevel.L3.getHeight())); //L2
-    operatorController.square().onTrue(elevator.setHeightCommand(ScoringLevel.L4.getHeight())); //L2
+    // operatorController.triangle().onTrue(elevator.setHeightCommand(ScoringLevel.L1.getHeight())); //L1 //66.93 inches
+    // operatorController.circle().onTrue(elevator.setHeightCommand(ScoringLevel.L2.getHeight())); //L2
+    // operatorController.cross().onTrue(elevator.setHeightCommand(ScoringLevel.L3.getHeight())); //L2
+    // operatorController.square().onTrue(elevator.setHeightCommand(ScoringLevel.L4.getHeight())); //L2
+    operatorController.triangle().onTrue(arm.setEnpointAngleCommand(Rotation2d.fromDegrees(0))); // Flat
+    operatorController.circle().onTrue(arm.setEnpointAngleCommand(Rotation2d.fromDegrees(30))); // Flat
+    operatorController.cross().onTrue(arm.setEnpointAngleCommand(Rotation2d.fromDegrees(-30))); // Flat
+
     
     //roller intake/outtake commands
     // operatorController.R1().onTrue(rollers.intakeAlgaeCommand());

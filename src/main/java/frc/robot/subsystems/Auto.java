@@ -283,10 +283,22 @@ public class Auto extends SubsystemBase {
                     // Load the path you want to follow using its name in the GUI
 
                     PathPlannerPath path = PathPlannerPath.fromPathFile(pathName);
+                    var config = RobotConfig.fromGUISettings();
+                    var trajectory = path.getIdealTrajectory(config).get();
+                    var seconds = trajectory.getTotalTimeSeconds();
+                    Commands.sequence(
+                        Commands.waitSeconds(seconds - 1000),
+                        RobotContainer.elevator.setHeightCommand(ScoringLevel.fromString(third).getHeight())
+                    );
+
+
+                    // SMP:
+                    // This is one way of doing auto by overwriting the event markers with names for each height you want 
+                    // the elevator to got to. This is a bit of a hack, but it works.
                     // for (int j=0; j<path.getEventMarkers().size(); j++) {
                     //     EventMarker marker = path.getEventMarkers().get(j);
                     //     if (marker.triggerName().equals("elevator")) {
-                    //         path.getEventMarkers().set(j, new EventMarker("elevator", marker.position(), marker.endPosition(), RobotContainer.elevator.setHeightCommand(ScoringLevel.fromString(third).getHeight())));
+                    //         // path.getEventMarkers().set(j, new EventMarker("elevator", marker.position(), marker.endPosition(), RobotContainer.elevator.setHeightCommand(ScoringLevel.fromString(third).getHeight())));
                     //         path.getEventMarkers().set(j, new EventMarker("elevator" + ScoringLevel.fromString(third).name(), marker.position(), marker.endPosition()));
                     //     }
                     // }

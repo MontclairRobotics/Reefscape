@@ -32,10 +32,11 @@ import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
-import edu.wpi.first.units.Units.*;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.simulation.BatterySim;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
+import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
@@ -220,7 +221,7 @@ public class Elevator extends SubsystemBase {
         topLimit = new LimitSwitch(22, false); // TODO get invert
 
         // Simulation
-        if (Utils.isSimulation()) {
+        if (Robot.isSimulation()) {
             elevatorSim = new ElevatorSim(
                     DCMotor.getKrakenX60Foc(2),
                     1/GEAR_RATIO, //TODO check, should be 1/12?
@@ -604,6 +605,9 @@ public class Elevator extends SubsystemBase {
             // Simulate limit switches
             topLimit.set(elevatorSim.getPositionMeters() >= MAX_HEIGHT-0.01);
             bottomLimit.set(elevatorSim.getPositionMeters() <= 0.01);
+
+            // Simulate load on battery
+            RoboRioSim.setVInVoltage(BatterySim.calculateDefaultBatteryLoadedVoltage(elevatorSim.getCurrentDrawAmps()));
         }
     }
 }
