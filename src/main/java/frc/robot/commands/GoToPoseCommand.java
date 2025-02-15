@@ -38,31 +38,31 @@ public class GoToPoseCommand extends Command {
 
         targetPose = RobotContainer.drivetrain.getClosestScoringPose();
         NetworkTableInstance inst = NetworkTableInstance.getDefault();
-        NetworkTable poseCommand = inst.getTable("Pose Command");
+        NetworkTable poseCommandTable = inst.getTable("Pose Command");
 
-        DoubleTopic xSetpointTopic = poseCommand.getDoubleTopic("X Setpoint");
+        DoubleTopic xSetpointTopic = poseCommandTable.getDoubleTopic("X Setpoint");
         DoublePublisher xSetpointPub = xSetpointTopic.publish();
-        DoubleTopic ySetpointTopic = poseCommand.getDoubleTopic("Y Setpoint");
+        DoubleTopic ySetpointTopic = poseCommandTable.getDoubleTopic("Y Setpoint");
         DoublePublisher ySetpointPub = ySetpointTopic.publish();
-        DoubleTopic rotSetpointTopic = poseCommand.getDoubleTopic("Rot Setpoint");
+        DoubleTopic rotSetpointTopic = poseCommandTable.getDoubleTopic("Rot Setpoint");
         DoublePublisher rotSetpointPub = rotSetpointTopic.publish();
 
         xSetpointPub.set(targetPose.getX());
         ySetpointPub.set(targetPose.getY());
         rotSetpointPub.set(targetPose.getRotation().getRadians());
 
-        DoubleTopic xOutputTopic = poseCommand.getDoubleTopic("X Output");
+        DoubleTopic xOutputTopic = poseCommandTable.getDoubleTopic("X Output");
         xOutputPub = xOutputTopic.publish();
-        DoubleTopic yOutputTopic = poseCommand.getDoubleTopic("Y Output");
+        DoubleTopic yOutputTopic = poseCommandTable.getDoubleTopic("Y Output");
         yOutputPub = yOutputTopic.publish();
-        DoubleTopic rotOutputTopic = poseCommand.getDoubleTopic("Rot Output");
+        DoubleTopic rotOutputTopic = poseCommandTable.getDoubleTopic("Rot Output");
         rotOutputPub = rotOutputTopic.publish();
 
-        DoubleTopic xPoseTopic = poseCommand.getDoubleTopic("X Pose");
+        DoubleTopic xPoseTopic = poseCommandTable.getDoubleTopic("X Pose");
         xPosePub = xPoseTopic.publish();
-        DoubleTopic yPoseTopic = poseCommand.getDoubleTopic("Y Pose");
+        DoubleTopic yPoseTopic = poseCommandTable.getDoubleTopic("Y Pose");
         yPosePub = yPoseTopic.publish();
-        DoubleTopic rotPoseTopic = poseCommand.getDoubleTopic("Rot Pose");
+        DoubleTopic rotPoseTopic = poseCommandTable.getDoubleTopic("Rot Pose");
         rotPosePub = rotPoseTopic.publish();
         
         xController.setGoal(targetPose.getX());
@@ -72,9 +72,9 @@ public class GoToPoseCommand extends Command {
 
     public GoToPoseCommand() {
         addRequirements(RobotContainer.drivetrain);
-        xController = new ProfiledPIDController(5, 0, 0, new TrapezoidProfile.Constraints(
+        xController = new ProfiledPIDController(5, 0, 1, new TrapezoidProfile.Constraints(
                 TunerConstants.kSpeedAt12Volts.in(Units.MetersPerSecond), Drivetrain.FORWARD_ACCEL));
-        yController = new ProfiledPIDController(5, 0, 0, new TrapezoidProfile.Constraints(
+        yController = new ProfiledPIDController(5, 0, 1, new TrapezoidProfile.Constraints(
                 TunerConstants.kSpeedAt12Volts.in(Units.MetersPerSecond), Drivetrain.SIDE_ACCEL));
         thetaController = new ProfiledPIDController(RobotContainer.drivetrain.thetaController.getP(),
                 RobotContainer.drivetrain.thetaController.getI(), RobotContainer.drivetrain.thetaController.getD(),

@@ -233,7 +233,7 @@ public class Arm extends SubsystemBase {
     }
 
     public void joystickControl() {
-        double voltage = Math.pow(-MathUtil.applyDeadband(RobotContainer.operatorController.getRightY(), 0.04), 3) * 12;
+        double voltage = Math.pow(-MathUtil.applyDeadband(RobotContainer.operatorController.getLeftY(), 0.04), 3) * 12;
         voltage = accelLimiter.calculate(voltage);
 
         double percentRot = getPercentRotation();

@@ -96,7 +96,7 @@ public class RobotContainer {
     // , arm));
 
     arm.setDefaultCommand(arm.joystickControlCommand());
-    elevator.setDefaultCommand(elevator.joystickControlCommand());
+   // elevator.setDefaultCommand(elevator.joystickControlCommand());
     operatorController.square().whileTrue(arm.goToAngleCommand(Rotation2d.fromDegrees(90)));
 
     ledControl.setDefaultCommand(ledControl.playPatternCommand(LEDs.m_scrollingRainbow));
@@ -149,7 +149,7 @@ public class RobotContainer {
     //90 degree buttons
     // driverController.triangle()
       // .onTrue(drivetrain.alignToAngleFieldRelativeCommand(Rotation2d.fromDegrees(0), false));
-    driverController.triangle().onTrue(drivetrain.goToPoseCommand());
+    driverController.triangle().onTrue(new GoToPoseCommand());
     driverController.square()
       .onTrue(drivetrain.alignToAngleFieldRelativeCommand(Rotation2d.fromDegrees(90), false));
     driverController.cross()

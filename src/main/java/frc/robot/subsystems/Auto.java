@@ -20,6 +20,7 @@ import com.pathplanner.lib.util.FlippingUtil;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.system.plant.DCMotor;
@@ -391,8 +392,8 @@ public class Auto extends SubsystemBase {
                                     Commands.waitSeconds(waitTime),
                                     Commands.parallel(
                                         Commands.print("Starting elevator command path 1"),
-                                        RobotContainer.elevator.setScoringHeightCommand(armPos).withTimeout(raiseTime)
-                                        //RobotContainer.arm.goToLocationCommand(armPos)
+                                        RobotContainer.elevator.setScoringHeightCommand(armPos).withTimeout(raiseTime),
+                                        RobotContainer.arm.goToAngleCommand(armPos.getAngle())
                                     ),
                                     Commands.print("Finished elevator command path 1")
                                 )    
@@ -440,9 +441,9 @@ public class Auto extends SubsystemBase {
                                 //Commands.waitSeconds(waitTime),
                                 Commands.parallel(
                                     Commands.print("Running elevator Command path 2"),
-                                    RobotContainer.elevator.setScoringHeightCommand(armPos).withTimeout(raiseTime)
+                                    RobotContainer.elevator.setScoringHeightCommand(armPos).withTimeout(raiseTime),
                                     //.withTimeout(raiseTime) TODO: timeout needed?
-                                    //RobotContainer.arm.goToLocationCommand(ArmPosition.Intake)
+                                    RobotContainer.arm.goToLocationCommand(ArmPosition.Intake)
                                 ),
                                 Commands.print("Finishing path 2 elevator command")
                             )

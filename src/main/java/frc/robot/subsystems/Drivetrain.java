@@ -392,8 +392,8 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         Pose2d closestPose;
         Pose2d currentPose;
         //if(!Robot.isReal()) 
-        currentPose = this.mapleSimSwerveDrivetrain.getSimulatedPose();
-        //else currentPose = this.getRobotPose();
+        // currentPose = this.mapleSimSwerveDrivetrain.getSimulatedPose();
+         currentPose = this.getRobotPose();
         System.out.println(currentPose);
         closestPose = BLUE_SCORING_POSES[0];
         for(Pose2d pos: BLUE_SCORING_POSES) {

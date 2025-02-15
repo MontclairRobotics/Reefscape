@@ -266,7 +266,7 @@ public class Elevator extends SubsystemBase {
         System.out.println("Height of pose: " + pos.getHeight());
         System.out.println("Extension: " + this.getExtension());
         System.out.println("Percent extension: " + percentExtension);
-        return Math.pow(percentExtension,0.3) + 0.6*percentExtension + 0.6;
+        return Math.pow(percentExtension,0.3) + 0.8*percentExtension + 1;
     }
     /*
      * Sets the elevator target to a height in meters off of the floor
