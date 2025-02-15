@@ -38,6 +38,7 @@ import frc.robot.util.Elastic.Notification;
 import frc.robot.util.Elastic.Notification.NotificationLevel;
 import frc.robot.util.simulation.MapleSimSwerveDrivetrain;
 import frc.robot.util.GamePiece;
+import frc.robot.util.PoseUtils;
 import frc.robot.util.TunerConstants;
 import frc.robot.vision.Limelight;
 
@@ -147,15 +148,15 @@ public class RobotContainer {
       .onTrue(drivetrain.toRobotRelativeCommand())
       .onFalse(drivetrain.toFieldRelativeCommand());
     //90 degree buttons
-    // driverController.triangle()
-      // .onTrue(drivetrain.alignToAngleFieldRelativeCommand(Rotation2d.fromDegrees(0), false));
-    driverController.triangle().onTrue(new GoToPoseCommand());
+    driverController.triangle()
+       .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(0)), false));
+    driverController.R2().whileTrue(new GoToPoseCommand());
     driverController.square()
-      .onTrue(drivetrain.alignToAngleFieldRelativeCommand(Rotation2d.fromDegrees(90), false));
+      .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(90)), false));
     driverController.cross()
-      .onTrue(drivetrain.alignToAngleFieldRelativeCommand(Rotation2d.fromDegrees(180), false));
+      .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(180)), false));
     driverController.circle()
-      .onTrue(drivetrain.alignToAngleFieldRelativeCommand(Rotation2d.fromDegrees(270), false)); 
+      .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(270)), false)); 
     //zero gyro
     driverController.touchpad().onTrue(drivetrain.zeroGyroCommand());
     //for testing robot relative angles

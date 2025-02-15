@@ -26,6 +26,13 @@ public class PoseUtils {
         return pose;
     }
 
+    public static Rotation2d flipRotAlliance(Rotation2d rot) {
+        if (DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get() == Alliance.Red) {
+            return FlippingUtil.flipFieldRotation(rot);
+        }
+        return rot;
+    }
+
     public static boolean angleDeadband(Rotation2d angle1, Rotation2d angle2, Rotation2d deadband) {
         double degrees1 = wrapRotation(angle1).getDegrees();
         double degrees2 = wrapRotation(angle2).getDegrees();

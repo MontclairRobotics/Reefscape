@@ -15,6 +15,7 @@ import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveModule.SteerRequestType;
+import com.ctre.phoenix6.swerve.SwerveRequest.ForwardPerspectiveValue;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
@@ -23,6 +24,7 @@ import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.path.PathConstraints;
 
+import frc.robot.util.PoseUtils;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
@@ -142,49 +144,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         
     }
 
-    public Command goToPoseInit() {
-        return Commands.runOnce(() -> {
-        xController = new ProfiledPIDController(5, 0, 0, new TrapezoidProfile.Constraints(
-                TunerConstants.kSpeedAt12Volts.in(Units.MetersPerSecond), Drivetrain.FORWARD_ACCEL));
-        yController = new ProfiledPIDController(5, 0, 0, new TrapezoidProfile.Constraints(
-                TunerConstants.kSpeedAt12Volts.in(Units.MetersPerSecond), Drivetrain.SIDE_ACCEL));
-        PoseThetaController = new ProfiledPIDController(RobotContainer.drivetrain.thetaController.getP(),
-                RobotContainer.drivetrain.thetaController.getI(), RobotContainer.drivetrain.thetaController.getD(),
-                new TrapezoidProfile.Constraints(Drivetrain.MAX_ROT_SPEED, Drivetrain.ROT_ACCEL));
-        PoseThetaController.enableContinuousInput(-Math.PI, Math.PI);
-        //targetPose = RobotContainer.drivetrain.getClosestScoringPose();
-        //System.out.println("Target Pose" + targetPose);
-        targetPose = RobotContainer.drivetrain.getClosestScoringPose();
-        xController.setGoal(targetPose.getX());
-        yController.setGoal(targetPose.getY());
-        PoseThetaController.setGoal(targetPose.getRotation().getRadians());
-        //targetPose = RobotContainer.drivetrain.getClosestScoringPose();
-        //System.out.println("Target Pose" + targetPose);
-        });
-    }
-
-    public Command goToPoseExec() {
-        return Commands.run(() -> {
-        ChassisSpeeds speeds = RobotContainer.drivetrain.getCurrentSpeeds();
-        Pose2d currentPose = RobotContainer.drivetrain.getState().Pose;
-
-        double xSpeed = xController.calculate(currentPose.getX());
-        double ySpeed = yController.calculate(currentPose.getY());
-        double omegaSpeed = PoseThetaController.calculate(currentPose.getRotation().getRadians());
-
-        RobotContainer.drivetrain.drive(xSpeed, ySpeed, omegaSpeed, true);
-
-        isAtPoseGoal = xController.atGoal() && yController.atGoal() && PoseThetaController.atGoal();
-        }).until(() -> isAtPoseGoal);
-    }
-
-
-    public Command goToPoseCommand() {
-        return Commands.sequence(
-            goToPoseInit(),
-            goToPoseExec()
-        );
-    }
+  
     /* RETURNS X VELOCITY FROM CONTROLLER 
      * 
     */
@@ -211,7 +171,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
      * 
      * 
      */
-    public void drive() {
+    public void driveJoystick() {
         double rotInput = -MathUtil.applyDeadband(RobotContainer.driverController.getRightX(), 0.04);
         double rotVelocity = Math.pow(rotInput, 3) * MAX_ROT_SPEED;
         if(IS_LIMITING_ACCEL) { 
@@ -219,12 +179,12 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
             Math.pow(rotInput,3) * MAX_ROT_SPEED
             );
         }
-        drive(getVelocityYFromController(), getVelocityXFromController(), rotVelocity, fieldRelative); //drives using supposed velocities, rot velocity, and field relative boolean
+        drive(getVelocityYFromController(), getVelocityXFromController(), rotVelocity, fieldRelative, true); //drives using supposed velocities, rot velocity, and field relative boolean
         // drive(0, 1, 0, true);
     }
 
-    public void drive(ChassisSpeeds speeds, boolean fieldRelative) {
-        drive(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond, fieldRelative);
+    public void drive(ChassisSpeeds speeds, boolean fieldRelative, boolean respectOperatorPerspective) {
+        drive(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond, fieldRelative, respectOperatorPerspective);
     }
 
     /* DRIVES GIVEN ROBOT RELATIVE CHASSIS SPEEDS, FOR PATHPLANNER 
@@ -246,13 +206,17 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
      * 
      * 
     */
-    public void drive(double velocityX, double velocityY, double rotationalVelocity, boolean fieldRelative){
+    public void drive(double velocityX, double velocityY, double rotationalVelocity, boolean fieldRelative, boolean respectOperatorPerspective){
         if(fieldRelative){
-            SwerveRequest.FieldCentric driveRequest = new SwerveRequest.FieldCentric() 
+            SwerveRequest.FieldCentric driveRequest = new SwerveRequest.FieldCentric()
                 // .withDeadband(0.03) //TODO: set these
                 // .withRotationalDeadband(1) 
                 .withDriveRequestType(DriveRequestType.Velocity) //Velocity is closed-loop velocity control
-                .withSteerRequestType(SteerRequestType.Position); 
+                .withSteerRequestType(SteerRequestType.Position);
+
+                if (!respectOperatorPerspective) {
+                    driveRequest = driveRequest.withForwardPerspective(ForwardPerspectiveValue.BlueAlliance);
+                }
         
             this.setControl(
                 driveRequest
@@ -266,7 +230,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
                 //.withDeadband(2) //TODO: set these
                 //.withRotationalDeadband(3) 
                 .withDriveRequestType(DriveRequestType.Velocity) //Velocity is closed-loop velocity control
-                .withSteerRequestType(SteerRequestType.Position); 
+                .withSteerRequestType(SteerRequestType.Position);            
 
             //sets the control for the drivetrain
             this.setControl(
@@ -395,8 +359,9 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         // currentPose = this.mapleSimSwerveDrivetrain.getSimulatedPose();
          currentPose = this.getRobotPose();
         System.out.println(currentPose);
-        closestPose = BLUE_SCORING_POSES[0];
+        closestPose = PoseUtils.flipPoseAlliance(BLUE_SCORING_POSES[0]);
         for(Pose2d pos: BLUE_SCORING_POSES) {
+            pos = PoseUtils.flipPoseAlliance(pos);
             // System.out.println("Current pose: " + currentPose);
             // System.out.println("Distance between current and pos: "  + getDistanceBetweenPoses(currentPose, pos));
             // System.out.println("Distance between closest and current: " + getDistanceBetweenPoses(closestPose, currentPose));
@@ -527,8 +492,8 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         //inputs field relative angle (set point is also converted to field relative)
         double response = thetaController.calculate(odometryHeading.getRadians());
 
-        if(lockDrive) drive(0,0,response, false);
-        else drive(getVelocityYFromController(), getVelocityXFromController(), response, false);
+        if(lockDrive) drive(0,0,response, false, true); //perspective doesn't matter in robot relative
+        else drive(getVelocityYFromController(), getVelocityXFromController(), response, false, true);
     }
 
 
@@ -546,9 +511,9 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     public void alignToAngleFieldRelative(boolean lockDrive){
         //Response must be in Radians per second for the .drive method.
         double response = thetaController.calculate(odometryHeading.getRadians());
-        if(lockDrive) drive(0,0, response, true);
+        if(lockDrive) drive(0,0, response, true, true);
         //swapped because pos X means forward
-        else drive(getVelocityYFromController(), getVelocityXFromController(), response, true);
+        else drive(getVelocityYFromController(), getVelocityXFromController(), response, true, true);
     }
 
     /* ALIGNS TO ANGLE ROBOT RELATIVE WITH CHANGING SETPOINT
@@ -573,7 +538,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
      * default drive command
      */
     public Command driveJoystickInputCommand(){
-        return Commands.run(() -> drive(), this);
+        return Commands.run(() -> driveJoystick(), this);
     }
 
      /* zeros the gyro */
@@ -644,16 +609,16 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
          * Otherwise, only check and apply the operator perspective if the DS is disabled.
          * This ensures driving behavior doesn't change until an explicit disable event occurs during testing.
          */
-        // if (!m_hasAppliedOperatorPerspective || DriverStation.isDisabled()) {
-        //     DriverStation.getAlliance().ifPresent(allianceColor -> {
-        //         setOperatorPerspectiveForward(
-        //             allianceColor == Alliance.Red
-        //                 ? kRedAlliancePerspectiveRotation
-        //                 : kBlueAlliancePerspectiveRotation
-        //         );
-        //         m_hasAppliedOperatorPerspective = true;
-        //     });
-        // }
+        if (!m_hasAppliedOperatorPerspective || DriverStation.isDisabled()) {
+            DriverStation.getAlliance().ifPresent(allianceColor -> {
+                setOperatorPerspectiveForward(
+                    allianceColor == Alliance.Red
+                        ? kRedAlliancePerspectiveRotation
+                        : kBlueAlliancePerspectiveRotation
+                );
+                m_hasAppliedOperatorPerspective = true;
+            });
+        }
     }
 
     private Notifier m_simNotifier = null;

@@ -42,14 +42,14 @@ public class GoToPoseCommandContinuous extends Command {
         double ySpeed = yController.calculate(speeds.vyMetersPerSecond);
         double omegaSpeed = thetaController.calculate(speeds.omegaRadiansPerSecond);
 
-        RobotContainer.drivetrain.drive(xSpeed, ySpeed, omegaSpeed, true);        
+        RobotContainer.drivetrain.drive(xSpeed, ySpeed, omegaSpeed, true, false);        
         
     }
 
     @Override
     public void end(boolean interrupted) {
         //Needed?
-        RobotContainer.drivetrain.drive(0, 0, 0, true);
+        RobotContainer.drivetrain.drive(0, 0, 0, true, false);
 
     }
 
