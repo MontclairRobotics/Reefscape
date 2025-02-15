@@ -58,24 +58,31 @@ public class RobotContainer {
 
   //Alliance
   public static boolean isBlueAlliance;
+  public static boolean yes = true;
 
   public RobotContainer() {
     DriverStation.silenceJoystickConnectionWarning(true);
     configureBindings();
-    setRumble();
 
   }
-    public void setRumble() {
-      Rollers rollers = new Rollers();
-      if(rollers.hasCoral() || rollers.hasAlgae()){
+  public Command setRumbleCommand() {
+    return Commands.startEnd(
+      // Start rumble
+      () -> {
         driverController.setRumble(GenericHID.RumbleType.kLeftRumble, 1);
         driverController.setRumble(GenericHID.RumbleType.kRightRumble, 1);
         operatorController.setRumble(GenericHID.RumbleType.kLeftRumble, 1);
         operatorController.setRumble(GenericHID.RumbleType.kRightRumble, 1);
-        testingController.setRumble(GenericHID.RumbleType.kLeftRumble, 1);
-        testingController.setRumble(GenericHID.RumbleType.kRightRumble, 1);
+      },
+      // Stop rumble
+      () -> {
+        driverController.setRumble(GenericHID.RumbleType.kLeftRumble, 0);
+        driverController.setRumble(GenericHID.RumbleType.kRightRumble, 0);
+        operatorController.setRumble(GenericHID.RumbleType.kLeftRumble, 0);
+        operatorController.setRumble(GenericHID.RumbleType.kRightRumble, 0);
+      }
+    );
   }
-}
   private void configureBindings() {
 
     orchestra.addInstrument(elevator.leftTalonFX);
@@ -103,7 +110,9 @@ public class RobotContainer {
     ledControl.setDefaultCommand(ledControl.playPatternCommand(LEDs.m_scrollingRainbow));
 
     /* Operator bindings */
-
+    driverController.L1().whileTrue(setRumbleCommand());
+    testingController.L1().whileTrue(setRumbleCommand());
+    operatorController.L1().whileTrue(setRumbleCommand());
     //elevator height commands
     operatorController.L1().whileTrue(elevator.joystickControlCommand()).whileTrue(arm.joystickControlCommand());
     operatorController.triangle().whileTrue(Commands.run(() -> elevator.setHeight(1.7), elevator)); //L1 //66.93 inches
