@@ -2,12 +2,23 @@ package frc.robot.vision;
 
 import java.util.function.DoubleSupplier;
 
+import com.ctre.phoenix6.configs.Pigeon2Configuration;
+import com.ctre.phoenix6.hardware.Pigeon2;
+
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
+import edu.wpi.first.networktables.DoublePublisher;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructPublisher;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.RobotContainer;
+import frc.robot.vision.LimelightHelpers.PoseEstimate;
 
 public class Limelight extends SubsystemBase {
 
@@ -15,6 +26,7 @@ public class Limelight extends SubsystemBase {
     public static final double limelightOffsetAngleVertical = 20; // TODO: set this
     public static final double limelightMountHeight = .1; // TODO: set this
     public static final double coralStationTagHeightMeters = 1.35255; // make sure these two are correct
+    public Pigeon2 gyro;
     // does it need to be to the center of the tag?
     public static final double reefTagHeightMeters = 0.174625;
     public static final double reefOffsetFromCenterOfTag = 0;
@@ -32,19 +44,33 @@ public class Limelight extends SubsystemBase {
 
     public static final double TARGET_DEBOUNCE_TIME = 0.2;
 
+    public final Field2d field = new Field2d();
+
     /* INSTANCE VARIABLES */
     private int tagCount;
     private int[] validIDs = {}; // TODO: set these
     private String cameraName;
     private Debouncer targetDebouncer = new Debouncer(TARGET_DEBOUNCE_TIME, DebounceType.kFalling);
     private boolean shouldRejectUpdate;
-    private LimelightHelpers.PoseEstimate mt2;
+    // private LimelightHelpers.PoseEstimate mt2;
 
+    private DoublePublisher yawPub;
+    private StructPublisher fieldPub;
     private double angleVelocityTolerance = 540 * Math.PI / 180; // in radians per sec
 
     public Limelight(String cameraName) {
         this.cameraName = cameraName;
         LimelightHelpers.SetFiducialIDFiltersOverride(cameraName, validIDs);
+
+        gyro = new Pigeon2(8);
+        var pigeonConfigs = new Pigeon2Configuration();
+        gyro.getConfigurator().apply(pigeonConfigs);
+
+        NetworkTableInstance inst = NetworkTableInstance.getDefault();
+        NetworkTable camTable = inst.getTable(cameraName);
+
+        yawPub = camTable.getDoubleTopic("Yaw").publish();
+        // fieldPub = camTable.getStructTopic("Field", Field2d.struct
     }
 
     // might not be needed
@@ -158,5 +184,13 @@ public class Limelight extends SubsystemBase {
     public void periodic() {
         // tagID = (int) Limetable.getEntry("tid").getDouble(-1);
        // poseEstimationMegatag2();
+       yawPub.set(gyro.getYaw().getValueAsDouble());
+       LimelightHelpers.SetRobotOrientation(cameraName, gyro.getYaw().getValueAsDouble(), 0, 0, 0, 0, 0);
+       PoseEstimate poseEstimate = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(cameraName);
+       if (poseEstimate.pose != null) {
+        field.setRobotPose(poseEstimate.pose);
+       }
+       SmartDashboard.putData("CamField", field);
+
     }
 }
