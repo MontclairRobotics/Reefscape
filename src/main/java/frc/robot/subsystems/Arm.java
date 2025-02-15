@@ -52,7 +52,7 @@ public class Arm extends SubsystemBase {
     private static final Rotation2d MAX_ANGLE = Rotation2d.fromDegrees(37.8); // The min safe angle of the endpoint to
                                                                               // the horizontal //TODO set
     // angle of endpoint at this angle is -104.33
-    private static final Rotation2d MIN_ANGLE = Rotation2d.fromDegrees(-102.143); // The max safe angle of the endpoint
+    private static final Rotation2d MIN_ANGLE = Rotation2d.fromDegrees(-(180 - 102.143)); // The max safe angle of the endpoint
                                                                                   // to the horizontal //TODO set
     // Angle of endpoint is -37.8
     private static final double LARGE_ANGLE_TO_SMALL = 30.0 / 14.0; // TODO check
