@@ -85,15 +85,19 @@ public class RobotContainer {
     //     elevator.setScoringLevel(pos);
     //   }
     // , elevator));
-    elevator.setDefaultCommand(
-      RobotContainer.elevator.setExtensionCommand(0)
-    );
+    // elevator.setDefaultCommand(
+    //   RobotContainer.elevator.setExtensionCommand(0)
+    // );
 
-    arm.setDefaultCommand(Commands.run(() -> {
-      ArmPosition pos = ArmPosition.getDefaultForPiece(rollers.getHeldPiece());
-        arm.setWristLocation(pos);
-      }
-    , arm));
+    // arm.setDefaultCommand(Commands.run(() -> {
+    //   ArmPosition pos = ArmPosition.getDefaultForPiece(rollers.getHeldPiece());
+    //     arm.setWristLocation(pos);
+    //   }
+    // , arm));
+
+    arm.setDefaultCommand(arm.joystickControlCommand());
+    elevator.setDefaultCommand(elevator.joystickControlCommand());
+    operatorController.square().whileTrue(arm.goToAngleCommand(Rotation2d.fromDegrees(90)));
 
     ledControl.setDefaultCommand(ledControl.playPatternCommand(LEDs.m_scrollingRainbow));
 
