@@ -143,7 +143,7 @@ public class Arm extends SubsystemBase {
                 () -> getEffectiveLength(),
                 MIN_ELBOW_ANGLE.getRadians(),
                 MAX_ELBOW_ANGLE.getRadians(), 
-                true, 
+                false, 
                 STARTING_ELBOW_ANGLE.getRadians(),
                 new double[] { 0.0, 0.0 });
             elbowEncoderSim = new DutyCycleEncoderSim(elbowEncoder);
