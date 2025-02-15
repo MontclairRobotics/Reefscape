@@ -5,6 +5,9 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.Seconds;
+
+import java.util.concurrent.TimeUnit;
 
 import com.ctre.phoenix6.Orchestra;
 import com.ctre.phoenix6.SignalLogger;
@@ -12,12 +15,16 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.pathplanner.lib.auto.NamedCommands;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
+import frc.robot.commands.GoToPoseCommand;
 import frc.robot.leds.LEDControl;
 import frc.robot.leds.LEDs;
 import frc.robot.subsystems.Arm;
@@ -29,6 +36,7 @@ import frc.robot.util.ArmPosition;
 import frc.robot.util.Elastic;
 import frc.robot.util.Elastic.Notification;
 import frc.robot.util.Elastic.Notification.NotificationLevel;
+import frc.robot.util.simulation.MapleSimSwerveDrivetrain;
 import frc.robot.util.GamePiece;
 import frc.robot.util.TunerConstants;
 import frc.robot.vision.Limelight;
@@ -52,7 +60,6 @@ public class RobotContainer {
   public static Orchestra orchestra = new Orchestra();
   public static Arm arm = new Arm();
   public static Auto auto = new Auto();
-
   public static Telemetry telemetryLogger = new Telemetry(TunerConstants.kSpeedAt12Volts.in(MetersPerSecond));
 
   //Alliance
@@ -98,7 +105,7 @@ public class RobotContainer {
     // operatorController.circle().onTrue(Commands.run(() -> elevator.setHeightRegular(0.5))); //L2
     // operatorController.cross().onTrue(Commands.run(() -> elevator.setHeightRegular(0.75))); //L3
     // operatorController.square().onTrue(Commands.run(() -> elevator.setHeightRegular(1))); //4
-    
+    //elevator.setDefaultCommand(elevator.joystickControlCommand());
     //roller intake/outtake commands
     // operatorController.R1().onTrue(rollers.intakeAlgaeCommand());
     // operatorController.R2().onTrue(rollers.outtakeAlgaeCommand());
@@ -136,8 +143,9 @@ public class RobotContainer {
       .onTrue(drivetrain.toRobotRelativeCommand())
       .onFalse(drivetrain.toFieldRelativeCommand());
     //90 degree buttons
-    driverController.triangle()
-      .onTrue(drivetrain.alignToAngleFieldRelativeCommand(Rotation2d.fromDegrees(0), false));
+    // driverController.triangle()
+      // .onTrue(drivetrain.alignToAngleFieldRelativeCommand(Rotation2d.fromDegrees(0), false));
+    driverController.triangle().onTrue(drivetrain.goToPoseCommand());
     driverController.square()
       .onTrue(drivetrain.alignToAngleFieldRelativeCommand(Rotation2d.fromDegrees(90), false));
     driverController.cross()

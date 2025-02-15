@@ -265,8 +265,11 @@ public class Elevator extends SubsystemBase {
      * @return the amount of estimated time, in seconds, that it will take to raise the elevator
      */
     public double getRaiseTime(ArmPosition pos) {
-        double displacement = Math.abs((getExtension() - pos.getHeight())/MAX_EXTENSION);
-        return Math.pow(displacement,0.3) + 0.6*displacement + 0.6;
+        double percentExtension = Math.abs((pos.getHeight() - this.getExtension())/MAX_EXTENSION);
+        System.out.println("Height of pose: " + pos.getHeight());
+        System.out.println("Extension: " + this.getExtension());
+        System.out.println("Percent extension: " + percentExtension);
+        return Math.pow(percentExtension,0.3) + 0.6*percentExtension + 0.6;
     }
     /*
      * Sets the elevator target to a height in meters off of the floor

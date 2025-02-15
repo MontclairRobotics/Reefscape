@@ -381,6 +381,9 @@ public class Auto extends SubsystemBase {
                         double raiseTime = RobotContainer.elevator.getRaiseTime(armPos); //time elevator will take to rise
                         double waitTime = pathTime - raiseTime; //how much time we should wait before raising elevator
                         timeSeconds += pathTime;
+                        System.out.println("Path 1 Arm height: " + armPos.getHeight());
+
+                        System.out.println("Path 1 Raise Time: " + raiseTime);
                         //runs the path command along with a command that waits to raise the elevator
                         autoCommand.addCommands(Commands.parallel(
                             path1Cmd,
@@ -426,9 +429,11 @@ public class Auto extends SubsystemBase {
                     if (opTraj.isPresent()) {
                         double pathTime = opTraj.get().getTotalTimeSeconds(); 
                         timeSeconds += pathTime;
-                        double waitTime = pathTime - Elevator.ELEVATOR_RAISE_TIME; //TODO: not needed, we want to immediately set elevator height
+                        // double waitTime = pathTime - Elevator.ELEVATOR_RAISE_TIME; //TODO: not needed, we want to immediately set elevator height
                         armPos = ArmPosition.Intake; //SETS ARM POSITION
+                        System.out.println("Path 2 Arm height: " + armPos.getHeight());
                         double raiseTime = RobotContainer.elevator.getRaiseTime(armPos); //time needed to raise the elevator, for timeout
+                        System.out.println("Path 2 Raise Time: " + raiseTime);
                         autoCommand.addCommands(Commands.parallel(
                             path2Cmd,
                             Commands.sequence(

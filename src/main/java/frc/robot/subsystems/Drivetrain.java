@@ -1,5 +1,7 @@
 package frc.robot.subsystems;
+import frc.robot.Robot;
 import frc.robot.RobotContainer;
+import frc.robot.commands.GoToPoseCommand;
 import frc.robot.util.TunerConstants;
 import frc.robot.util.TunerConstants.TunerSwerveDrivetrain;
 import frc.robot.util.simulation.MapleSimSwerveDrivetrain;
@@ -23,12 +25,14 @@ import com.pathplanner.lib.path.PathConstraints;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.units.Units;
@@ -48,19 +52,38 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
      * 
      */
 
-    public static final double MAX_SPEED = 4; //TODO: actually set this with units
-    public static final double MAX_ROT_SPEED = Math.PI*2;
+    public static final double MAX_SPEED = 5; //TODO: actually set this with units
+    public static final double MAX_ROT_SPEED = Math.PI*4;
     public static final double FORWARD_ACCEL = 9; // m / s^2
     public static final double SIDE_ACCEL = 9; //m / s^2
     public static final double ROT_ACCEL = 9; // radians / s^2
-       
+    public static final boolean IS_LIMITING_ACCEL = false;
+    public static final Pose2d[] BLUE_SCORING_POSES = {
+        new Pose2d(new Translation2d(1.091, 1.060), new Rotation2d(Math.toRadians(-127.000))),
+        new Pose2d(new Translation2d(1.091, 7.000), new Rotation2d(Math.toRadians(127.000))),
+        new Pose2d(new Translation2d(3.680, 2.600), new Rotation2d(Math.toRadians(60.000))),
+        new Pose2d(new Translation2d(2.870, 4.030), new Rotation2d(Math.toRadians(0.000))),
+        new Pose2d(new Translation2d(3.670, 5.450), new Rotation2d(Math.toRadians(-60.000))),
+        new Pose2d(new Translation2d(5.320, 5.450), new Rotation2d(Math.toRadians(-120.000))),
+        new Pose2d(new Translation2d(6.130, 4.030), new Rotation2d(Math.toRadians(180.000))),
+        new Pose2d(new Translation2d(5.320, 2.600), new Rotation2d(Math.toRadians(120.000)))         
+    };
+
+    //for go to pose command
+    private boolean isAtPoseGoal;
+    private ProfiledPIDController xController;
+    private ProfiledPIDController yController;
+    private ProfiledPIDController PoseThetaController;
+
+    private Pose2d targetPose;
+
     /* Acceleration limiters for our drivetrain */
     private SlewRateLimiter forwardLimiter = new SlewRateLimiter(FORWARD_ACCEL); //TODO: actually set this
     private SlewRateLimiter strafeLimiter = new SlewRateLimiter(SIDE_ACCEL); //TODO: actually set this
     private SlewRateLimiter rotationLimiter = new SlewRateLimiter(ROT_ACCEL); //TODO: actually set this
     
     /* Heading PID Controller for things like automatic alignment buttons */
-    public PIDController thetaController = new PIDController(0,0 ,0 );
+    public PIDController thetaController = new PIDController(6,0 ,.2 );
     
     /* variable to store our heading  */
     private Rotation2d odometryHeading;
@@ -112,20 +135,65 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         }
 
         thetaController.setTolerance(1 * Math.PI / 180); //degrees converted to radians
+        thetaController.enableContinuousInput(-Math.PI, Math.PI);
         configurePathPlanner();
 
         resetPose(new Pose2d(3, 3, Rotation2d.fromDegrees(0)));
         
     }
 
+    public Command goToPoseInit() {
+        return Commands.runOnce(() -> {
+        xController = new ProfiledPIDController(5, 0, 0, new TrapezoidProfile.Constraints(
+                TunerConstants.kSpeedAt12Volts.in(Units.MetersPerSecond), Drivetrain.FORWARD_ACCEL));
+        yController = new ProfiledPIDController(5, 0, 0, new TrapezoidProfile.Constraints(
+                TunerConstants.kSpeedAt12Volts.in(Units.MetersPerSecond), Drivetrain.SIDE_ACCEL));
+        PoseThetaController = new ProfiledPIDController(RobotContainer.drivetrain.thetaController.getP(),
+                RobotContainer.drivetrain.thetaController.getI(), RobotContainer.drivetrain.thetaController.getD(),
+                new TrapezoidProfile.Constraints(Drivetrain.MAX_ROT_SPEED, Drivetrain.ROT_ACCEL));
+        PoseThetaController.enableContinuousInput(-Math.PI, Math.PI);
+        //targetPose = RobotContainer.drivetrain.getClosestScoringPose();
+        //System.out.println("Target Pose" + targetPose);
+        targetPose = RobotContainer.drivetrain.getClosestScoringPose();
+        xController.setGoal(targetPose.getX());
+        yController.setGoal(targetPose.getY());
+        PoseThetaController.setGoal(targetPose.getRotation().getRadians());
+        //targetPose = RobotContainer.drivetrain.getClosestScoringPose();
+        //System.out.println("Target Pose" + targetPose);
+        });
+    }
+
+    public Command goToPoseExec() {
+        return Commands.run(() -> {
+        ChassisSpeeds speeds = RobotContainer.drivetrain.getCurrentSpeeds();
+        Pose2d currentPose = RobotContainer.drivetrain.getState().Pose;
+
+        double xSpeed = xController.calculate(currentPose.getX());
+        double ySpeed = yController.calculate(currentPose.getY());
+        double omegaSpeed = PoseThetaController.calculate(currentPose.getRotation().getRadians());
+
+        RobotContainer.drivetrain.drive(xSpeed, ySpeed, omegaSpeed, true);
+
+        isAtPoseGoal = xController.atGoal() && yController.atGoal() && PoseThetaController.atGoal();
+        }).until(() -> isAtPoseGoal);
+    }
+
+
+    public Command goToPoseCommand() {
+        return Commands.sequence(
+            goToPoseInit(),
+            goToPoseExec()
+        );
+    }
     /* RETURNS X VELOCITY FROM CONTROLLER 
      * 
     */
     public double getVelocityXFromController(){
         double xInput = -MathUtil.applyDeadband(RobotContainer.driverController.getLeftX(), 0.04);
-        return forwardLimiter.calculate(
+        if(IS_LIMITING_ACCEL) return forwardLimiter.calculate(
             Math.pow(xInput, 3) * MAX_SPEED
             );
+        else return Math.pow(xInput, 3)* MAX_SPEED;
     }
 
     /* RETURNS Y VELOCITY FROM CONTROLLER 
@@ -133,8 +201,10 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     */
     public double getVelocityYFromController(){
         double yInput = -MathUtil.applyDeadband(RobotContainer.driverController.getLeftY(), 0.04);
-        return strafeLimiter.calculate(Math.pow(yInput, 3) * MAX_SPEED);
+        if(IS_LIMITING_ACCEL) return strafeLimiter.calculate(Math.pow(yInput, 3) * MAX_SPEED);
        
+        else return Math.pow(yInput, 3)* MAX_SPEED;
+
     }
 
     /* DEFAULT DRIVE METHOD
@@ -143,9 +213,12 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
      */
     public void drive() {
         double rotInput = -MathUtil.applyDeadband(RobotContainer.driverController.getRightX(), 0.04);
-        double rotVelocity = rotationLimiter.calculate(
+        double rotVelocity = Math.pow(rotInput, 3) * MAX_ROT_SPEED;
+        if(IS_LIMITING_ACCEL) { 
+            rotVelocity = rotationLimiter.calculate(
             Math.pow(rotInput,3) * MAX_ROT_SPEED
             );
+        }
         drive(getVelocityYFromController(), getVelocityXFromController(), rotVelocity, fieldRelative); //drives using supposed velocities, rot velocity, and field relative boolean
         // drive(0, 1, 0, true);
     }
@@ -302,6 +375,42 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         return Rotation2d.fromDegrees(angle - 180); // Step 3
       }
 
+    public double getDistanceBetweenPoses(Pose2d pos1, Pose2d pos2) {
+        return Math.sqrt(
+            Math.pow(
+                (pos1.getX()-pos2.getX())
+                ,2
+            ) + 
+            Math.pow(
+                (pos1.getY()-pos2.getY())
+                , 2
+            )
+        );
+    }
+
+    public Pose2d getClosestScoringPose() {
+        Pose2d closestPose;
+        Pose2d currentPose;
+        //if(!Robot.isReal()) 
+        currentPose = this.mapleSimSwerveDrivetrain.getSimulatedPose();
+        //else currentPose = this.getRobotPose();
+        System.out.println(currentPose);
+        closestPose = BLUE_SCORING_POSES[0];
+        for(Pose2d pos: BLUE_SCORING_POSES) {
+            // System.out.println("Current pose: " + currentPose);
+            // System.out.println("Distance between current and pos: "  + getDistanceBetweenPoses(currentPose, pos));
+            // System.out.println("Distance between closest and current: " + getDistanceBetweenPoses(closestPose, currentPose));
+            double distanceFromCurrentToPose = currentPose.getTranslation().getDistance(pos.getTranslation());
+            double distanceFromCurrentToClosest = currentPose.getTranslation().getDistance(closestPose.getTranslation());
+            if(distanceFromCurrentToPose < distanceFromCurrentToClosest) {
+                closestPose = pos;
+                System.out.println("YAYA YAYAY AYAYAYClosest pose: " + closestPose);
+            }
+        }
+        System.out.println("Closest pose: " + closestPose);
+        return closestPose;
+    }
+
     //TODO: input correct poses
     public Pose2d getPoseToPathFindTo(){
             switch(RobotContainer.limelight.getTagID()){
@@ -416,7 +525,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
   public void alignToAngleRobotRelative(boolean lockDrive) {
         //calculates the input for the drive function (NO IDEA IF I SHOULD MULTIPLY THIS BY SOMETHING)
         //inputs field relative angle (set point is also converted to field relative)
-        double response = thetaController.calculate(odometryHeading.getRadians()) * Math.PI / 180;
+        double response = thetaController.calculate(odometryHeading.getRadians());
 
         if(lockDrive) drive(0,0,response, false);
         else drive(getVelocityYFromController(), getVelocityXFromController(), response, false);

@@ -255,4 +255,9 @@ public class MapleSimSwerveDrivetrain {
                 // Adjust steer inertia
                 .withSteerInertia(KilogramSquareMeters.of(0.05));
     }
+
+    public Pose2d getSimulatedPose() {
+        Pose2d pose = mapleSimDrive.getSimulatedDriveTrainPose();
+        return pose;
+    }
 }
