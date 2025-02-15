@@ -66,18 +66,6 @@ public class RobotContainer {
 
   private void configureBindings() {
 
-    /* NAMED COMMANDS */
-        NamedCommands.registerCommand(
-            "elevator", 
-            elevator.setHeightCommand(auto.autoElevatorHeight)
-        );
-
-        //TODO: Make this actually move the arm
-        NamedCommands.registerCommand(
-            "arm",
-            Commands.none()
-        );
-
     orchestra.addInstrument(elevator.leftTalonFX);
     orchestra.addInstrument(elevator.rightTalonFX);
     operatorController.R2().onTrue(playMusic("SevenNationArmy.chrp")).onFalse(stopMusic());
@@ -195,6 +183,7 @@ public class RobotContainer {
   }
 
   public Command getAutonomousCommand() {
+    System.out.println(auto.getAutoCommand());
     return auto.getAutoCommand();
   }
 }
