@@ -5,6 +5,8 @@ import com.revrobotics.spark.SparkMax;
 
 import java.util.GregorianCalendar;
 
+import org.dyn4j.geometry.Rotation;
+
 import com.revrobotics.sim.SparkMaxSim;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
@@ -32,6 +34,7 @@ import edu.wpi.first.wpilibj.DutyCycleEncoder;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.simulation.DutyCycleEncoderSim;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -52,21 +55,22 @@ public class Arm extends SubsystemBase {
     private static final Rotation2d MAX_ANGLE = Rotation2d.fromDegrees(37.8); // The min safe angle of the endpoint to
                                                                               // the horizontal //TODO set
     // angle of endpoint at this angle is -104.33
-    private static final Rotation2d MIN_ANGLE = Rotation2d.fromDegrees(-(180 - 102.143)); // The max safe angle of the endpoint
-                                                                                  // to the horizontal //TODO set
+    private static final Rotation2d MIN_ANGLE = Rotation2d.fromDegrees(-(180 - 102.143)); // The max safe angle of the
+                                                                                          // endpoint
+    // to the horizontal //TODO set
     // Angle of endpoint is -37.8
-    private static final double LARGE_ANGLE_TO_SMALL = 30.0 / 14.0; // TODO check
-    private static final double ENCODER_TO_LARGE_ANGLE = 12.0 / 18.0; // 12 teeth on gear near motor, 18 on gear near
+    private static final double ELBOW_ANGLE_TO_WRIST = 30.0 / 14.0; // TODO check
+    private static final double ENCODER_TO_ELBOW = 12.0 / 18.0; // 12 teeth on gear near motor, 18 on gear near
                                                                       // mechanism
     private static final double MOTOR_TO_ENCODER = -1; // TODO can't get gearbox from CAD
-    private static final Rotation2d SMALL_ANGLE_WHEN_LARGE_IS_HORIZONTAL = Rotation2d.fromDegrees(-34.903); // TODO
+    private static final Rotation2d WRIST_ANGLE_WHEN_ELBOW_IS_HORIZONTAL = Rotation2d.fromDegrees(-34.903); // TODO
                                                                                                             // check
 
-    private static final double J1Length = 0.19 - Units.inchesToMeters(3);
+    private static final double J1Length = 0.19 - Units.inchesToMeters(2);
     private double j1PrevPos;
     private double j2PrevPos;
-    private double j1Velocity;
-    private double j2Velocity;
+    private double j1Velocity = 0;
+    private double j2Velocity = 0;
     private double prevLoopTime = Timer.getFPGATimestamp();
     private SlewRateLimiter accelLimiter = new SlewRateLimiter(8); // accelerate fully in ~1.5 seconds (can tune value)
 
@@ -76,16 +80,16 @@ public class Arm extends SubsystemBase {
                                                // crashing during manual control
     private final double SLOWEST_SPEED = 0.3;
 
-    private DutyCycleEncoder j1Encoder;
+    private DutyCycleEncoder elbowEncoder;
     // TODO will there be 2 encoders?
-    private DutyCycleEncoder j2Encoder;
+    private DutyCycleEncoder wristEncoder;
 
-    DutyCycleEncoderSim j1EncoderSim;
-    DutyCycleEncoderSim j2EncoderSim;
+    DutyCycleEncoderSim elbowEncoderSim;
+    DutyCycleEncoderSim wristEncoderSim;
     private SparkMax armMotor;
     private SparkMaxSim armMotorSim;
-    public double smallWristAngle;
-    public double largeWristAngle;
+    // public double smallWristAngle;
+    // public double largeWristAngle;
 
     private DoublePublisher voltagePub;
     private DoublePublisher largeRotPub;
@@ -95,36 +99,37 @@ public class Arm extends SubsystemBase {
     private DoublePublisher endPointAnglePub;
     private DoublePublisher percentRotPub;
 
-    private StructPublisher<Pose3d> joint1PosePub;
-    private StructPublisher<Pose3d> joint2PosePub;
+    private StructPublisher<Pose3d> elbowPosePub;
+    private StructPublisher<Pose3d> wristPosePub;
 
-    // SIM
-    private DoublePublisher simJ1EncoderPub;
-    private DoublePublisher simJ2EncoderPub;
+    // double appliedVoltage = 0;
 
     public Arm() {
         // TrapezoidProfile.Constraints constraints = new
         // TrapezoidProfile.Constraints(MAX_VELOCITY, MAX_ACCELERATION);
         armMotor = new SparkMax(-1, MotorType.kBrushless);
-        j1Encoder = new DutyCycleEncoder(0, 1 * ENCODER_TO_LARGE_ANGLE, -68.8 / 360); // 1st number is port, 2nd is
-                                                                                      // range in this case 1 rotation
-                                                                                      // per rotation, 3rd number is
-                                                                                      // offset (whatever number you
-                                                                                      // have to add so it reads zero
-                                                                                      // degrees when horizontal)
-        j2Encoder = new DutyCycleEncoder(1, 1, -34.429 / 360); // 1st # is port, 2nd is ratio to rotations of mechanism
-                                                               // (1 here), 3rd is initial offset (TODO to be measured)
+        elbowEncoder = new DutyCycleEncoder(0, 1 * ENCODER_TO_ELBOW, 0); // 1st number is port, 2nd is
+                                                                                         // range in this case 1
+                                                                                         // rotation
+                                                                                         // per rotation, 3rd number is
+                                                                                         // offset (whatever number you
+                                                                                         // have to add so it reads zero
+                                                                                         // degrees when horizontal)
+        wristEncoder = new DutyCycleEncoder(1, 1, 0); // 1st # is port, 2nd is ratio to rotations of
+                                                                  // mechanism
+                                                                  // (1 here), 3rd is initial offset (TODO to be
+                                                                  // measured)
         // pidController = new ProfiledPIDController(30.0, 0.0, 0.0, constraints);
         pidController = new PIDController(100, 0, 0);
         pidController.setTolerance(1.0 / 360.0);
         pidController.enableContinuousInput(-0.5, 0.5);
 
-        if (!j1Encoder.isConnected()) {
+        if (!elbowEncoder.isConnected()) {
             Elastic.sendNotification(new Notification(NotificationLevel.ERROR, "Encoder disconnected!",
                     "J1 arm encoder not connected!"));
         }
 
-        if (!j2Encoder.isConnected()) {
+        if (!wristEncoder.isConnected()) {
             Elastic.sendNotification(new Notification(NotificationLevel.ERROR, "Encoder disconnected!",
                     "J2 arm encoder not connected!"));
         }
@@ -139,15 +144,15 @@ public class Arm extends SubsystemBase {
         armMotor.configure(cfg, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
         armMotorSim = new SparkMaxSim(armMotor, DCMotor.getNEO(1));
-        armSim = new DoubleJointedArmModel(2, 0.25, 0.5, 0.5, DCMotor.getNEO(1).withReduction(ENCODER_TO_LARGE_ANGLE),
-                6, 0.25, 0.5, DCMotor.getNEO(1).withReduction(ENCODER_TO_LARGE_ANGLE), 1); // TODO how to handle 2nd
+        armSim = new DoubleJointedArmModel(2, 0.25, 1.5, 0.5, DCMotor.getNEO(1),
+                6, 0.25, 0.5, DCMotor.getNEO(1), 0.009); // TODO how to handle 2nd,
                                                                                            // motor?
 
         if (Robot.isSimulation()) {
-            j1EncoderSim = new DutyCycleEncoderSim(j1Encoder);
-            j2EncoderSim = new DutyCycleEncoderSim(j2Encoder);
-            j1EncoderSim.set(0);
-            j2EncoderSim.set(SMALL_ANGLE_WHEN_LARGE_IS_HORIZONTAL.getRotations());
+            elbowEncoderSim = new DutyCycleEncoderSim(elbowEncoder);
+            wristEncoderSim = new DutyCycleEncoderSim(wristEncoder);
+            elbowEncoderSim.set(0);
+            wristEncoderSim.set(WRIST_ANGLE_WHEN_ELBOW_IS_HORIZONTAL.getRotations());
             // j2EncoderSim.set(0);
         }
 
@@ -159,13 +164,9 @@ public class Arm extends SubsystemBase {
         setpointPub = armTable.getDoubleTopic("PID Setpoint - Small Angle Desgrees").publish();
         endPointAnglePub = armTable.getDoubleTopic("Endpoint Degrees").publish();
         percentRotPub = armTable.getDoubleTopic("Arm Percent Rotation").publish();
-        NetworkTable simTable = armTable.getSubTable("Sim");
 
-        joint1PosePub = armTable.getStructTopic("Joint1Pose", Pose3d.struct).publish();
-        joint2PosePub = armTable.getStructTopic("Joint2Pose", Pose3d.struct).publish();
-
-        simJ1EncoderPub = simTable.getDoubleTopic("Joint 1 Sim Angle").publish();
-        simJ2EncoderPub = simTable.getDoubleTopic("Joint 2 Sim Angle").publish();
+        elbowPosePub = armTable.getStructTopic("Joint1Pose", Pose3d.struct).publish();
+        wristPosePub = armTable.getStructTopic("Joint2Pose", Pose3d.struct).publish();
     }
 
     public boolean atSetpoint() {
@@ -189,6 +190,20 @@ public class Arm extends SubsystemBase {
                 PersistMode.kNoPersistParameters);
     }
 
+    /**
+     * Returns the angle of the elbow to the horizontal
+     */
+    public Rotation2d getElbowAngle() {
+        return Rotation2d.fromRotations(elbowEncoder.get());
+    }
+
+    /**
+     * Returns the angle from the elbow to the wrist
+     */
+    public Rotation2d getWristAngle() {
+        return Rotation2d.fromRotations(wristEncoder.get());
+    }
+
     /*
      * Returns the angle to the horizontal of the endpoint of the arm in rotations
      */
@@ -197,9 +212,9 @@ public class Arm extends SubsystemBase {
         // LARGE_ANGLE_TO_SMALL) +
         // SMALL_ANGLE_WHEN_LARGE_IS_HORIZONTAL.getRotations()));
         // OR
-        return PoseUtils.wrapRotation(Rotation2d.fromRotations((smallWristAngle + largeWristAngle))); // TODO check?
-                                                                                                      // should be
-                                                                                                      // subtract?
+        // return PoseUtils.wrapRotation(Rotation2d.fromRotations((smallWristAngle +
+        // largeWristAngle))); // TODO check?
+        return getElbowAngle().plus(getWristAngle());
     }
 
     private void setWristAngle(Rotation2d targetAngle) {
@@ -233,12 +248,14 @@ public class Arm extends SubsystemBase {
     }
 
     public void joystickControl() {
-        double voltage = Math.pow(-MathUtil.applyDeadband(RobotContainer.operatorController.getRightY(), 0.04), 3) * 12;
-        voltage = accelLimiter.calculate(voltage);
+        // don't invert joystick because we want up to apply a negative voltage
+        double voltage = Math.pow(MathUtil.applyDeadband(RobotContainer.operatorController.getRightY(), 0.04), 3) * 12;
+        // voltage = accelLimiter.calculate(voltage);
 
         double percentRot = getPercentRotation();
 
-        if (voltage < 0) {
+        // percentRot is based on endpoint rotation, which moves in the opposite direction as the motor
+        if (voltage > 0) {
             if (percentRot <= 0.004) {
                 voltage = 0;
                 accelLimiter.reset(0);
@@ -247,7 +264,7 @@ public class Arm extends SubsystemBase {
                         (-12 * Math.pow((percentRot * (100.0 / SLOW_DOWN_ZONE)), 3.2)) - SLOWEST_SPEED);
             }
         }
-        if (voltage > 0) {
+        if (voltage < 0) {
             if (percentRot >= 0.996) {
                 voltage = 0;
                 accelLimiter.reset(0);
@@ -256,10 +273,11 @@ public class Arm extends SubsystemBase {
                         (12 * Math.pow((percentRot * (100.0 / SLOW_DOWN_ZONE)), 3.2)) + SLOWEST_SPEED);
             }
         }
+        
+        // double ffVoltage = armSim.feedforward(VecBuilder.fill(getElbowAngle().getRadians(), getWristAngle().getRadians())).get(0,0);
+        // voltage = voltage - ffVoltage; 
         voltage = MathUtil.clamp(voltage, -12, 12);
 
-        // Negative Voltage because positive brings the endpiece down
-        voltage = -voltage;
         voltagePub.set(voltage);
 
         // voltage = MathUtil.clamp(voltage, -(12 * Math.pow((percentRot * (100.0 /
@@ -272,6 +290,7 @@ public class Arm extends SubsystemBase {
         // The slowest speed will allow the wrist to still go up and down no mater
         // what as long it has not hit the limit switch
         // Puting it to the power of 3 makes the slowdown more noticable
+        // appliedVoltage = voltage;
         armMotor.setVoltage(voltage);
     }
 
@@ -281,26 +300,19 @@ public class Arm extends SubsystemBase {
 
     @Override
     public void periodic() {
-        largeWristAngle = j1Encoder.get();
-        smallWristAngle = j2Encoder.get(); // OR (largeWristAngle * LARGE_ANGLE_TO_SMALL) +
-                                           // SMALL_ANGLE_WHEN_LARGE_IS_HORIZONTAL.getRotations(); //TODO is this 30
-                                           // right? I dont think so
         percentRotPub.set(getPercentRotation());
 
-        if (Robot.isSimulation()) {
-            largeWristAngle = j1EncoderSim.get();
-            smallWristAngle = j2EncoderSim.get();
-        }
-
         // These lines are for an actual physics simulator
-        // j1Velocity = (largeWristAngle - j1PrevPos) / 0.02;
-        // j2Velocity = (smallWristAngle - j2PrevPos) / 0.02;
+        // j1Velocity = (getElbowAngle().getRotations() - j1PrevPos) / 0.02;
+        // j1Velocity = 0;
+        // j2Velocity = (getWristAngle().getRotations() - j2PrevPos) / 0.02;
+        // j2Velocity = 0;
         // prevLoopTime = Timer.getFPGATimestamp();
-        // j1PrevPos = largeWristAngle;
-        // j2PrevPos = smallWristAngle;
+        j1PrevPos = getElbowAngle().getRotations();
+        j2PrevPos = getWristAngle().getRotations();
 
-        largeRotPub.set(largeWristAngle * 360);
-        smallRotPub.set(smallWristAngle * 360);
+        largeRotPub.set(getElbowAngle().getDegrees());
+        smallRotPub.set(getWristAngle().getDegrees());
         endPointAnglePub.set(getEndpointAngle().getDegrees());
     }
 
@@ -308,22 +320,36 @@ public class Arm extends SubsystemBase {
     public void simulationPeriodic() {
         // double dt = 0.02; //Timer.getFPGATimestamp() - prevLoopTime;
         // Matrix<N2, N2> stateMatrix = new Matrix<N2, N2>(N2.instance, N2.instance);
-        // stateMatrix.set(0, 0, largeWristAngle * 2 * Math.PI);
-        // stateMatrix.set(1, 0, smallWristAngle * 2 * Math.PI);
-        // stateMatrix.set(0, 1, j1Velocity * 2 * Math.PI);
-        // stateMatrix.set(1, 1, j2Velocity * 2 * Math.PI);
-        // double voltage = wristSim.getAppliedOutput() *
-        // RobotController.getBatteryVoltage();
-        // double voltage2 = MathUtil.clamp(voltage * LARGE_ANGLE_TO_SMALL, -12, 12);
+        // stateMatrix.set(0, 0, getElbowAngle().getRadians());
+        // stateMatrix.set(1, 0, getWristAngle().getRadians());
+        // double voltage = appliedVoltage;
+        // double voltage2 = MathUtil.clamp(0, -12, 12);
         // System.out.println(voltage);
+
+        // stateMatrix.set(0, 1, j1Velocity);
+        // stateMatrix.set(1, 1, j2Velocity);
+        // // double voltage = armMotorSim.getAppliedOutput() * RobotController.getBatteryVoltage();
+        // // System.out.println(voltage);
+        // if (true) {
+        // // System.out.println(voltage);
         // Matrix<N2, N2> nextStates = armSim.simulate(stateMatrix,
-        // VecBuilder.fill(voltage, 0), 0.002);
+        // VecBuilder.fill(voltage, voltage2), dt);
+
+        // SmartDashboard.putNumber("J1 Velocity", j1Velocity);
+        // SmartDashboard.putNumber("Modified J2 Velocity", j2Velocity * (14.0 /30.0));
+
+
+        // armMotorSim.iterate(Units.radiansPerSecondToRotationsPerMinute(nextStates.get(0,1) / ENCODER_TO_ELBOW), RobotController.getBatteryVoltage(), dt);
+        // j1Velocity = nextStates.get(0, 1);
+        // j2Velocity = nextStates.get(1, 1);
+        // j2Velocity = 0;
 
         // // System.out.println(nextStates.get(0,0));
-        // wristSim.iterate(Units.radiansPerSecondToRotationsPerMinute(nextStates.get(0,
-        // 1)), RobotController.getBatteryVoltage(), dt);
-        // j1EncoderSim.set(Units.radiansToRotations(nextStates.get(0, 0)));
-        // j2EncoderSim.set(Units.radiansToRotations(nextStates.get(1, 0)));
+        // System.out.println(nextStates.get(0,1));
+        
+        // elbowEncoderSim.set(Units.radiansToRotations(nextStates.get(0, 0)) % 1);
+        // wristEncoderSim.set(Units.radiansToRotations(nextStates.get(0, 1)) % 1);
+        // }
 
         // Increment the simulation of the motor
         armMotorSim.iterate(armMotorSim.getAppliedOutput() * MAX_VELOCITY, RobotController.getBatteryVoltage(), 0.02);
@@ -339,39 +365,34 @@ public class Arm extends SubsystemBase {
         // ensure
         // that the encoders always read between 0 and 1 rotation (0 and 360 degrees)
 
-        j1EncoderSim.set(((largeWristAngle + (armMotorSim.getAppliedOutput() * MAX_VELOCITY) * 0.02) + 1) % 1);
-        j2EncoderSim.set(
-                ((smallWristAngle - (armMotorSim.getAppliedOutput() * MAX_VELOCITY * (30.0 / 14.0)) * 0.02) + 1) % 1);
+        elbowEncoderSim.set(
+                ((getElbowAngle().getRotations() + (armMotorSim.getAppliedOutput() * MAX_VELOCITY) * 0.02)) % 1);
+        wristEncoderSim.set(
+                ((getWristAngle().getRotations()
+                        - (armMotorSim.getAppliedOutput() * MAX_VELOCITY * (30.0 / 14.0)) * 0.02)) % 1);
 
         // Publish sim encoder positions to the network
-        simJ1EncoderPub.set(j1EncoderSim.get() * 360);
-        simJ2EncoderPub.set(j2EncoderSim.get() * 360);
 
         // invert the angle for visualization because positive angle is down in
         // AdvantageScope
         // the constant added is because the CAD was exported on an angle (I think?) It
         // Just brings the simulated arm piece to the horizontal when the encoder reads
         // 0.
-        double largeVisualizationAngle = -largeWristAngle + 0.1047;
+        double largeVisualizationAngle = -getElbowAngle().getRadians();
 
         // Invert the largeWristAngle and smallWristAngle because positive angle is down
         // in AdvantageScope
-        // Mod by 1 to make sure the sum is between 0 and 1 (-1 and 0 with the invert)
-        // The arbitrary number being added makes sure it is rendered horizontally when
-        // it's angle is zero
-        double smallVisualizationAngle = (-((largeWristAngle + smallWristAngle) % 1)) - (78.0 / 360.0);
+        double smallVisualizationAngle = -getEndpointAngle().getRadians();
 
         // Publish the pose for joint 1. The x coordinate is the coordinate of the
         // elevator
         // Y coordinate is zero because it is centered on that axis.
-        // The random offset of 1.5 inches accounts for the model being out of position
-        // for a reason I can't explain
-        joint1PosePub.set(new Pose3d(0.121, 0, RobotContainer.elevator.getHeight() - Units.inchesToMeters(1.5),
-                new Rotation3d(0, largeVisualizationAngle * 2 * Math.PI, 0)));
+        elbowPosePub.set(new Pose3d(0.121, 0, RobotContainer.elevator.getExtension() + 0.937,
+                new Rotation3d(0, largeVisualizationAngle, 0)));
 
         // Calculate position of second joint based on first joint length
-        double j2X = J1Length * Math.cos(largeWristAngle * 2 * Math.PI);
-        double j2Z = J1Length * Math.sin(largeWristAngle * 2 * Math.PI);
+        double xOffset = J1Length * Math.cos(getElbowAngle().getRadians());
+        double yOffset = J1Length * Math.sin(getElbowAngle().getRadians());
 
         // Publish the pose for joint 2. The x coordinate is the coordinate of the
         // elevator plus
@@ -380,9 +401,9 @@ public class Arm extends SubsystemBase {
         // because it is centered on that axis
         // The z coordinate is the elevator height plus the length of the first part of
         // the arm along the y axis
-        joint2PosePub
-                .set(new Pose3d(j2X + 0.121, 0, RobotContainer.elevator.getHeight() + j2Z - Units.inchesToMeters(1.5),
-                        new Rotation3d(0, smallVisualizationAngle * 2 * Math.PI, 0)));
+        wristPosePub
+                .set(new Pose3d(xOffset + 0.121, 0, RobotContainer.elevator.getExtension() + yOffset + 0.937,
+                        new Rotation3d(0, smallVisualizationAngle, 0)));
     }
 
     public Command goToAngleCommand(Rotation2d angle) {

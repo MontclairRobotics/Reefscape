@@ -155,7 +155,6 @@ public class DoubleJointedArmModel {
                 VecBuilder.fill(
                         clamp(localDrive.nominalVoltageVolts, voltages.get(0, 0)),
                         clamp(distalDrive.nominalVoltageVolts, voltages.get(1, 0)));
-
         Matrix<N4, N1> prelim =
                 NumericalIntegration.rkdp(
                         this::instDynamics, stateAsVector, clampedVoltage, dtSeconds);
