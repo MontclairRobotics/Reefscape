@@ -5,6 +5,7 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
@@ -38,10 +39,18 @@ public class GoToPoseCommand extends Command {
     @Override
     public void initialize() {
 
-        targetPose = RobotContainer.drivetrain.getClosestScoringPose();
+
+        targetPose = RobotContainer.drivetrain.getClosestScoringPose(Drivetrain.BLUE_SCORING_POSES);
+        
+        if(RobotContainer.driverController.L1().getAsBoolean()) {
+            targetPose = RobotContainer.drivetrain.getClosestScoringPose(Drivetrain.LEFT_BLUE_SCORING_POSES);
+        } else if(RobotContainer.driverController.R1().getAsBoolean()) {
+            targetPose = RobotContainer.drivetrain.getClosestScoringPose(Drivetrain.RIGHT_BLUE_SCORING_POSES);
+        } 
+        
         NetworkTableInstance inst = NetworkTableInstance.getDefault();
         NetworkTable poseCommandTable = inst.getTable("Pose Command");
-        Auto.field.setRobotPose(targetPose);
+        //.Auto.field.setRobotPose(targetPose);
 
     
         DoubleTopic xSetpointTopic = poseCommandTable.getDoubleTopic("X Setpoint");

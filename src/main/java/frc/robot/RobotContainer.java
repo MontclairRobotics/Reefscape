@@ -105,7 +105,8 @@ public class RobotContainer {
     /* Operator bindings */
 
     //elevator height commands
-    operatorController.L1().whileTrue(elevator.joystickControlCommand()).whileTrue(arm.joystickControlCommand());
+    operatorController.L1().whileTrue(elevator.joystickControlCommand());
+   // operatorController.L1().whileTrue(arm.joystickControlCommand());
     operatorController.triangle().whileTrue(Commands.run(() -> elevator.setHeight(1.7), elevator)); //L1 //66.93 inches
     // operatorController.circle().onTrue(Commands.run(() -> elevator.setHeightRegular(0.5))); //L2
     // operatorController.cross().onTrue(Commands.run(() -> elevator.setHeightRegular(0.75))); //L3
@@ -151,6 +152,8 @@ public class RobotContainer {
     driverController.triangle()
        .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(0)), false));
     driverController.R2().whileTrue(new GoToPoseCommand());
+    driverController.L1().whileTrue(new GoToPoseCommand());
+    driverController.R1().whileTrue(new GoToPoseCommand());
     driverController.square()
       .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(90)), false));
     driverController.cross()
@@ -160,8 +163,8 @@ public class RobotContainer {
     //zero gyro
     driverController.touchpad().onTrue(drivetrain.zeroGyroCommand());
     //for testing robot relative angles
-    driverController.L1().onTrue(drivetrain.alignToAngleRobotRelativeCommand(Rotation2d.fromDegrees(30), false));
-    driverController.R1().onTrue(drivetrain.alignToAngleRobotRelativeCommand(Rotation2d.fromDegrees(-30), false));
+   // driverController.L1().onTrue(drivetrain.alignToAngleRobotRelativeCommand(Rotation2d.fromDegrees(30), false));
+   // driverController.R1().onTrue(drivetrain.alignToAngleRobotRelativeCommand(Rotation2d.fromDegrees(-30), false));
 
    drivetrain.registerTelemetry(telemetryLogger::telemeterize);    
   }
