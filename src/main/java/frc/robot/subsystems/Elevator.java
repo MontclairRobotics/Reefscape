@@ -46,7 +46,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Robot;
 import frc.robot.RobotContainer;
-import frc.robot.util.ArmPosition;
+import frc.robot.util.RobotState;
 import frc.robot.util.Elastic;
 
 import com.ctre.phoenix6.controls.VoltageOut;
@@ -258,12 +258,12 @@ public class Elevator extends SubsystemBase {
 
     /**
      * 
-     * @param pos the Arm Position to raise to
+     * @param state the mechanism state to raise to
      * @return the amount of estimated time, in seconds, that it will take to raise the elevator
      */
-    public double getRaiseTime(ArmPosition pos) {
-        double percentExtension = Math.abs((pos.getHeight() - this.getExtension())/MAX_EXTENSION);
-        System.out.println("Height of pose: " + pos.getHeight());
+    public double getRaiseTime(RobotState state) {
+        double percentExtension = Math.abs((state.getHeight() - this.getExtension())/MAX_EXTENSION);
+        System.out.println("Height of pose: " + state.getHeight());
         System.out.println("Extension: " + this.getExtension());
         System.out.println("Percent extension: " + percentExtension);
         return Math.pow(percentExtension,0.3) + 0.8*percentExtension + 1;
@@ -509,7 +509,7 @@ public class Elevator extends SubsystemBase {
         setExtension(extension);
     }
 
-    public void setScoringLevel(ArmPosition pos) {
+    public void setScoringLevel(RobotState pos) {
         setExtension(pos.getHeight());
     }
 
@@ -561,7 +561,7 @@ public class Elevator extends SubsystemBase {
         return Commands.run(() -> setHeight(height), this);
     }
 
-    public Command setScoringHeightCommand(ArmPosition pos) {
+    public Command setScoringHeightCommand(RobotState pos) {
         return Commands.run(() -> setScoringLevel(pos), this);
     }
 

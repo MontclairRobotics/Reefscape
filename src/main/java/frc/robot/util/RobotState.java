@@ -3,7 +3,7 @@ package frc.robot.util;
 import edu.wpi.first.math.geometry.Rotation2d;
 
 // height should be extension of elevator in meters
-public enum ArmPosition {
+public enum RobotState {
     L4 (1.15,Rotation2d.fromDegrees(-57)),
     L3 (0.424,Rotation2d.fromDegrees(-33)),
     L2 (0,Rotation2d.fromDegrees(-17)),
@@ -20,12 +20,12 @@ public enum ArmPosition {
     private double height;
     private Rotation2d angle;
 
-    ArmPosition(double height, Rotation2d angle) {
+    RobotState(double height, Rotation2d angle) {
         this.height = height;
         this.angle = angle;
     }
 
-    public ArmPosition fromInt(int x){
+    public RobotState fromInt(int x){
         switch(x) {
             case 4: return L4;
             case 3: return L3;
@@ -35,7 +35,7 @@ public enum ArmPosition {
         return null;
     }
 
-    public static ArmPosition getDefaultForPiece(GamePiece piece) {
+    public static RobotState getDefaultForPiece(GamePiece piece) {
         if (piece == GamePiece.Coral) {
             return DrivingCoral;
         } else if (piece == GamePiece.Algae) {
@@ -45,7 +45,7 @@ public enum ArmPosition {
         }
     }
 
-    public static ArmPosition fromString(String s){
+    public static RobotState fromString(String s){
         switch(s) {
             case "4": return L4;
             case "3": return L3;

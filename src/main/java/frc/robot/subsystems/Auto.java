@@ -50,7 +50,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.RobotContainer;
-import frc.robot.util.ArmPosition;
+import frc.robot.util.RobotState;
 import frc.robot.util.Elastic;
 import frc.robot.util.Elastic.Notification;
 import frc.robot.util.Elastic.Notification.NotificationLevel;
@@ -61,10 +61,11 @@ public class Auto extends SubsystemBase {
     // public double autoElevatorHeight = 0;
     // public double autoArmAngle = 0;
 
+    //TODO: probably won't want a INTAKE timeout, we can just wait until piece is intaked
     private final double SCORING_TIMEOUT = 0.3;
     private final double INTAKE_TIMEOUT = 0.3;
 
-    public int estimatedScore = 3; //3 because leave bonus!
+    public int estimatedScore = 3; //Starts at 3 because of the leave bonus!
     private String prevAutoString = "";
     private double prevProgressBar = 0;
     private ArrayList<PathPlannerPath> pathList = new ArrayList<PathPlannerPath>();
@@ -73,7 +74,7 @@ public class Auto extends SubsystemBase {
 
     private Command autoCmd = Commands.none();
 
-    private double timeSeconds = 0; //time the auto routine will take
+    private double timeSeconds = 0; //*ESTIMATED* time the auto routine will take
 
     private boolean isUsingProgressBar;
 
@@ -86,7 +87,6 @@ public class Auto extends SubsystemBase {
     DoubleEntry progressBarEnt = progressBarTopic.getEntry(0);
     DoubleTopic timeStampTopic = auto.getDoubleTopic("Time (s)");
     DoublePublisher timeStampPub = timeStampTopic.publish();
-    // DoublePublisher progressBarPub = progressBarTopic.publish();
 
     StringTopic feedbackTopic = auto.getStringTopic("Auto Feedback");
     StringPublisher feedbackPub = feedbackTopic.publish();
@@ -95,6 +95,11 @@ public class Auto extends SubsystemBase {
 
     public static Field2d field = new Field2d();
 
+    /**
+     * 
+     * @param x the scoring level from 1-4 (Representing L1, L2, L3, L4)
+     * @return the score for placing a coral on the given level during autonomous
+     */
     public static int mapCoralLevels(int x) {
         if (x == 1) {
             return 3;
@@ -121,13 +126,16 @@ public class Auto extends SubsystemBase {
         stringEnt.set("");
         progressBarEnt.set(0);
         progressBarTopic.setRetained(true);
-        // progressBarPub.set(0);
         feedbackTopic.setRetained(true);
         feedbackPub.set("Enter auto string!");
         timeStampTopic.setRetained(true);
         timeStampPub.set(0);
     }
 
+    /**
+     * @param estimatedScore
+     * @return the estimated score for the inputted auto string, if we make all of our shots
+     */
     public int calculateEstimatedScore(int estimatedScore) {
         estimatedScore = 3;
 
@@ -214,7 +222,11 @@ public class Auto extends SubsystemBase {
 
     }
 
-    public void drawPaths() { // TODO rotate for red alliance?
+    /**
+     * Loops through paths and draws them on the field2d object that is sent to the Auto Dashboard
+     */
+    public void drawPaths() { //TODO rotate for red alliance?
+        //It does rotate for alliance - rafael
 
         for (int i = 0; i < pathList.size(); i++) {
             PathPlannerPath path = pathList.get(i);
@@ -236,28 +248,36 @@ public class Auto extends SubsystemBase {
     }
 
     public Command buildAutoCommand(String autoString) {
-
-        timeSeconds = 0;
+ 
+        timeSeconds = 0; //resets estimated time
 
         if (!isAutoStringValid(autoString)) {
-            return Commands.none();
-            // Possibly make this return just a simple path so we get the leave bonus
+            //drives half speed for 1 second
+            return Commands.run(
+                () -> RobotContainer.drivetrain.drive(Drivetrain.MAX_SPEED/2, 0, 0, false, true)
+            )
+            .withTimeout(1);
+            //TODO: does the above thing drive forwards or sideways? Forget if X is forwards or sideways.
         }
 
         SequentialCommandGroup autoCommand = new SequentialCommandGroup();
 
-        // S1 B3 1
-        // TODO: write the rest of this
         for (int i = 1; i < autoString.length(); i += 3) {
 
-            /* Creates strings to store each part of the 3 character interval */
-            String first = autoString.substring(i, i + 1); // pickup location
-            String second = i < autoString.length() - 1 ? autoString.substring(i + 1, i + 2) : null; // scoring location
-            String third = i < autoString.length() - 2 ? autoString.substring(i + 2, i + 3) : null; // coral level
-            String fourth = i < autoString.length() - 3 ? autoString.substring(i + 3, i + 4) : null; // next pickup
-                                                                                                     // location
+            //checks if its the last iteration, then we want to reset robot state after scoring
+            boolean isLastIteration = i+3 >= autoString.length();
 
-            //pure driving commands to be added
+            /* Creates strings to store each part of the 3 character interval */
+            // pickup location ->
+            String first = autoString.substring(i, i + 1); 
+            // scoring location ->
+            String second = i < autoString.length() - 1 ? autoString.substring(i + 1, i + 2) : null; 
+            // coral level ->
+            String third = i < autoString.length() - 2 ? autoString.substring(i + 2, i + 3) : null; 
+            // next pickup location ->
+            String fourth = i < autoString.length() - 3 ? autoString.substring(i + 3, i + 4) : null; 
+
+            //driving commands
             Command path1Cmd = Commands.none(); //path towards scoring location
             Command path2Cmd = Commands.none(); //path towards intake location
 
@@ -366,10 +386,11 @@ public class Auto extends SubsystemBase {
             }
 
             //Default armPos is none (which is 0)
-            ArmPosition armPos = ArmPosition.DrivingNone;
-            //if we have a scoring location, set the arm position to that scoring location!
+            RobotState mechState = RobotState.DrivingNone;
+
+            //if we have a scoring location, set the arm/elevator state to that scoring location!
             if (third != null) {
-                armPos = ArmPosition.fromString(third); 
+                mechState = RobotState.fromString(third); 
             }
 
             /* adds command form scoring location to next pickup location */
@@ -379,23 +400,22 @@ public class Auto extends SubsystemBase {
                     opTraj = path1.getIdealTrajectory(RobotConfig.fromGUISettings());
                     if (opTraj.isPresent()) {
                         double pathTime = opTraj.get().getTotalTimeSeconds(); //time path will take
-                        double raiseTime = RobotContainer.elevator.getRaiseTime(armPos); //time elevator will take to rise
+                        double raiseTime = RobotContainer.elevator.getRaiseTime(mechState); //time elevator will take to rise
                         double waitTime = pathTime - raiseTime; //how much time we should wait before raising elevator
-                        timeSeconds += pathTime;
-                        System.out.println("Path 1 Arm height: " + armPos.getHeight());
-
-                        System.out.println("Path 1 Raise Time: " + raiseTime);
+                        timeSeconds += pathTime; //adds how long the path will take to the estimated time
+                       // System.out.println("Path 1 Arm height: " + mechState.getHeight());
+                       // System.out.println("Path 1 Raise Time: " + raiseTime);
                         //runs the path command along with a command that waits to raise the elevator
                         autoCommand.addCommands(Commands.parallel(
                             path1Cmd,
                                 Commands.sequence(
                                     Commands.waitSeconds(waitTime),
                                     Commands.parallel(
-                                        Commands.print("Starting elevator command path 1"),
-                                        RobotContainer.elevator.setScoringHeightCommand(armPos).withTimeout(raiseTime),
-                                        RobotContainer.arm.goToAngleCommand(armPos.getAngle())
-                                    ),
-                                    Commands.print("Finished elevator command path 1")
+                                        //Commands.print("Starting elevator command path 1"),
+                                        RobotContainer.elevator.setScoringHeightCommand(mechState).withTimeout(raiseTime),
+                                        RobotContainer.arm.goToAngleCommand(mechState.getAngle())
+                                    )
+                                    //,Commands.print("Finished elevator command path 1")
                                 )    
                         ));
 
@@ -409,17 +429,16 @@ public class Auto extends SubsystemBase {
 
             //Command to shoot!!!
             
-            autoCommand.addCommands(RobotContainer.rollers.outtakeCoralCommand().withTimeout(SCORING_TIMEOUT)); // add command to
-            timeSeconds += SCORING_TIMEOUT;
+            autoCommand.addCommands(RobotContainer.rollers.outtakeCoralCommand().withTimeout(SCORING_TIMEOUT));
+            timeSeconds += SCORING_TIMEOUT; //adds how long it will take to shoot the the estimated time
             
-            //TODO: not needed
-            // // Bring elevator and arm to driving position after scoring
-            // autoCommand.addCommands(Commands.parallel(
-            //         Commands.print("Setting elevator to default position after scoring"),
-            //         RobotContainer.elevator.setScoringHeightCommand(ArmPosition.DrivingNone).withTimeout(1)
-            //         //RobotContainer.arm.goToLocationCommand(ArmPosition.DrivingNone)
-            //         ));
-
+           // Bring elevator and arm to default position after scoring last coral
+           if(isLastIteration) {
+            autoCommand.addCommands(Commands.parallel(
+                    RobotContainer.elevator.setScoringHeightCommand(RobotState.DrivingNone).withTimeout(1),
+                    RobotContainer.arm.goToLocationCommand(RobotState.DrivingNone)
+            ));
+           }
 
             //Path 2 command group
 
@@ -431,21 +450,20 @@ public class Auto extends SubsystemBase {
                         double pathTime = opTraj.get().getTotalTimeSeconds(); 
                         timeSeconds += pathTime;
                         // double waitTime = pathTime - Elevator.ELEVATOR_RAISE_TIME; //TODO: not needed, we want to immediately set elevator height
-                        armPos = ArmPosition.Intake; //SETS ARM POSITION
-                        System.out.println("Path 2 Arm height: " + armPos.getHeight());
-                        double raiseTime = RobotContainer.elevator.getRaiseTime(armPos); //time needed to raise the elevator, for timeout
-                        System.out.println("Path 2 Raise Time: " + raiseTime);
+                        mechState = RobotState.Intake; //SETS ROBOT STATE TO INTAKING
+                        //System.out.println("Path 2 Arm height: " + mechState.getHeight());
+                        double raiseTime = RobotContainer.elevator.getRaiseTime(mechState); //time needed to raise the elevator, for timeout
+                        //System.out.println("Path 2 Raise Time: " + raiseTime);
                         autoCommand.addCommands(Commands.parallel(
                             path2Cmd,
                             Commands.sequence(
                                 //Commands.waitSeconds(waitTime),
                                 Commands.parallel(
-                                    Commands.print("Running elevator Command path 2"),
-                                    RobotContainer.elevator.setScoringHeightCommand(armPos).withTimeout(raiseTime),
-                                    //.withTimeout(raiseTime) TODO: timeout needed?
-                                    RobotContainer.arm.goToLocationCommand(ArmPosition.Intake)
-                                ),
-                                Commands.print("Finishing path 2 elevator command")
+                                    //Commands.print("Running elevator Command path 2"),
+                                    RobotContainer.elevator.setScoringHeightCommand(mechState).withTimeout(raiseTime),
+                                    RobotContainer.arm.goToLocationCommand(mechState)
+                                )
+                               // ,Commands.print("Finishing path 2 elevator command")
                             )
                         ));
 
@@ -458,16 +476,9 @@ public class Auto extends SubsystemBase {
             }
 
             /* ADDS AN INTAKING COMMAND */
+            //TODO: make it end when we detect coral in our grabber, not based on a timeout
             autoCommand.addCommands(RobotContainer.rollers.intakeCoralCommand().withTimeout(INTAKE_TIMEOUT));
             timeSeconds += INTAKE_TIMEOUT;
-
-            //TODO: not needed
-            // Set elevator and arm to driving position after intaking
-            // autoCommand.addCommands(Commands.parallel(
-            //         Commands.print("Setting elevator to default position after intaking"),
-            //         RobotContainer.elevator.setScoringHeightCommand(ArmPosition.DrivingNone).withTimeout(RobotContainer.elevator.getRaiseTime(ArmPosition.DrivingNone))
-            //         //RobotContainer.arm.goToLocationCommand(ArmPosition.DrivingNone)
-            //         ));
 
         }
 
@@ -519,8 +530,9 @@ public class Auto extends SubsystemBase {
 
     public void displayTimestampSeconds() {
         double time = timeSeconds;
-        double rounded = Math.round(time * 10.0) / 10.0;
-        timeStampPub.set(rounded);
+        //rounds time to tenth place because it looks nicer
+        double roundedTime = Math.round(time * 10.0) / 10.0;
+        timeStampPub.set(roundedTime);
     }
 
     public Command getAutoCommand() {

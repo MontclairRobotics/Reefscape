@@ -24,6 +24,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
+import frc.robot.commands.AlignToAprilTagCommand;
 import frc.robot.commands.GoToPoseCommand;
 import frc.robot.leds.LEDControl;
 import frc.robot.leds.LEDs;
@@ -32,13 +33,14 @@ import frc.robot.subsystems.Auto;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Rollers;
-import frc.robot.util.ArmPosition;
+import frc.robot.util.RobotState;
 import frc.robot.util.Elastic;
 import frc.robot.util.Elastic.Notification;
 import frc.robot.util.Elastic.Notification.NotificationLevel;
 import frc.robot.util.simulation.MapleSimSwerveDrivetrain;
 import frc.robot.util.GamePiece;
 import frc.robot.util.PoseUtils;
+import frc.robot.util.ScoreDirection;
 import frc.robot.util.TunerConstants;
 import frc.robot.vision.Limelight;
 
@@ -95,7 +97,7 @@ public class RobotContainer {
     //     arm.setWristLocation(pos);
     //   }
     // , arm));
-
+    elevator.setDefaultCommand(elevator.joystickControlCommand());
     arm.setDefaultCommand(arm.joystickControlCommand());
    // elevator.setDefaultCommand(elevator.joystickControlCommand());
     operatorController.square().whileTrue(arm.goToAngleCommand(Rotation2d.fromDegrees(30)));
@@ -105,7 +107,7 @@ public class RobotContainer {
     /* Operator bindings */
 
     //elevator height commands
-    operatorController.L1().whileTrue(elevator.joystickControlCommand());
+    //operatorController.L2().whileTrue(elevator.joystickControlCommand()).whileTrue(arm.joystickControlCommand());
    // operatorController.L1().whileTrue(arm.joystickControlCommand());
     operatorController.triangle().whileTrue(Commands.run(() -> elevator.setHeight(1.7), elevator)); //L1 //66.93 inches
     // operatorController.circle().onTrue(Commands.run(() -> elevator.setHeightRegular(0.5))); //L2
@@ -123,6 +125,7 @@ public class RobotContainer {
     // operatorController.cross().whileTrue(elevator.sysIdQuasistatic(Direction.kReverse));
     // operatorController.square().whileTrue(elevator.sysIdQuasistatic(Direction.kForward));
 
+    
     operatorController.circle().whileTrue(Commands.sequence(
       Commands.runOnce(() -> SignalLogger.start()),
       elevator.sysIdDynamic(Direction.kForward).until(elevator::isAtTop),
@@ -144,16 +147,25 @@ public class RobotContainer {
 
     /* DRIVER BINDINGS */
 
+    //alignment buttons
+    driverController.R2().whileTrue(new GoToPoseCommand(ScoreDirection.CENTER)
+     // .andThen(new AlignToAprilTagCommand(ScoreDirection.CENTER))
+     );
+    driverController.L1().whileTrue(new GoToPoseCommand(ScoreDirection.LEFT)
+    //  .andThen(new AlignToAprilTagCommand(ScoreDirection.LEFT))
+    );
+    driverController.R1().whileTrue(new GoToPoseCommand(ScoreDirection.RIGHT)
+    //  .andThen(new AlignToAprilTagCommand(ScoreDirection.RIGHT))
+    );
+
     //Robot relative
     driverController.L2()
       .onTrue(drivetrain.toRobotRelativeCommand())
       .onFalse(drivetrain.toFieldRelativeCommand());
+
     //90 degree buttons
     driverController.triangle()
        .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(0)), false));
-    driverController.R2().whileTrue(new GoToPoseCommand());
-    driverController.L1().whileTrue(new GoToPoseCommand());
-    driverController.R1().whileTrue(new GoToPoseCommand());
     driverController.square()
       .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(90)), false));
     driverController.cross()

@@ -40,7 +40,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Robot;
 import frc.robot.RobotContainer;
-import frc.robot.util.ArmPosition;
+import frc.robot.util.RobotState;
 import frc.robot.util.Elastic;
 import frc.robot.util.PoseUtils;
 import frc.robot.util.Elastic.Notification;
@@ -243,7 +243,7 @@ public class Arm extends SubsystemBase {
         armMotor.setVoltage(-wristVoltage);
     }
 
-    public void setWristLocation(ArmPosition pos) {
+    public void setWristLocation(RobotState pos) {
         setWristAngle(pos.getAngle());
     }
 
@@ -418,7 +418,7 @@ public class Arm extends SubsystemBase {
         return Commands.runOnce(() -> setIdleMode(mode)).ignoringDisable(true);
     }
 
-    public Command goToLocationCommand(ArmPosition pos) {
+    public Command goToLocationCommand(RobotState pos) {
         return goToAngleCommand(pos.getAngle());
     }
 
