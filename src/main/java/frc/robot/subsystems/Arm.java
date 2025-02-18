@@ -256,7 +256,7 @@ public class Arm extends SubsystemBase {
 
         // percentRot is based on endpoint rotation, which moves in the opposite direction as the motor
         if (voltage > 0) {
-            if (percentRot <= 0.004) {
+            if (percentRot <= 0.009) {
                 voltage = 0;
                 accelLimiter.reset(0);
             } else if (percentRot <= 0.07) {
@@ -296,6 +296,10 @@ public class Arm extends SubsystemBase {
 
     public void stop() {
         armMotor.stopMotor();
+    }
+
+    public Command stopCommand() {
+        return Commands.runOnce(() -> stopMotor());
     }
 
     @Override
