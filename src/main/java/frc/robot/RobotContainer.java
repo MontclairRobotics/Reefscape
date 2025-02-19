@@ -83,23 +83,23 @@ public class RobotContainer {
 
     /*     Default commands */
     drivetrain.setDefaultCommand(drivetrain.driveJoystickInputCommand());
-    // elevator.setDefaultCommand(Commands.run(() -> {
-    //   ArmPosition pos = ArmPosition.getDefaultForPiece(rollers.getHeldPiece());
-    //   System.out.println(pos.getHeight());
-    //     elevator.setScoringLevel(pos);
-    //   }
-    // , elevator));
-    // elevator.setDefaultCommand(
-    //   RobotContainer.elevator.setExtensionCommand(0)
-    // );
+    elevator.setDefaultCommand(Commands.run(() -> {
+      RobotState pos = RobotState.getDefaultForPiece(rollers.getHeldPiece());
+      System.out.println(pos.getHeight());
+        elevator.setScoringLevel(pos);
+      }
+    , elevator));
+    elevator.setDefaultCommand(
+      RobotContainer.elevator.setExtensionCommand(0)
+    );
 
-    // arm.setDefaultCommand(Commands.run(() -> {
-    //   ArmPosition pos = ArmPosition.getDefaultForPiece(rollers.getHeldPiece());
-    //     arm.setWristLocation(pos);
-    //   }
-    // , arm));
-    elevator.setDefaultCommand(elevator.joystickControlCommand());
-    arm.setDefaultCommand(arm.joystickControlCommand());
+    arm.setDefaultCommand(Commands.run(() -> {
+      RobotState pos = RobotState.getDefaultForPiece(rollers.getHeldPiece());
+        arm.setWristLocation(pos);
+      }
+    , arm));
+    //elevator.setDefaultCommand(elevator.joystickControlCommand());
+    //arm.setDefaultCommand(arm.joystickControlCommand());
    // elevator.setDefaultCommand(elevator.joystickControlCommand());
     operatorController.square().whileTrue(arm.goToAngleCommand(Rotation2d.fromDegrees(30)));
 
@@ -108,35 +108,37 @@ public class RobotContainer {
     /* Operator bindings */
 
     //elevator height commands
-    //operatorController.L2().whileTrue(elevator.joystickControlCommand()).whileTrue(arm.joystickControlCommand());
-   // operatorController.L1().whileTrue(arm.joystickControlCommand());
+    operatorController.L1().whileTrue(elevator.joystickControlCommand()).whileTrue(arm.joystickControlCommand());
     operatorController.triangle().whileTrue(Commands.run(() -> elevator.setHeight(1.7), elevator)); //L1 //66.93 inches
-    // operatorController.circle().onTrue(Commands.run(() -> elevator.setHeightRegular(0.5))); //L2
-    // operatorController.cross().onTrue(Commands.run(() -> elevator.setHeightRegular(0.75))); //L3
-    // operatorController.square().onTrue(Commands.run(() -> elevator.setHeightRegular(1))); //4
-    //elevator.setDefaultCommand(elevator.joystickControlCommand());
-    //roller intake/outtake commands
-    // operatorController.R1().onTrue(rollers.intakeAlgaeCommand());
-    // operatorController.R2().onTrue(rollers.outtakeAlgaeCommand());
-    // operatorController.L1().onTrue(rollers.intakeCoralCommand());
-    // operatorController.L2().onTrue(rollers.outtakeCoralCommand());
-
-    // operatorController.triangle().whileTrue(elevator.sysIdDynamic(Direction.kReverse));
-    // operatorController.circle().whileTrue(elevator.sysIdDynamic(Direction.kForward));
-    // operatorController.cross().whileTrue(elevator.sysIdQuasistatic(Direction.kReverse));
-    // operatorController.square().whileTrue(elevator.sysIdQuasistatic(Direction.kForward));
-
     
-    operatorController.circle().whileTrue(Commands.sequence(
-      Commands.runOnce(() -> SignalLogger.start()),
-      elevator.sysIdDynamic(Direction.kForward).until(elevator::isAtTop),
-      elevator.sysIdDynamic(Direction.kReverse).until(elevator::isAtBottom),
-      elevator.sysIdQuasistatic(Direction.kForward).until(elevator::isAtTop),
-      elevator.sysIdQuasistatic(Direction.kReverse).until(elevator::isAtBottom),
-      Commands.runOnce(() -> SignalLogger.stop())
-    ).onlyWhile(() -> {
-      return elevator.isSysIDSafe();
-    }));
+
+    //roller intake/outtake commands
+    operatorController.L2().whileTrue(elevator.setScoringHeightCommand(RobotState.Intake).alongWith(arm.goToLocationCommand(RobotState.Intake)).alongWith(rollers.intakeCoralCommand())).onFalse(rollers.stop());
+    operatorController.R2().whileTrue(rollers.outtakeCoralCommand()).onFalse(rollers.stop());
+
+    operatorController.triangle()
+    .whileTrue(arm.goToLocationCommand(RobotState.L3).alongWith(elevator.setScoringHeightCommand(RobotState.L3)))
+    .onFalse(arm.stopCommand().alongWith(elevator.stopCommand()));
+    operatorController.circle()
+    .whileTrue(arm.goToLocationCommand(RobotState.L4).alongWith(elevator.setScoringHeightCommand(RobotState.L4)))
+    .onFalse(arm.stopCommand().alongWith(elevator.stopCommand()));
+    operatorController.cross()
+    .whileTrue(arm.goToLocationCommand(RobotState.L1).alongWith(elevator.setScoringHeightCommand(RobotState.L1)))
+    .onFalse(arm.stopCommand().alongWith(elevator.stopCommand()));
+    operatorController.square()
+    .whileTrue(arm.goToLocationCommand(RobotState.L2).alongWith(elevator.setScoringHeightCommand(RobotState.L2)))
+    .onFalse(arm.stopCommand().alongWith(elevator.stopCommand()));
+    
+    // operatorController.circle().whileTrue(Commands.sequence(
+    //   Commands.runOnce(() -> SignalLogger.start()),
+    //   elevator.sysIdDynamic(Direction.kForward).until(elevator::isAtTop),
+    //   elevator.sysIdDynamic(Direction.kReverse).until(elevator::isAtBottom),
+    //   elevator.sysIdQuasistatic(Direction.kForward).until(elevator::isAtTop),
+    //   elevator.sysIdQuasistatic(Direction.kReverse).until(elevator::isAtBottom),
+    //   Commands.runOnce(() -> SignalLogger.stop())
+    // ).onlyWhile(() -> {
+    //   return elevator.isSysIDSafe();
+    // }));
 
     operatorController.touchpad().onTrue(Commands.runOnce(() -> elevator.resetEncoders(0)));
 
@@ -144,7 +146,7 @@ public class RobotContainer {
     // operatorController.L2().onTrue(Commands.runOnce(() -> SignalLogger.start()));
     // operatorController.R2().onTrue(Commands.runOnce(() -> SignalLogger.stop()));
 
-    operatorController.cross().onTrue(Commands.runOnce(() -> elevator.setNeutralMode(NeutralModeValue.Coast)).ignoringDisable(true)).onFalse(Commands.runOnce(() -> elevator.setNeutralMode(NeutralModeValue.Brake)).ignoringDisable(true));
+    //operatorController.cross().onTrue(Commands.runOnce(() -> elevator.setNeutralMode(NeutralModeValue.Coast)).ignoringDisable(true)).onFalse(Commands.runOnce(() -> elevator.setNeutralMode(NeutralModeValue.Brake)).ignoringDisable(true));
 
     /* DRIVER BINDINGS */
 

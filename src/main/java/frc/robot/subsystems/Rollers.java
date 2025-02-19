@@ -48,6 +48,10 @@ public class Rollers extends SubsystemBase {
         leftMotor.stopMotor();
     }
 
+    public Command stop() {
+        return Commands.runOnce(() -> stopMotors());
+    }
+
     public Command intakeAlgaeCommand() {
         return Commands.run(() -> setSpeed(ALGAE_INTAKE_SPEED, 0), this)
                 .finallyDo(() -> {
