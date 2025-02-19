@@ -6,6 +6,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+
+import org.littletonrobotics.junction.Logger;
+
 import com.pathplanner.lib.auto.NamedCommands;
 
 import com.pathplanner.lib.auto.AutoBuilder;
@@ -50,7 +53,9 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.RobotContainer;
+import frc.robot.commands.AlignToAprilTagCommandOffset;
 import frc.robot.util.RobotState;
+import frc.robot.util.TagOffset;
 import frc.robot.util.Elastic;
 import frc.robot.util.Elastic.Notification;
 import frc.robot.util.Elastic.Notification.NotificationLevel;
@@ -277,6 +282,8 @@ public class Auto extends SubsystemBase {
             // next pickup location ->
             String fourth = i < autoString.length() - 3 ? autoString.substring(i + 3, i + 4) : null; 
 
+            System.out.println("First: " + first);
+            System.out.println("Fourth: " + fourth);
             //driving commands
             Command path1Cmd = Commands.none(); //path towards scoring location
             Command path2Cmd = Commands.none(); //path towards intake location
@@ -392,14 +399,26 @@ public class Auto extends SubsystemBase {
             if (third != null) {
                 mechState = RobotState.fromString(third); 
             }
-
+            
             /* adds command form scoring location to next pickup location */
+
+            // path 1 mechanism movement
             if (third != null && path1 != null) {
+                List<PathPoint> path1Points = path1.getAllPathPoints();
                 Optional<PathPlannerTrajectory> opTraj;
                 try {
                     opTraj = path1.getIdealTrajectory(RobotConfig.fromGUISettings());
+                    PathPlannerTrajectory traj = null;
                     if (opTraj.isPresent()) {
-                        double pathTime = opTraj.get().getTotalTimeSeconds(); //time path will take
+                        traj = opTraj.get();
+
+                    } else {
+                        // attempt to run path using nonideal trajectory, may be incorrect
+                        System.out.println("Ideal Trajectory failed to load, skipping path");
+                        traj = path1.generateTrajectory(new ChassisSpeeds(), path1.getInitialHeading(), RobotConfig.fromGUISettings());
+                    }
+
+                        double pathTime = traj.getTotalTimeSeconds(); //time path will take
                         double raiseTime = RobotContainer.elevator.getRaiseTime(mechState); //time elevator will take to rise
                         double waitTime = pathTime - raiseTime; //how much time we should wait before raising elevator
                         timeSeconds += pathTime; //adds how long the path will take to the estimated time
@@ -412,16 +431,12 @@ public class Auto extends SubsystemBase {
                                     Commands.waitSeconds(waitTime),
                                     Commands.parallel(
                                         //Commands.print("Starting elevator command path 1"),
-                                        RobotContainer.elevator.setScoringHeightCommand(mechState).withTimeout(raiseTime),
+                                        RobotContainer.elevator.setScoringHeightCommand(mechState), // TODO I removed this timeout. You'd rather wait then score at wrong height
                                         RobotContainer.arm.goToAngleCommand(mechState.getAngle())
                                     )
                                     //,Commands.print("Finished elevator command path 1")
                                 )    
                         ));
-
-                    } else {
-                        System.out.println("Ideal Trajectory failed to load, skipping path");
-                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -432,13 +447,6 @@ public class Auto extends SubsystemBase {
             autoCommand.addCommands(RobotContainer.rollers.outtakeCoralCommand().withTimeout(SCORING_TIMEOUT));
             timeSeconds += SCORING_TIMEOUT; //adds how long it will take to shoot the the estimated time
             
-           // Bring elevator and arm to default position after scoring last coral
-           if(isLastIteration) {
-            autoCommand.addCommands(Commands.parallel(
-                    RobotContainer.elevator.setScoringHeightCommand(RobotState.DrivingNone).withTimeout(1),
-                    RobotContainer.arm.goToLocationCommand(RobotState.DrivingNone)
-            ));
-           }
 
             //Path 2 command group
 
@@ -466,6 +474,11 @@ public class Auto extends SubsystemBase {
                                // ,Commands.print("Finishing path 2 elevator command")
                             )
                         ));
+                        TagOffset offset = TagOffset.CENTER; //default to 0?
+                        if (fourth == "1") {
+                            offset = TagOffset.LEFT_INTAKE;
+                        }
+                        autoCommand.addCommands(new AlignToAprilTagCommandOffset(RobotContainer.topLimelight, raiseTime, pathTime, raiseTime, i));
 
                     } else {
                         System.out.println("Ideal Trajectory failed to load, skipping path");
@@ -476,9 +489,17 @@ public class Auto extends SubsystemBase {
             }
 
             /* ADDS AN INTAKING COMMAND */
-            //TODO: make it end when we detect coral in our grabber, not based on a timeout
             autoCommand.addCommands(RobotContainer.rollers.intakeCoralCommand().withTimeout(INTAKE_TIMEOUT));
             timeSeconds += INTAKE_TIMEOUT;
+            // Bring elevator and arm to default position after scoring last coral
+
+        //    if(isLastIteration) { //TODO shouldn't need? in theory default command should kick in
+        //     autoCommand.addCommands(Commands.parallel(
+        //             RobotContainer.elevator.setScoringHeightCommand(RobotState.DrivingNone).withTimeout(1),
+        //             RobotContainer.arm.goToLocationCommand(RobotState.DrivingNone)
+        //     ));
+        //    }
+            
 
         }
 

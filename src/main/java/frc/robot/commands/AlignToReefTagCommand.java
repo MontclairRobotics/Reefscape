@@ -5,20 +5,22 @@ import com.pathplanner.lib.config.RobotConfig;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.RobotContainer;
-import frc.robot.util.ScoreDirection;
+import frc.robot.util.TagOffset;
+import frc.robot.vision.Limelight;
 
-public class AlignToAprilTagCommand extends Command {
+public class AlignToReefTagCommand extends Command {
     
     private PIDController xController;
     private PIDController yController;
     private PIDController thetaController;
     //private int tagID;
-    private double currentTx;
-    private double currentTy;
-    private ScoreDirection direction;
+    private TagOffset direction;
 
-    public AlignToAprilTagCommand(ScoreDirection direction) {
+    private Limelight camera;
+
+    public AlignToReefTagCommand(TagOffset direction, Limelight camera) {
         this.direction = direction; //left or right for coral, center for grabbing algae
+        this.camera = camera;
         //TODO: tune + make global PID Constants
         xController = new PIDController(5, 0, 0);
         xController.setTolerance(0.5); //0.5 degrees, I think? if its based on tx
@@ -37,13 +39,10 @@ public class AlignToAprilTagCommand extends Command {
 
     @Override
     public void execute() {
-        //TODO: make these get the correct value
-        currentTx = RobotContainer.limelight.getTX();
-        currentTy = RobotContainer.limelight.getTY();
 
         //PID calculated outputs
-        double xSpeed = xController.calculate(currentTx);
-        double ySpeed = yController.calculate(currentTy);
+        double xSpeed = xController.calculate(camera.getTX());
+        double ySpeed = yController.calculate(camera.getTY());
 
         //drives robot relative because tx and ty are robot relative
         //no rotation input, we assume this is being used when robot is aligned heading-wise, but not translationally
@@ -59,6 +58,6 @@ public class AlignToAprilTagCommand extends Command {
 
     @Override
     public boolean isFinished() {
-        return xController.atSetpoint() && yController.atSetpoint() && thetaController.atSetpoint();
+        return xController.atSetpoint() && yController.atSetpoint() && thetaController.atSetpoint() && camera.hasValidTarget();
     }
 }

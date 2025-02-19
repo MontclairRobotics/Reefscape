@@ -18,7 +18,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.Auto;
 import frc.robot.subsystems.Drivetrain;
-import frc.robot.util.ScoreDirection;
+import frc.robot.util.TagOffset;
 import frc.robot.util.TunerConstants;
 
 public class GoToPoseCommand extends Command {
@@ -28,7 +28,7 @@ public class GoToPoseCommand extends Command {
     private PIDController thetaController;
 
     private Pose2d targetPose;
-    private ScoreDirection direction;
+    private TagOffset direction;
 
     DoublePublisher xOutputPub;
     DoublePublisher yOutputPub;
@@ -92,7 +92,7 @@ public class GoToPoseCommand extends Command {
         thetaController.setSetpoint(targetPose.getRotation().getRadians());
     }
 
-    public GoToPoseCommand(ScoreDirection direction) {
+    public GoToPoseCommand(TagOffset direction) {
         this.direction = direction; //sets the direction
         addRequirements(RobotContainer.drivetrain); //requires the drivetrain
         xController = new PIDController(5, 0, .3); //creates the PIDControllers

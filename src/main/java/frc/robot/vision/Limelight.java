@@ -2,25 +2,20 @@ package frc.robot.vision;
 
 import java.util.function.DoubleSupplier;
 
-import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.RobotContainer;
 
 public class Limelight extends SubsystemBase {
 
     /* CONSTANTS */
-    public static final double limelightOffsetAngleVertical = 20; // TODO: set this
-    public static final double limelightMountHeight = .1; // TODO: set this
     public static final double coralStationTagHeightMeters = 1.35255; // make sure these two are correct
     // does it need to be to the center of the tag?
     public static final double reefTagHeightMeters = 0.174625;
     public static final double reefOffsetFromCenterOfTag = 0;
-
-    public static final double goalHeightReef = reefTagHeightMeters - limelightMountHeight;
-    public static final double goalHeightCoralStation = coralStationTagHeightMeters - limelightMountHeight;
 
     public static final int[] reefIDsRed = { 6, 7, 8, 9, 10, 11 };
     public static final int[] reefIDsBlue = { 17, 18, 19, 20, 21, 22 };
@@ -42,13 +37,22 @@ public class Limelight extends SubsystemBase {
 
     private double angleVelocityTolerance = 540 * Math.PI / 180; // in radians per sec
 
-    public Limelight(String cameraName) {
+    private double cameraHeightMeters;
+    private double cameraAngle;
+    private double cameraOffsetX; // right is positive
+    private double cameraOffsetY; //forward is positive
+
+    public Limelight(String cameraName, double cameraHeightMeters, double cameraAngle, double cameraOffsetX, double cameraOffsetY) {
         this.cameraName = cameraName;
+        this.cameraHeightMeters = cameraHeightMeters;
+        this.cameraAngle = cameraAngle;
+        this.cameraOffsetX = cameraOffsetX;
+        this.cameraOffsetY = cameraOffsetY;
         LimelightHelpers.SetFiducialIDFiltersOverride(cameraName, validIDs);
     }
 
     // might not be needed
-    public static boolean isCorrectID(int[] IDs, double ID) {
+    public static boolean isCorrectID(int ID, int... IDs) {
         for (int n : IDs) {
             if (n == ID)
                 return true;
@@ -97,23 +101,65 @@ public class Limelight extends SubsystemBase {
     // }
 
     //TODO: Do we need these / check if the trig is right
-    public double getStraightDistanceToCoralStation() {
-        double distance = (coralStationTagHeightMeters - limelightMountHeight)
-                / Math.tan(
-                        (Math.PI / 180.0)
-                                * (limelightOffsetAngleVertical + getTY()));
+    
 
-        return distance;
+    public double getDistanceToTag(double tagHeightMeters) {
+        if (hasValidTarget()) {
+            double distance = (tagHeightMeters - cameraHeightMeters)
+                    / Math.tan(
+                            (Math.PI / 180.0)
+                                    * (cameraAngle + getTY()));
+            return distance;
+        }
+        return 0;
     }
 
+    public double getStraightDistanceToTag(double tagHeightMeters) {
+        if (hasValidTarget()) {
+            double distance = getDistanceToTag(tagHeightMeters);
+            distance = distance / Math.cos(getTX() * (Math.PI / 180.0));
+            return distance + cameraOffsetY;
+        }
+        return 0;
+    }
+
+    public double getHorizontalDistanceToTag(double tagHeightMeters) {
+        double distance = getDistanceToTag(tagHeightMeters);
+        try {
+            distance = distance / Math.sin(getTX() * (Math.PI / 180.0));
+        } catch (Exception e) {
+            e.printStackTrace();
+            distance = 0;
+        }
+        return distance + cameraOffsetX;
+    }
+
+    public double getDistanceToCoralStation() {
+        return getDistanceToTag(coralStationTagHeightMeters);
+    }
+
+    public double getStraightDistanceToCoralStation() {
+        return getStraightDistanceToTag(coralStationTagHeightMeters);
+
+    }
+
+    public double getHorizontalDistanceToCoralStation() {
+        return getHorizontalDistanceToTag(coralStationTagHeightMeters);
+    }
+
+    // ISN'T OFFSET FOR THE CENTER OF THE ROBOT!!!!!!!
+    public double getDistanceToReef() {
+        return getDistanceToTag(reefTagHeightMeters);
+    }
+   
     //TODO: Do we need these / check if the trig is right
     public double getStraightDistanceToReef() {
-        double distance = (reefTagHeightMeters - limelightMountHeight)
-                / Math.tan(
-                        (Math.PI / 180.0)
-                                * (limelightOffsetAngleVertical + getTY()));
+        return getStraightDistanceToTag(reefTagHeightMeters);
+    }
 
-        return distance;
+
+    public double getHorizontalDistanceToReef() {
+        return getHorizontalDistanceToTag(reefTagHeightMeters);
     }
 
     public double getTX() {
@@ -133,16 +179,16 @@ public class Limelight extends SubsystemBase {
     }
 
     //TODO: Do we need these / check if the trig is right
-    public double getStraightDistanceToTag() {
-        if (hasValidTarget())
-            return goalHeightReef / (Math.tan(Math.toRadians(getTY() + limelightOffsetAngleVertical)));
-        return 0;
-    }
+    // public double getStraightDistanceToTag() {
+    //     if (hasValidTarget())
+    //         return goalHeightReef / (Math.tan(Math.toRadians(getTY() + limelightOffsetAngleVertical)));
+    //     return 0;
+    // }
 
     //TODO: Do we need these / check if the trig is right
     public double getStrafeDistanceToReef() {
-        if (isCorrectID(reefIDs, getTagID())) {
-            return (Math.tan(Math.toRadians(getTX()))) * getStraightDistanceToTag();
+        if (isCorrectID(getTagID(), reefIDs)) {
+            return (Math.tan(Math.toRadians(getTX()))) * getStraightDistanceToReef();
         }
         return 0;
     }
@@ -151,12 +197,12 @@ public class Limelight extends SubsystemBase {
         return (int) LimelightHelpers.getFiducialID(cameraName);
     }
 
-    public double getBotPose() {
-        return LimelightHelpers.getLimelightNTDouble(cameraName, "botpose");
-    }
-
     public void periodic() {
         // tagID = (int) Limetable.getEntry("tid").getDouble(-1);
        // poseEstimationMegatag2();
+    }
+
+    public Command ifHasTarget(Command cmd) {
+        return cmd.onlyWhile(this::hasValidTarget);
     }
 }

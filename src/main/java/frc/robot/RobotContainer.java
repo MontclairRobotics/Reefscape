@@ -24,7 +24,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
-import frc.robot.commands.AlignToAprilTagCommand;
+import frc.robot.commands.AlignToReefTagCommand;
 import frc.robot.commands.GoToPoseCommand;
 import frc.robot.leds.LEDControl;
 import frc.robot.leds.LEDs;
@@ -40,7 +40,7 @@ import frc.robot.util.Elastic.Notification.NotificationLevel;
 import frc.robot.util.simulation.MapleSimSwerveDrivetrain;
 import frc.robot.util.GamePiece;
 import frc.robot.util.PoseUtils;
-import frc.robot.util.ScoreDirection;
+import frc.robot.util.TagOffset;
 import frc.robot.util.TunerConstants;
 import frc.robot.vision.Limelight;
 
@@ -57,7 +57,8 @@ public class RobotContainer {
   //Subsystems
   public static Drivetrain drivetrain = new Drivetrain();
   public static Elevator elevator = new Elevator();
-  public static Limelight limelight = new Limelight("Camera");
+  public static Limelight bottomLimelight = new Limelight("Limelight-Bottom", 0, 0, 0, 0);
+  public static Limelight topLimelight = new Limelight("Limelight-Top", 0, 0, 0, 0);
   public static LEDControl ledControl = new LEDControl();
   public static Rollers rollers = new Rollers();
   public static Orchestra orchestra = new Orchestra();
@@ -148,13 +149,13 @@ public class RobotContainer {
     /* DRIVER BINDINGS */
 
     //alignment buttons
-    driverController.R2().whileTrue(new GoToPoseCommand(ScoreDirection.CENTER)
+    driverController.R2().whileTrue(new GoToPoseCommand(TagOffset.CENTER)
      // .andThen(new AlignToAprilTagCommand(ScoreDirection.CENTER))
      );
-    driverController.L1().whileTrue(new GoToPoseCommand(ScoreDirection.LEFT)
+    driverController.L1().whileTrue(new GoToPoseCommand(TagOffset.LEFT)
     //  .andThen(new AlignToAprilTagCommand(ScoreDirection.LEFT))
     );
-    driverController.R1().whileTrue(new GoToPoseCommand(ScoreDirection.RIGHT)
+    driverController.R1().whileTrue(new GoToPoseCommand(TagOffset.RIGHT)
     //  .andThen(new AlignToAprilTagCommand(ScoreDirection.RIGHT))
     );
 

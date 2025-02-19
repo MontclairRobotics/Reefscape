@@ -5,6 +5,7 @@ import frc.robot.commands.GoToPoseCommand;
 import frc.robot.util.TunerConstants;
 import frc.robot.util.TunerConstants.TunerSwerveDrivetrain;
 import frc.robot.util.simulation.MapleSimSwerveDrivetrain;
+import frc.robot.vision.Limelight;
 
 import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Volts;
@@ -398,8 +399,8 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     }
 
     //TODO: input correct poses
-    public Pose2d getPoseToPathFindTo(){
-            switch(RobotContainer.limelight.getTagID()){
+    public Pose2d getPoseToPathFindTo(Limelight camera){
+            switch(camera.getTagID()){
                 case 12:
                     return new Pose2d(new Translation2d(1.091, 1.060), new Rotation2d(Math.toRadians(-127.000)));
                 case 13:
@@ -494,7 +495,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     // }
 
     public Command followPathToAprilTagLocation(){
-        return AutoBuilder.pathfindToPose(getPoseToPathFindTo(), DEFAULT_CONSTRAINTS);
+        return AutoBuilder.pathfindToPose(getPoseToPathFindTo(RobotContainer.bottomLimelight), DEFAULT_CONSTRAINTS);
     }
 
     /* ROBOT RELATIVE SETPOINT METHOD 
