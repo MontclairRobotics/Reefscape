@@ -5,6 +5,9 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.Seconds;
+
+import java.util.concurrent.TimeUnit;
 
 import com.ctre.phoenix6.Orchestra;
 import com.ctre.phoenix6.SignalLogger;
@@ -12,13 +15,17 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.pathplanner.lib.auto.NamedCommands;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
+import frc.robot.commands.AlignToReefTagCommand;
+import frc.robot.commands.GoToPoseCommand;
 import frc.robot.leds.LEDControl;
 import frc.robot.leds.LEDs;
 import frc.robot.subsystems.Arm;
@@ -26,11 +33,14 @@ import frc.robot.subsystems.Auto;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Rollers;
-import frc.robot.util.ArmPosition;
+import frc.robot.util.RobotState;
 import frc.robot.util.Elastic;
 import frc.robot.util.Elastic.Notification;
 import frc.robot.util.Elastic.Notification.NotificationLevel;
+import frc.robot.util.simulation.MapleSimSwerveDrivetrain;
 import frc.robot.util.GamePiece;
+import frc.robot.util.PoseUtils;
+import frc.robot.util.TagOffset;
 import frc.robot.util.TunerConstants;
 import frc.robot.vision.Limelight;
 
@@ -47,42 +57,24 @@ public class RobotContainer {
   //Subsystems
   public static Drivetrain drivetrain = new Drivetrain();
   public static Elevator elevator = new Elevator();
-  public static Limelight limelight = new Limelight("Camera");
+  public static Limelight bottomLimelight = new Limelight("Limelight-Bottom", 0, 0, 0, 0);
+  public static Limelight topLimelight = new Limelight("Limelight-Top", 0, 0, 0, 0);
   public static LEDControl ledControl = new LEDControl();
   public static Rollers rollers = new Rollers();
   public static Orchestra orchestra = new Orchestra();
   public static Arm arm = new Arm();
   public static Auto auto = new Auto();
-
   public static Telemetry telemetryLogger = new Telemetry(TunerConstants.kSpeedAt12Volts.in(MetersPerSecond));
 
   //Alliance
   public static boolean isBlueAlliance;
-  public static boolean yes = true;
 
   public RobotContainer() {
     DriverStation.silenceJoystickConnectionWarning(true);
     configureBindings();
 
   }
-  public Command setRumbleCommand() {
-    return Commands.startEnd(
-      // Start rumble
-      () -> {
-        driverController.setRumble(GenericHID.RumbleType.kLeftRumble, 1);
-        driverController.setRumble(GenericHID.RumbleType.kRightRumble, 1);
-        operatorController.setRumble(GenericHID.RumbleType.kLeftRumble, 1);
-        operatorController.setRumble(GenericHID.RumbleType.kRightRumble, 1);
-      },
-      // Stop rumble
-      () -> {
-        driverController.setRumble(GenericHID.RumbleType.kLeftRumble, 0);
-        driverController.setRumble(GenericHID.RumbleType.kRightRumble, 0);
-        operatorController.setRumble(GenericHID.RumbleType.kLeftRumble, 0);
-        operatorController.setRumble(GenericHID.RumbleType.kRightRumble, 0);
-      }
-    );
-  }
+
   private void configureBindings() {
 
     orchestra.addInstrument(elevator.leftTalonFX);
@@ -91,56 +83,62 @@ public class RobotContainer {
 
     /*     Default commands */
     drivetrain.setDefaultCommand(drivetrain.driveJoystickInputCommand());
-    // elevator.setDefaultCommand(Commands.run(() -> {
-    //   ArmPosition pos = ArmPosition.getDefaultForPiece(rollers.getHeldPiece());
-    //   System.out.println(pos.getHeight());
-    //     elevator.setScoringLevel(pos);
-    //   }
-    // , elevator));
+    elevator.setDefaultCommand(Commands.run(() -> {
+      RobotState pos = RobotState.getDefaultForPiece(rollers.getHeldPiece());
+      System.out.println(pos.getHeight());
+        elevator.setScoringLevel(pos);
+      }
+    , elevator));
     elevator.setDefaultCommand(
       RobotContainer.elevator.setExtensionCommand(0)
     );
 
     arm.setDefaultCommand(Commands.run(() -> {
-      ArmPosition pos = ArmPosition.getDefaultForPiece(rollers.getHeldPiece());
+      RobotState pos = RobotState.getDefaultForPiece(rollers.getHeldPiece());
         arm.setWristLocation(pos);
       }
     , arm));
+    //elevator.setDefaultCommand(elevator.joystickControlCommand());
+    //arm.setDefaultCommand(arm.joystickControlCommand());
+   // elevator.setDefaultCommand(elevator.joystickControlCommand());
+    operatorController.square().whileTrue(arm.goToAngleCommand(Rotation2d.fromDegrees(30)));
 
     ledControl.setDefaultCommand(ledControl.playPatternCommand(LEDs.m_scrollingRainbow));
 
     /* Operator bindings */
-    driverController.L1().whileTrue(setRumbleCommand());
-    testingController.L1().whileTrue(setRumbleCommand());
-    operatorController.L1().whileTrue(setRumbleCommand());
+
     //elevator height commands
     operatorController.L1().whileTrue(elevator.joystickControlCommand()).whileTrue(arm.joystickControlCommand());
     operatorController.triangle().whileTrue(Commands.run(() -> elevator.setHeight(1.7), elevator)); //L1 //66.93 inches
-    // operatorController.circle().onTrue(Commands.run(() -> elevator.setHeightRegular(0.5))); //L2
-    // operatorController.cross().onTrue(Commands.run(() -> elevator.setHeightRegular(0.75))); //L3
-    // operatorController.square().onTrue(Commands.run(() -> elevator.setHeightRegular(1))); //4
     
+
     //roller intake/outtake commands
-    // operatorController.R1().onTrue(rollers.intakeAlgaeCommand());
-    // operatorController.R2().onTrue(rollers.outtakeAlgaeCommand());
-    // operatorController.L1().onTrue(rollers.intakeCoralCommand());
-    // operatorController.L2().onTrue(rollers.outtakeCoralCommand());
+    operatorController.L2().whileTrue(elevator.setScoringHeightCommand(RobotState.Intake).alongWith(arm.goToLocationCommand(RobotState.Intake)).alongWith(rollers.intakeCoralCommand())).onFalse(rollers.stop());
+    operatorController.R2().whileTrue(rollers.outtakeCoralCommand()).onFalse(rollers.stop());
 
-    // operatorController.triangle().whileTrue(elevator.sysIdDynamic(Direction.kReverse));
-    // operatorController.circle().whileTrue(elevator.sysIdDynamic(Direction.kForward));
-    // operatorController.cross().whileTrue(elevator.sysIdQuasistatic(Direction.kReverse));
-    // operatorController.square().whileTrue(elevator.sysIdQuasistatic(Direction.kForward));
-
-    operatorController.circle().whileTrue(Commands.sequence(
-      Commands.runOnce(() -> SignalLogger.start()),
-      elevator.sysIdDynamic(Direction.kForward).until(elevator::isAtTop),
-      elevator.sysIdDynamic(Direction.kReverse).until(elevator::isAtBottom),
-      elevator.sysIdQuasistatic(Direction.kForward).until(elevator::isAtTop),
-      elevator.sysIdQuasistatic(Direction.kReverse).until(elevator::isAtBottom),
-      Commands.runOnce(() -> SignalLogger.stop())
-    ).onlyWhile(() -> {
-      return elevator.isSysIDSafe();
-    }));
+    operatorController.triangle()
+    .whileTrue(arm.goToLocationCommand(RobotState.L3).alongWith(elevator.setScoringHeightCommand(RobotState.L3)))
+    .onFalse(arm.stopCommand().alongWith(elevator.stopCommand()));
+    operatorController.circle()
+    .whileTrue(arm.goToLocationCommand(RobotState.L4).alongWith(elevator.setScoringHeightCommand(RobotState.L4)))
+    .onFalse(arm.stopCommand().alongWith(elevator.stopCommand()));
+    operatorController.cross()
+    .whileTrue(arm.goToLocationCommand(RobotState.L1).alongWith(elevator.setScoringHeightCommand(RobotState.L1)))
+    .onFalse(arm.stopCommand().alongWith(elevator.stopCommand()));
+    operatorController.square()
+    .whileTrue(arm.goToLocationCommand(RobotState.L2).alongWith(elevator.setScoringHeightCommand(RobotState.L2)))
+    .onFalse(arm.stopCommand().alongWith(elevator.stopCommand()));
+    
+    // operatorController.circle().whileTrue(Commands.sequence(
+    //   Commands.runOnce(() -> SignalLogger.start()),
+    //   elevator.sysIdDynamic(Direction.kForward).until(elevator::isAtTop),
+    //   elevator.sysIdDynamic(Direction.kReverse).until(elevator::isAtBottom),
+    //   elevator.sysIdQuasistatic(Direction.kForward).until(elevator::isAtTop),
+    //   elevator.sysIdQuasistatic(Direction.kReverse).until(elevator::isAtBottom),
+    //   Commands.runOnce(() -> SignalLogger.stop())
+    // ).onlyWhile(() -> {
+    //   return elevator.isSysIDSafe();
+    // }));
 
     operatorController.touchpad().onTrue(Commands.runOnce(() -> elevator.resetEncoders(0)));
 
@@ -148,28 +146,40 @@ public class RobotContainer {
     // operatorController.L2().onTrue(Commands.runOnce(() -> SignalLogger.start()));
     // operatorController.R2().onTrue(Commands.runOnce(() -> SignalLogger.stop()));
 
-    operatorController.cross().onTrue(Commands.runOnce(() -> elevator.setNeutralMode(NeutralModeValue.Coast)).ignoringDisable(true)).onFalse(Commands.runOnce(() -> elevator.setNeutralMode(NeutralModeValue.Brake)).ignoringDisable(true));
+    //operatorController.cross().onTrue(Commands.runOnce(() -> elevator.setNeutralMode(NeutralModeValue.Coast)).ignoringDisable(true)).onFalse(Commands.runOnce(() -> elevator.setNeutralMode(NeutralModeValue.Brake)).ignoringDisable(true));
 
     /* DRIVER BINDINGS */
+
+    //alignment buttons
+    driverController.R2().whileTrue(new GoToPoseCommand(TagOffset.CENTER)
+     // .andThen(new AlignToAprilTagCommand(ScoreDirection.CENTER))
+     );
+    driverController.L1().whileTrue(new GoToPoseCommand(TagOffset.LEFT)
+    //  .andThen(new AlignToAprilTagCommand(ScoreDirection.LEFT))
+    );
+    driverController.R1().whileTrue(new GoToPoseCommand(TagOffset.RIGHT)
+    //  .andThen(new AlignToAprilTagCommand(ScoreDirection.RIGHT))
+    );
 
     //Robot relative
     driverController.L2()
       .onTrue(drivetrain.toRobotRelativeCommand())
       .onFalse(drivetrain.toFieldRelativeCommand());
+
     //90 degree buttons
     driverController.triangle()
-      .onTrue(drivetrain.alignToAngleFieldRelativeCommand(Rotation2d.fromDegrees(0), false));
+       .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(0)), false));
     driverController.square()
-      .onTrue(drivetrain.alignToAngleFieldRelativeCommand(Rotation2d.fromDegrees(90), false));
+      .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(90)), false));
     driverController.cross()
-      .onTrue(drivetrain.alignToAngleFieldRelativeCommand(Rotation2d.fromDegrees(180), false));
+      .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(180)), false));
     driverController.circle()
-      .onTrue(drivetrain.alignToAngleFieldRelativeCommand(Rotation2d.fromDegrees(270), false)); 
+      .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(270)), false)); 
     //zero gyro
     driverController.touchpad().onTrue(drivetrain.zeroGyroCommand());
     //for testing robot relative angles
-    driverController.L1().onTrue(drivetrain.alignToAngleRobotRelativeCommand(Rotation2d.fromDegrees(30), false));
-    driverController.R1().onTrue(drivetrain.alignToAngleRobotRelativeCommand(Rotation2d.fromDegrees(-30), false));
+   // driverController.L1().onTrue(drivetrain.alignToAngleRobotRelativeCommand(Rotation2d.fromDegrees(30), false));
+   // driverController.R1().onTrue(drivetrain.alignToAngleRobotRelativeCommand(Rotation2d.fromDegrees(-30), false));
 
    drivetrain.registerTelemetry(telemetryLogger::telemeterize);    
   }
