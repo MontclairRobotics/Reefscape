@@ -3,12 +3,16 @@ package frc.robot.subsystems;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 
+import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.util.GamePiece;
 
 public class Rollers extends SubsystemBase {
+    private NetworkTableEntry entry;
     private SparkMax rightMotor;
     private SparkMax leftMotor;
     public final double CORAL_INTAKE_SPEED = 1;
@@ -22,10 +26,28 @@ public class Rollers extends SubsystemBase {
     public Rollers() {
         rightMotor = new SparkMax(13, MotorType.kBrushless);
         leftMotor = new SparkMax(14, MotorType.kBrushless);
+        NetworkTableInstance nt = NetworkTableInstance.getDefault();
+        nt.startServer(); 
+        entry = nt.getTable("Testing").getEntry("IsHeld");
+
     }
 
     public GamePiece getHeldPiece() {
         return heldPiece;
+    }
+    public boolean hasCoral() {
+        if (getHeldPiece() == GamePiece.Coral){
+            return true;
+        }else{
+            return false;
+        }
+    }
+    public boolean hasAlgae() {
+        if (getHeldPiece() == GamePiece.Algae){
+            return true;
+        }else{
+            return false;
+        }
     }
 
     // TODO need to be debounced? probably not?
@@ -82,5 +104,10 @@ public class Rollers extends SubsystemBase {
                     stopMotors();
                     this.heldPiece = GamePiece.None;
                 }).withTimeout(2); // TODO find timeout
+    }
+    @Override
+    public void periodic() {
+        boolean isHeld = (heldPiece != GamePiece.None)&&!(DriverStation.isAutonomousEnabled());
+        entry.setBoolean(isHeld);
     }
 }
