@@ -1,22 +1,24 @@
 package frc.robot.util;
 
+import edu.wpi.first.wpilibj.LEDPattern;
+import edu.wpi.first.wpilibj.LEDPattern.GradientType;
 import edu.wpi.first.wpilibj.util.Color;
+import frc.robot.leds.LEDs;
 
-//TODO instead of colors, perhaps this should take in LED patterns
 public enum GamePiece {
-    Coral(Color.kWhite),
-    Algae(Color.kSeaGreen),
-    None(Color.kBeige); // TODO this should be alliance color?
+    // TODO: Use This?
+    Coral(LEDs.shot(Color.kSkyBlue)),
+    Algae(LEDs.shot(Color.kWhite)),
+    None(LEDPattern.gradient(GradientType.kDiscontinuous, Color.kFirstBlue,Color.kFirstRed));
 
-    private Color color;
+    private LEDPattern pattern;
 
-    GamePiece(Color color) {
-
-        this.color = color;
+    GamePiece(LEDPattern pattern) {
+        this.pattern = pattern;
     }
 
 
-    public Color getColor() {
-        return color;
+    public LEDPattern getPattern() {
+        return pattern;
     }
 }

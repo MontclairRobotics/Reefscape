@@ -158,10 +158,10 @@ public class Arm extends SubsystemBase {
 
         if (Robot.isSimulation()) {
             elbowEncoderSim = new DutyCycleEncoderSim(elbowEncoder);
-            wristEncoderSim = new DutyCycleEncoderSim(wristEncoder);
+            //wristEncoderSim = new DutyCycleEncoderSim(wristEncoder);
             elbowEncoderSim.set(0);
-            wristEncoderSim.set(WRIST_ANGLE_WHEN_ELBOW_IS_HORIZONTAL.getRotations());
-            wristEncoderSim.set(0);
+            // wristEncoderSim.set(WRIST_ANGLE_WHEN_ELBOW_IS_HORIZONTAL.getRotations());
+            // wristEncoderSim.set(0);
             // j2EncoderSim.set(0);
         }
 
@@ -383,9 +383,9 @@ public class Arm extends SubsystemBase {
 
         elbowEncoderSim.set(
                 ((getElbowAngle().getRotations() + (armMotorSim.getAppliedOutput() * MAX_VELOCITY) * 0.02)) % 1);
-        wristEncoderSim.set(
-                ((getWristAngle().getRotations()
-                        - (armMotorSim.getAppliedOutput() * MAX_VELOCITY * ELBOW_ANGLE_TO_WRIST) * 0.02)) % 1);
+        // wristEncoderSim.set(
+        //         ((getWristAngle().getRotations()
+        //                 - (armMotorSim.getAppliedOutput() * MAX_VELOCITY * ELBOW_ANGLE_TO_WRIST) * 0.02)) % 1);
 
         // Publish sim encoder positions to the network
 

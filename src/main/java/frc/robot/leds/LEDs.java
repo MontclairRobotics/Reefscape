@@ -1,5 +1,14 @@
 package frc.robot.leds;
 
+import frc.robot.util.GamePiece;
+
+import static edu.wpi.first.units.Units.Meter;
+import static edu.wpi.first.units.Units.Percent;
+import static edu.wpi.first.units.Units.Second;
+import static edu.wpi.first.units.Units.Seconds;
+
+import java.util.Map;
+
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.AddressableLED;
@@ -15,7 +24,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.Elevator;
 
-public class LEDs extends SubsystemBase{
+public class LEDs extends SubsystemBase {
     public static final int kPORT = -1;
     public static final int kLENGTH = -1; 
     public static final int PORT = 9;
@@ -26,8 +35,6 @@ public class LEDs extends SubsystemBase{
     // public static final LEDPattern m_progressbar = LEDs.progressBar(Color.kRed);
     static AddressableLED led;
     static AddressableLEDBuffer ledBuffer;
-    static LEDPattern pattern;
-        
         // static LEDPattern m_scrollingRainbowProgress = m_progressBar.scrollingRainbowProgress();
     public LEDs() {
             led = new AddressableLED(PORT);
@@ -35,53 +42,77 @@ public class LEDs extends SubsystemBase{
             ledBuffer = new AddressableLEDBuffer(LENGTH);
             led.start();
         }
-    public static void scrollingRainbowProgress() {
+    // public static void scrollingRainbowProgress() {
         
-    }
+    // }
 
     public static LEDPattern holding() {
         LEDPattern objectInArm = LEDPattern.solid(Color.kBlue);
         return objectInArm;
     }
 
-    public static LEDPattern shot() {
-        LEDPattern shotGamPiece = LEDPattern.solid(Color.kGreen);
-        LEDPattern pattern = shotGamPiece.blink(Units.Seconds.of(1.5));
-        return pattern;
-    }
-
-    // TODO This isn't implemented properly, you're returning the contents of the instance variable
-    // pattern, not the contants of the local variable created here
-    public static LEDPattern breathingPattern(boolean onRed, boolean startUp) {
-        LEDPattern base;
-        boolean noAlliance = false;
-        if(DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get() == Alliance.Red) {
-            base = LEDPattern.gradient(GradientType.kDiscontinuous,Color.kRed, Color.kDarkRed);
-        } else if(DriverStation.getAlliance().isPresent()) {
-            base = LEDPattern.gradient(GradientType.kDiscontinuous,Color.kBlue, Color.kDarkBlue);
+    public static LEDPattern shot(Color color) {
+        LEDPattern shotGamePiece;
+        if (DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get() == Alliance.Red){
+            shotGamePiece = LEDPattern.gradient(GradientType.kContinuous,Color.kFirstRed, color);
+        } else if (DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get() == Alliance.Blue) {
+            shotGamePiece = LEDPattern.gradient(GradientType.kContinuous,Color.kFirstBlue, color);
         } else {
-            base = LEDPattern.solid(Color.kFirstRed);
+            Map<Double, Color> maskSteps = Map.of(0.0, Color.kWhite, 0.5, Color.kBlack);
+            LEDPattern base = LEDPattern.rainbow(255, 255);
+            LEDPattern mask = LEDPattern.steps(maskSteps).scrollAtRelativeSpeed(Percent.per(Second).of(0.25));
+            shotGamePiece = base.mask(mask);
         }
-        if(! noAlliance) {
-            LEDPattern pattern = base.breathe(Units.Seconds.of(5));
-        } else if(startUp) {
-            LEDPattern pattern = base.blink(Units.Second.of(0.3));
+        return shotGamePiece;
+    }
+    public static LEDPattern breathingPattern() {
+        LEDPattern base;
+        if (DriverStation.getAlliance().get() == Alliance.Red) {
+            base = LEDPattern.gradient(GradientType.kDiscontinuous,Color.kFirstRed, Color.kDarkRed);
+        } else if(DriverStation.getAlliance().get() == Alliance.Blue ) {
+            base = LEDPattern.gradient(GradientType.kDiscontinuous,Color.kFirstBlue, Color.kDarkBlue);
+        } else {
+            base = LEDPattern.solid(Color.kWhite);
         }
-        
+        LEDPattern pattern =  base.breathe(Seconds.of(2.5));
         return pattern;
     }
-    
     public static LEDPattern progress(){
-        LEDPattern base = LEDPattern.rainbow(255,255);
-        LEDPattern m_progress = LEDPattern.progressMaskLayer(() -> RobotContainer.elevator.getHeight() / Elevator.MAX_HEIGHT);
-        return m_progress;
+        LEDPattern base;
+        if(DriverStation.getAlliance().isPresent()){
+            if (DriverStation.getAlliance().get() == Alliance.Red) {
+                base = LEDPattern.solid(Color.kFirstRed);
+            } else {
+                base = LEDPattern.solid(Color.kFirstBlue);
+        }
+        } else {
+            base = LEDPattern.solid(Color.kWhite);
     }
-    public static Command runPattern(LEDPattern pattern){
-        return Commands.run(() -> pattern.applyTo(ledBuffer), RobotContainer.ledControl);
+        LEDPattern scrollingBase = base.scrollAtAbsoluteSpeed(Meter.per(Second).of(1.5), kLedSpacing);
+        LEDPattern m_progress = LEDPattern.progressMaskLayer(() -> RobotContainer.elevator.getHeight() / Elevator.MAX_HEIGHT);
+        LEDPattern basedProgress = scrollingBase.mask(m_progress);
+        return basedProgress;  
+    }   
+    public Command playPatternCommand(LEDPattern pattern) {
+        System.out.println(pattern);
+        return Commands.run(() -> pattern.applyTo(ledBuffer), this).ignoringDisable(true);
     }
 
     public void periodic(){
-        pattern.applyTo(ledBuffer);
+        if(RobotContainer.rollers.getHeldPiece() == GamePiece.None) {
+            if(RobotContainer.elevator.isVelociatated()){
+                playPatternCommand(progress());
+            } else {
+                playPatternCommand(m_scrollingRainbow);
+            }
+        }
+        else if(RobotContainer.rollers.getHeldPiece() == GamePiece.Algae) {
+                playPatternCommand(shot(Color.kSkyBlue));   
+            } 
+        else if(RobotContainer.rollers.getHeldPiece() == GamePiece.Coral) {
+                playPatternCommand(shot(Color.kWhite));
+            }
         led.setData(ledBuffer);
+        
     }
 }

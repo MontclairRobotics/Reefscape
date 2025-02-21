@@ -27,7 +27,6 @@ import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.commands.AlignToReefTagCommand;
 import frc.robot.commands.GoToPoseCommand;
-import frc.robot.leds.LEDControl;
 import frc.robot.leds.LEDs;
 import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.Auto;
@@ -60,7 +59,7 @@ public class RobotContainer {
   public static Elevator elevator = new Elevator();
   public static Limelight bottomLimelight = new Limelight("Limelight-Bottom", 0, 0, 0, 0);
   public static Limelight topLimelight = new Limelight("Limelight-Top", 0, 0, 0, 0);
-  public static LEDControl ledControl = new LEDControl();
+  public static LEDs leds = new LEDs();
   public static Rollers rollers = new Rollers();
   public static Orchestra orchestra = new Orchestra();
   public static Arm arm = new Arm();
@@ -102,9 +101,8 @@ public class RobotContainer {
     elevator.setDefaultCommand(elevator.joystickControlCommand());
     arm.setDefaultCommand(arm.joystickControlCommand());
    // elevator.setDefaultCommand(elevator.joystickControlCommand());
+   //leds.setDefaultCommand(leds.playPatternCommand(LEDs.breathingPattern()));
     // operatorController.square().whileTrue(arm.goToAngleCommand(Rotation2d.fromDegrees(30)));
-
-    // ledControl.setDefaultCommand(ledControl.playPatternCommand(LEDs.m_scrollingRainbow));
 
     /* Operator bindings */
 

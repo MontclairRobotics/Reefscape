@@ -116,7 +116,6 @@ public class Elevator extends SubsystemBase {
     private double extensionSetpointMeters = 0; // tracks extension setpoint, not from ground
 
     SlewRateLimiter accelerationLimiter;
-
     double sysIDVoltage = 0; // TODO delete
 
     // Limit Switches
@@ -343,7 +342,18 @@ public class Elevator extends SubsystemBase {
     public double getHeight() {
         return getExtension() + STARTING_HEIGHT;
     }
-
+    public double getVelocity(){
+        return leftTalonFX.get() + rightTalonFX.get();
+        
+    }
+    public boolean isVelociatated(){
+        if(getVelocity() > 0){
+            return true;
+        }
+        else{
+            return false;
+        }
+    }
 
     public boolean atSetpoint() {
         return Math.abs(extensionSetpointMeters - getExtension()) < Units.inchesToMeters(1); // TODO find threshold
