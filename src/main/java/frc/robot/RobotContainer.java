@@ -110,33 +110,56 @@ public class RobotContainer {
 
     //elevator height commands
     // operatorController.L1().whileTrue(elevator.joystickControlCommand()).whileTrue(arm.joystickControlCommand());
-    operatorController.triangle().whileTrue(Commands.run(() -> elevator.setHeight(1.7), elevator)); //L1 //66.93 inches
+    //operatorController.triangle().whileTrue(Commands.run(() -> elevator.setHeight(1.7), elevator)); //L1 //66.93 inches
     
 
-    //roller intake/outtake commands
-    // operatorController.L2().whileTrue(elevator.setScoringHeightCommand(RobotState.Intake).alongWith(arm.goToLocationCommand(RobotState.Intake)).alongWith(rollers.intakeCoralCommand())).onFalse(rollers.stop());
-    operatorController.R2().whileTrue(rollers.outtakeAlgaeCommand()).onFalse(rollers.stop());
-    operatorController.R1().whileTrue(rollers.intakeAlgaeCommand()).onFalse(Commands.run(() -> 
-    {
-      rollers.leftMotor.setVoltage(12*.3);
-      rollers.rightMotor.setVoltage(12*.3);
-    }));
-    operatorController.circle().onTrue(arm.setIdleModeCommand(IdleMode.kCoast)).onFalse(arm.setIdleModeCommand(IdleMode.kBrake));
-    operatorController.L1().whileTrue(rollers.intakeCoralCommand()).onFalse(rollers.stop());
-    operatorController.L2().whileTrue(rollers.outtakeCoralCommand()).onFalse(rollers.stop());
+    //Intake coral
+    // operatorController.L2()
+    //   .whileTrue(
+    //     elevator.setScoringHeightCommand(RobotState.Intake)
+    //     .alongWith(arm.goToLocationCommand(RobotState.Intake))
+    //     .alongWith(rollers.intakeCoralCommand()))
+    //   .onFalse(rollers.stop());
 
-    // operatorController.triangle()
-    // .whileTrue(arm.goToLocationCommand(RobotState.L3).alongWith(elevator.setScoringHeightCommand(RobotState.L3)))
-    // .onFalse(arm.stopCommand().alongWith(elevator.stopCommand()));
+    //Intake algae
+    operatorController.R2()
+      .whileTrue(rollers.outtakeAlgaeCommand())
+      .onFalse(rollers.stopCommand());
+    operatorController.R1()
+      .whileTrue(rollers.intakeAlgaeCommand())
+      .onFalse(rollers.stopCommand());
+
+    
+    //Arm coast mode
+    operatorController.circle().onTrue(arm.setIdleModeCommand(IdleMode.kCoast)).onFalse(arm.setIdleModeCommand(IdleMode.kBrake));
+    
+    //Coral intake outtake
+    operatorController.L1()
+      .whileTrue(rollers.intakeCoralCommand())
+      .onFalse(rollers.stopCommand());
+    operatorController.L2()
+      .whileTrue(rollers.outtakeCoralCommand())
+      .onFalse(rollers.stopCommand());
+
+
+    /* SETS DIFFERENT ROBOT STATES */
+
+    //L3
+    operatorController.triangle()
+    .whileTrue(arm.setState(RobotState.L3).alongWith(elevator.setState(RobotState.L3)))
+    .onFalse(arm.stopCommand().alongWith(elevator.stopCommand()));
+    //L4
     // operatorController.circle()
     // .whileTrue(arm.goToLocationCommand(RobotState.L4).alongWith(elevator.setScoringHeightCommand(RobotState.L4)))
     // .onFalse(arm.stopCommand().alongWith(elevator.stopCommand()));
+    //L1
     // operatorController.cross()
     // .whileTrue(arm.goToLocationCommand(RobotState.L1).alongWith(elevator.setScoringHeightCommand(RobotState.L1)))
     // .onFalse(arm.stopCommand().alongWith(elevator.stopCommand()));
-    // operatorController.square()
-    // .whileTrue(arm.goToLocationCommand(RobotState.L2).alongWith(elevator.setScoringHeightCommand(RobotState.L2)))
-    // .onFalse(arm.stopCommand().alongWith(elevator.stopCommand()));
+    //L2
+    operatorController.square()
+    .whileTrue(arm.setState(RobotState.L2).alongWith(elevator.setState(RobotState.L2)))
+    .onFalse(arm.stopCommand().alongWith(elevator.stopCommand()));
     
     // operatorController.circle().whileTrue(Commands.sequence(
     //   Commands.runOnce(() -> SignalLogger.start()),
@@ -149,13 +172,22 @@ public class RobotContainer {
     //   return elevator.isSysIDSafe();
     // }));
 
-    operatorController.touchpad().onTrue(Commands.runOnce(() -> elevator.resetEncoders(0)).ignoringDisable(true));
+    //resets elevator encoders
+    operatorController.touchpad().onTrue(
+      Commands.runOnce(() -> elevator.resetEncoders(0))
+      .ignoringDisable(true)
+    );
 
-    //SignalLogger.setPath("/media/sda1/");
-    // operatorController.L2().onTrue(Commands.runOnce(() -> SignalLogger.start()));
-    // operatorController.R2().onTrue(Commands.runOnce(() -> SignalLogger.stop()));
-
-    operatorController.cross().onTrue(Commands.runOnce(() -> elevator.setNeutralMode(NeutralModeValue.Coast)).ignoringDisable(true)).onFalse(Commands.runOnce(() -> elevator.setNeutralMode(NeutralModeValue.Brake)).ignoringDisable(true));
+    //Coast mode elevator
+    operatorController.cross()
+      .onTrue(
+        Commands.runOnce(() -> elevator.setNeutralMode(NeutralModeValue.Coast))
+        .ignoringDisable(true)
+      )
+      .onFalse(
+        Commands.runOnce(() -> elevator.setNeutralMode(NeutralModeValue.Brake))
+        .ignoringDisable(true)
+      );
 
     /* DRIVER BINDINGS */
 
@@ -184,13 +216,11 @@ public class RobotContainer {
       .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(180)), false));
     driverController.circle()
       .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(270)), false)); 
-    //zero gyro
+    
+    //zeros gyro
     driverController.touchpad().onTrue(drivetrain.zeroGyroCommand());
-    //for testing robot relative angles
-   // driverController.L1().onTrue(drivetrain.alignToAngleRobotRelativeCommand(Rotation2d.fromDegrees(30), false));
-   // driverController.R1().onTrue(drivetrain.alignToAngleRobotRelativeCommand(Rotation2d.fromDegrees(-30), false));
+    drivetrain.registerTelemetry(telemetryLogger::telemeterize);    
 
-   drivetrain.registerTelemetry(telemetryLogger::telemeterize);    
   }
 
   /* MUSIC */

@@ -512,10 +512,6 @@ public class Elevator extends SubsystemBase {
         setExtension(extension);
     }
 
-    public void setScoringLevel(RobotState pos) {
-        setExtension(pos.getHeight());
-    }
-
     /**
      * Sets extension of the elevator in meters between 0 and the max extension of
      * the
@@ -564,8 +560,8 @@ public class Elevator extends SubsystemBase {
         return Commands.run(() -> setHeight(height), this);
     }
 
-    public Command setScoringHeightCommand(RobotState pos) {
-        return Commands.run(() -> setScoringLevel(pos), this);
+    public Command setState(RobotState state) {
+        return Commands.run(() -> setExtension(state.getHeight()), this);
     }
 
     @Override

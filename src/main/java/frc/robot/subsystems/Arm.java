@@ -3,6 +3,8 @@ package frc.robot.subsystems;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 
+import static edu.wpi.first.units.Units.Rotations;
+
 import java.util.GregorianCalendar;
 
 import org.dyn4j.geometry.Rotation;
@@ -17,6 +19,7 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
@@ -49,10 +52,12 @@ import frc.robot.util.Elastic.Notification.NotificationLevel;
 import frc.robot.util.simulation.DoubleJointedArmModel;
 
 public class Arm extends SubsystemBase {
+
     public final double WRIST_SPEED = 0.5; // TODO set
     public final double MAX_VELOCITY = 0.5;
     public final double MAX_ACCELERATION = 0.5;
     private final PIDController pidController;
+    private static final double ELBOW_ENCODER_OFFSET = 0;
     private static final Rotation2d MAX_ANGLE = Rotation2d.fromDegrees(37.8); // The min safe angle of the endpoint to
                                                                               // the horizontal //TODO set
     // angle of endpoint at this angle is -104.33
@@ -61,12 +66,13 @@ public class Arm extends SubsystemBase {
     // to the horizontal //TODO set
     // Angle of endpoint is -37.8
     private static final double ELBOW_ANGLE_TO_WRIST = 30.0 / 14.0; // TODO check
-    private static final double ENCODER_TO_ELBOW = 12.0 / 18.0; // 12 teeth on gear near motor, 18 on gear near
+    //private static final double ENCODER_TO_ELBOW = 12.0 / 18.0; // 12 teeth on gear near motor, 18 on gear near
                                                                       // mechanism
     private static final double MOTOR_TO_ENCODER = -1; // TODO can't get gearbox from CAD
     private static final Rotation2d WRIST_ANGLE_WHEN_ELBOW_IS_HORIZONTAL = Rotation2d.fromDegrees(-34.903); // TODO
                                                                                                             // check
 
+    private ArmFeedforward armFeedforward = new ArmFeedforward(0, 0, 0);                                                                                                     
     private static final double J1Length = 0.19 - Units.inchesToMeters(2);
     private double j1PrevPos;
     private double j2PrevPos;
@@ -109,7 +115,8 @@ public class Arm extends SubsystemBase {
         // TrapezoidProfile.Constraints constraints = new
         // TrapezoidProfile.Constraints(MAX_VELOCITY, MAX_ACCELERATION);
         armMotor = new SparkMax(29, MotorType.kBrushless);
-        elbowEncoder = new DutyCycleEncoder(0, 1 * ENCODER_TO_ELBOW, 0); // 1st number is port, 2nd is
+        elbowEncoder = new DutyCycleEncoder(0, 1 , ELBOW_ENCODER_OFFSET)
+        ; // 1st number is port, 2nd is
                                                                                          // range in this case 1
                                                                                          // rotation
                                                                                          // per rotation, 3rd number is
@@ -154,6 +161,7 @@ public class Arm extends SubsystemBase {
             wristEncoderSim = new DutyCycleEncoderSim(wristEncoder);
             elbowEncoderSim.set(0);
             wristEncoderSim.set(WRIST_ANGLE_WHEN_ELBOW_IS_HORIZONTAL.getRotations());
+            wristEncoderSim.set(0);
             // j2EncoderSim.set(0);
         }
 
@@ -191,6 +199,7 @@ public class Arm extends SubsystemBase {
                 PersistMode.kNoPersistParameters);
     }
 
+
     /**
      * Returns the angle of the elbow to the horizontal
      */
@@ -203,7 +212,7 @@ public class Arm extends SubsystemBase {
      */
     public Rotation2d getWristAngle() {
         // return Rotation2d.fromRotations(wristEncoder.get());
-         return Rotation2d.fromRotations((elbowEncoder.get() * (-30.0 / 14.0)) + 0);
+         return Rotation2d.fromRotations((getElbowAngle().getRotations() * (-ELBOW_ANGLE_TO_WRIST)) + WRIST_ANGLE_WHEN_ELBOW_IS_HORIZONTAL.getRotations());
     }
 
     /*
@@ -239,14 +248,14 @@ public class Arm extends SubsystemBase {
         target = MathUtil.clamp(target, MIN_ANGLE.getRotations(), MAX_ANGLE.getRotations());
         double wristVoltage = pidController.calculate(getEndpointAngle().getRotations(), target);
 
+        //needs feedforward only when we have algae, because algae is heavy!
+        if(RobotContainer.rollers.hasAlgae()) wristVoltage += armFeedforward.calculate(getElbowAngle().getRadians(), 0);
+
         wristVoltage = MathUtil.clamp(wristVoltage, -12, 12);
         // TODO do we need feedforward? If so we have to figure out the equation
         // negative voltage brings it up, positive brings it down AFAIK
         armMotor.setVoltage(-wristVoltage);
-    }
 
-    public void setWristLocation(RobotState pos) {
-        setWristAngle(pos.getAngle());
     }
 
     public void joystickControl() {
@@ -256,28 +265,29 @@ public class Arm extends SubsystemBase {
 
         double percentRot = getPercentRotation();
 
-        // percentRot is based on endpoint rotation, which moves in the opposite direction as the motor
-        // if (voltage > 0) {
-        //     if (percentRot <= 0.009) {
-        //         voltage = 0;
-        //         accelLimiter.reset(0);
-        //     } else if (percentRot <= 0.07) {
-        //         voltage = Math.max(voltage,
-        //                 (-12 * Math.pow((percentRot * (100.0 / SLOW_DOWN_ZONE)), 3.2)) - SLOWEST_SPEED);
-        //     }
-        // }
-        // if (voltage < 0) {
-        //     if (percentRot >= 0.996) {
-        //         voltage = 0;
-        //         accelLimiter.reset(0);
-        //     } else if (percentRot >= 0.93) {
-        //         voltage = Math.min(voltage,
-        //                 (12 * Math.pow((percentRot * (100.0 / SLOW_DOWN_ZONE)), 3.2)) + SLOWEST_SPEED);
-        //     }
-        // }
+        //percentRot is based on endpoint rotation, which moves in the opposite direction as the motor
+        if (voltage > 0) {
+            if (percentRot <= 0.009) {
+                voltage = 0;
+                accelLimiter.reset(0);
+            } else if (percentRot <= 0.07) {
+                voltage = Math.max(voltage,
+                        (-12 * Math.pow((percentRot * (100.0 / SLOW_DOWN_ZONE)), 3.2)) - SLOWEST_SPEED);
+            }
+        }
+        if (voltage < 0) {
+            if (percentRot >= 0.996) {
+                voltage = 0;
+                accelLimiter.reset(0);
+            } else if (percentRot >= 0.93) {
+                voltage = Math.min(voltage,
+                        (12 * Math.pow((percentRot * (100.0 / SLOW_DOWN_ZONE)), 3.2)) + SLOWEST_SPEED);
+            }
+        }
         
         // double ffVoltage = armSim.feedforward(VecBuilder.fill(getElbowAngle().getRadians(), getWristAngle().getRadians())).get(0,0);
-        // voltage = voltage - ffVoltage; 
+        // voltage = voltage - ffVol
+        if(RobotContainer.rollers.hasAlgae()) voltage += armFeedforward.calculate(getElbowAngle().getRadians(), 0);
         voltage = MathUtil.clamp(voltage, -1, 1);
 
         voltagePub.set(voltage);
@@ -375,7 +385,7 @@ public class Arm extends SubsystemBase {
                 ((getElbowAngle().getRotations() + (armMotorSim.getAppliedOutput() * MAX_VELOCITY) * 0.02)) % 1);
         wristEncoderSim.set(
                 ((getWristAngle().getRotations()
-                        - (armMotorSim.getAppliedOutput() * MAX_VELOCITY * (30.0 / 14.0)) * 0.02)) % 1);
+                        - (armMotorSim.getAppliedOutput() * MAX_VELOCITY * ELBOW_ANGLE_TO_WRIST) * 0.02)) % 1);
 
         // Publish sim encoder positions to the network
 
@@ -424,8 +434,8 @@ public class Arm extends SubsystemBase {
         return Commands.runOnce(() -> setIdleMode(mode)).ignoringDisable(true);
     }
 
-    public Command goToLocationCommand(RobotState pos) {
-        return goToAngleCommand(pos.getAngle());
+    public Command setState(RobotState state) {
+        return goToAngleCommand(state.getAngle());
     }
 
 }

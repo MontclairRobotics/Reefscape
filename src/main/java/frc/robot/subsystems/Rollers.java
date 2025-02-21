@@ -20,11 +20,12 @@ public class Rollers extends SubsystemBase {
     public SparkMax rightMotor;
     public SparkMax leftMotor;
     public final double CORAL_INTAKE_SPEED = 0.5;
-    
     public final double CORAL_OUTTAKE_SPEED = -1;
     public final double ALGAE_INTAKE_SPEED = 0.2;
     public final double ALGAE_OUTTAKE_SPEED = -0.5;
     public final double ROLLER_STALL_CURRENT = 43; // TODO check/tune
+    public final double CORAL_HOLDING_SPEED = 0.1;
+    public final double ALGAE_HOLDING_SPEED = 0.5;
 
     private NetworkTableEntry entry;
     
@@ -48,17 +49,18 @@ public class Rollers extends SubsystemBase {
     public GamePiece getHeldPiece() {
         return heldPiece;
     }
+
     public boolean hasCoral() {
         if (getHeldPiece() == GamePiece.Coral){
             return true;
-        }else{
+        } else{
             return false;
         }
     }
     public boolean hasAlgae() {
         if (getHeldPiece() == GamePiece.Algae){
             return true;
-        }else{
+        } else{
             return false;
         }
     }
@@ -83,7 +85,7 @@ public class Rollers extends SubsystemBase {
         leftMotor.stopMotor();
     }
 
-    public Command stop() {
+    public Command stopCommand() {
         return Commands.runOnce(() -> stopMotors());
     }
 
@@ -92,8 +94,8 @@ public class Rollers extends SubsystemBase {
                 .finallyDo(() -> {
                     setSpeed(0);
                     this.heldPiece = GamePiece.Algae;
-                });
-                // .until(this::isStalled);
+                })
+                .until(this::isStalled);
     }
 
     public Command outtakeAlgaeCommand() {
@@ -110,12 +112,7 @@ public class Rollers extends SubsystemBase {
                     stopMotors();
                     this.heldPiece = GamePiece.Coral;
                 })
-                
-                
-                 .until(this::isStalled);
-                // .andThen(
-                //     () -> setSpeed(CORAL_INTAKE_SPEED), this
-                // ).withTimeout(0.2);
+                .until(this::isStalled);
     }
 
     public Command outtakeCoralCommand() {
@@ -132,5 +129,13 @@ public class Rollers extends SubsystemBase {
         SmartDashboard.putNumber("Left Motor Current", leftMotor.getOutputCurrent());
         boolean isHeld = (heldPiece != GamePiece.None)&&!(DriverStation.isAutonomousEnabled());
         entry.setBoolean(isHeld);
+
+        if(hasCoral()) {
+            this.setSpeed(CORAL_HOLDING_SPEED);
+        }
+
+        if(hasAlgae()) {
+            this.setSpeed(ALGAE_HOLDING_SPEED);
+        }
     }
 }

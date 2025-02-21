@@ -431,7 +431,7 @@ public class Auto extends SubsystemBase {
                                     Commands.waitSeconds(waitTime),
                                     Commands.parallel(
                                         //Commands.print("Starting elevator command path 1"),
-                                        RobotContainer.elevator.setScoringHeightCommand(mechState), // TODO I removed this timeout. You'd rather wait then score at wrong height
+                                        RobotContainer.elevator.setState(mechState), // TODO I removed this timeout. You'd rather wait then score at wrong height
                                         RobotContainer.arm.goToAngleCommand(mechState.getAngle())
                                     )
                                     //,Commands.print("Finished elevator command path 1")
@@ -468,8 +468,8 @@ public class Auto extends SubsystemBase {
                                 //Commands.waitSeconds(waitTime),
                                 Commands.parallel(
                                     //Commands.print("Running elevator Command path 2"),
-                                    RobotContainer.elevator.setScoringHeightCommand(mechState).withTimeout(raiseTime),
-                                    RobotContainer.arm.goToLocationCommand(mechState)
+                                    RobotContainer.elevator.setState(mechState).withTimeout(raiseTime),
+                                    RobotContainer.arm.setState(mechState)
                                 )
                                // ,Commands.print("Finishing path 2 elevator command")
                             )

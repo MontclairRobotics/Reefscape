@@ -3,12 +3,12 @@ import edu.wpi.first.wpilibj.AddressableLEDBuffer;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.Timer;
 
-public class ASCIImation
+public class ASCIInimation
 {
     static AddressableLEDBuffer ledBuffer;
     private final Color[] bits;
 
-    public ASCIImation(String text, Color lo, Color hi, Color buf, Color wrd)
+    public ASCIInimation(String text, Color lo, Color hi, Color buf, Color wrd)
     {
         final int tlen9 = text.length() * 9;
         bits = new Color[tlen9 + 1];
