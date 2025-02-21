@@ -144,7 +144,7 @@ public class RobotContainer {
 
     //L3
     operatorController.triangle()
-    .whileTrue(arm.setState(RobotState.L3).alongWith(elevator.setState(RobotState.L3)))
+    .whileTrue(arm.setState(RobotState.L3))//.alongWith(elevator.setState(RobotState.L3)))
     .onFalse(arm.stopCommand().alongWith(elevator.stopCommand()));
     //L4
     // operatorController.circle()

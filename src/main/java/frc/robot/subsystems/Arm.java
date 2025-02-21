@@ -54,12 +54,12 @@ import frc.robot.util.simulation.DoubleJointedArmModel;
 public class Arm extends SubsystemBase {
 
     public final double WRIST_SPEED = 0.5; // TODO set
-    public final double MAX_VELOCITY = 0.5;
-    public final double MAX_ACCELERATION = 0.5;
+    public final double MAX_VELOCITY = 60.0 / 360.0;
+    public final double MAX_ACCELERATION = 20.0 / 360.0;
     private final PIDController pidController;
     private static final double ELBOW_ENCODER_OFFSET = -
     83;
-    private static final Rotation2d MAX_ANGLE = Rotation2d.fromDegrees(37.8); // The min safe angle of the endpoint to
+    private static final Rotation2d MAX_ANGLE = Rotation2d.fromDegrees(36.8); // The min safe angle of the endpoint to
                                                                               // the horizontal //TODO set
     // angle of endpoint at this angle is -104.33
     private static final Rotation2d MIN_ANGLE = Rotation2d.fromDegrees(-(180 - 102.143)); // The max safe angle of the
@@ -113,25 +113,25 @@ public class Arm extends SubsystemBase {
     // double appliedVoltage = 0;
 
     public Arm() {
-        // TrapezoidProfile.Constraints constraints = new
-        // TrapezoidProfile.Constraints(MAX_VELOCITY, MAX_ACCELERATION);
+        TrapezoidProfile.Constraints constraints = new
+        TrapezoidProfile.Constraints(MAX_VELOCITY, MAX_ACCELERATION);
         armMotor = new SparkMax(29, MotorType.kBrushless);
         elbowEncoder = new DutyCycleEncoder(0, 1 , ELBOW_ENCODER_OFFSET/360);
         elbowEncoder.setInverted(true);
-        ; // 1st number is port, 2nd is
+         // 1st number is port, 2nd is
                                                                                          // range in this case 1
                                                                                          // rotation
                                                                                          // per rotation, 3rd number is
                                                                                          // offset (whatever number you
                                                                                          // have to add so it reads zero
                                                                                          // degrees when horizontal)
-        // wristEncoder = new DutyCycleEncoder(1, 1, 0); // 1st # is port, 2nd is ratio to rotations of
+        wristEncoder = new DutyCycleEncoder(1, 1, 0); // 1st # is port, 2nd is ratio to rotations of
                                                                   // mechanism
                                                                   // (1 here), 3rd is initial offset (TODO to be
                                                                   // measured)
-        // pidController = new ProfiledPIDController(30.0, 0.0, 0.0, constraints);
-        pidController = new PIDController(35, 5, 0);
-        pidController.setTolerance(1.0 / 360.0);
+        pidController = new PIDController(17, 0, 0);
+        // pidController = new PIDController(35, 0, 0);
+        pidController.setTolerance(0.5 / 360.0);
         pidController.enableContinuousInput(-0.5, 0.5);
 
         if (!elbowEncoder.isConnected()) {
@@ -148,7 +148,7 @@ public class Arm extends SubsystemBase {
         cfg
                 .smartCurrentLimit(50) // TODO find stall limit
                 .idleMode(IdleMode.kBrake)
-                .inverted(false)
+                .inverted(true)
                 .voltageCompensation(12); // TODO needed?
 
         armMotor.configure(cfg, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
@@ -192,12 +192,12 @@ public class Arm extends SubsystemBase {
 
         double max = 32;
         double min = -56;
-        // double distance = PoseUtils.getAngleDistance(getEndpointAngle(), MIN_ANGLE).getDegrees();
-        // double interval = PoseUtils.getAngleDistance(MAX_ANGLE, MIN_ANGLE).getDegrees();
+        double distance = PoseUtils.getAngleDistance(getEndpointAngle(), MIN_ANGLE).getDegrees();
+        double interval = PoseUtils.getAngleDistance(MAX_ANGLE, MIN_ANGLE).getDegrees();
         // interval = MAX_ANGLE.getDegrees() - MIN_ANGLE.getDegrees();
         // distance = getEndpointAngle().getDegrees() + MIN_ANGLE.getDegrees();
-        double interval = max - min;
-        double distance = getElbowAngle().getDegrees() +56;
+        // double interval = max - min;
+        // double distance = getElbowAngle().getDegrees() +56;
         return distance / interval;
     }
 
@@ -262,9 +262,10 @@ public class Arm extends SubsystemBase {
         else wristVoltage += armFeedforward.calculate(getElbowAngle().getRadians(), 0);
     
         wristVoltage = MathUtil.clamp(wristVoltage, -12, 12);
+        System.out.println(-wristVoltage);
         // TODO do we need feedforward? If so we have to figure out the equation
         // negative voltage brings it up, positive brings it down AFAIK
-        armMotor.setVoltage(wristVoltage/2);
+        armMotor.setVoltage(-wristVoltage);
 
     }
 
@@ -297,12 +298,13 @@ public class Arm extends SubsystemBase {
         
         // double ffVoltage = armSim.feedforward(VecBuilder.fill(getElbowAngle().getRadians(), getWristAngle().getRadians())).get(0,0);
         // voltage = voltage - ffVol
-        // if(RobotContainer.rollers.hasAlgae()) 
+        // if(RobotContainer.rollers.hasAlgae())
+        //TODO check safeties after ff 
         if(getElbowAngle().getDegrees() > 0)
-        voltage += -armFeedforward.calculate(getElbowAngle().getRadians(), 0);
-        else voltage += armFeedforward.calculate(getElbowAngle().getRadians(), 0);
+        voltage += armFeedforward.calculate(getElbowAngle().getRadians(), 0);
+        else voltage += -armFeedforward.calculate(getElbowAngle().getRadians(), 0);
         voltage = MathUtil.clamp(voltage, -1, 1);
-
+        // System.out.println(voltage);
         voltagePub.set(voltage);
 
         // voltage = MathUtil.clamp(voltage, -(12 * Math.pow((percentRot * (100.0 /
@@ -436,7 +438,7 @@ public class Arm extends SubsystemBase {
     }
 
     public Command goToAngleCommand(Rotation2d angle) {
-        return Commands.run(() -> setWristAngle(angle), this).until(pidController::atSetpoint).finallyDo(this::stop);
+        return Commands.run(() -> setWristAngle(angle), this).until(this::atSetpoint).finallyDo(this::stop);
     }
 
     public Command joystickControlCommand() {
