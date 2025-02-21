@@ -108,27 +108,36 @@ public class RobotContainer {
     /* Operator bindings */
 
     //elevator height commands
+    //Joystick control
     operatorController.L1().whileTrue(elevator.joystickControlCommand()).whileTrue(arm.joystickControlCommand());
-    operatorController.triangle().whileTrue(Commands.run(() -> elevator.setHeight(1.7), elevator)); //L1 //66.93 inches
+
+    // operatorController.triangle().whileTrue(Commands.run(() -> elevator.setHeight(1.7), elevator)); //L1 //66.93 inches
     
 
     //roller intake/outtake commands
+    //Intake coral
     operatorController.L2().whileTrue(elevator.setScoringHeightCommand(RobotState.Intake).alongWith(arm.goToLocationCommand(RobotState.Intake)).alongWith(rollers.intakeCoralCommand())).onFalse(rollers.stop());
+    //Outake coral
     operatorController.R2().whileTrue(rollers.outtakeCoralCommand()).onFalse(rollers.stop());
-
-    operatorController.triangle()
-    .whileTrue(arm.goToLocationCommand(RobotState.L3).alongWith(elevator.setScoringHeightCommand(RobotState.L3)))
-    .onFalse(arm.stopCommand().alongWith(elevator.stopCommand()));
-    operatorController.circle()
-    .whileTrue(arm.goToLocationCommand(RobotState.L4).alongWith(elevator.setScoringHeightCommand(RobotState.L4)))
-    .onFalse(arm.stopCommand().alongWith(elevator.stopCommand()));
+    //L1
     operatorController.cross()
     .whileTrue(arm.goToLocationCommand(RobotState.L1).alongWith(elevator.setScoringHeightCommand(RobotState.L1)))
     .onFalse(arm.stopCommand().alongWith(elevator.stopCommand()));
+    //L2
     operatorController.square()
     .whileTrue(arm.goToLocationCommand(RobotState.L2).alongWith(elevator.setScoringHeightCommand(RobotState.L2)))
     .onFalse(arm.stopCommand().alongWith(elevator.stopCommand()));
-    
+    //L3
+    operatorController.triangle()
+    .whileTrue(arm.goToLocationCommand(RobotState.L3).alongWith(elevator.setScoringHeightCommand(RobotState.L3)))
+    .onFalse(arm.stopCommand().alongWith(elevator.stopCommand()));
+    //L4
+    operatorController.circle()
+    .whileTrue(arm.goToLocationCommand(RobotState.L4).alongWith(elevator.setScoringHeightCommand(RobotState.L4)))
+    .onFalse(arm.stopCommand().alongWith(elevator.stopCommand()));
+    //Reset elevator height
+    operatorController.touchpad().onTrue(Commands.runOnce(() -> elevator.resetEncoders(0)));
+
     // operatorController.circle().whileTrue(Commands.sequence(
     //   Commands.runOnce(() -> SignalLogger.start()),
     //   elevator.sysIdDynamic(Direction.kForward).until(elevator::isAtTop),
@@ -140,7 +149,6 @@ public class RobotContainer {
     //   return elevator.isSysIDSafe();
     // }));
 
-    operatorController.touchpad().onTrue(Commands.runOnce(() -> elevator.resetEncoders(0)));
 
     //SignalLogger.setPath("/media/sda1/");
     // operatorController.L2().onTrue(Commands.runOnce(() -> SignalLogger.start()));
