@@ -57,7 +57,8 @@ public class Arm extends SubsystemBase {
     public final double MAX_VELOCITY = 0.5;
     public final double MAX_ACCELERATION = 0.5;
     private final PIDController pidController;
-    private static final double ELBOW_ENCODER_OFFSET = 0;
+    private static final double ELBOW_ENCODER_OFFSET = -
+    83;
     private static final Rotation2d MAX_ANGLE = Rotation2d.fromDegrees(37.8); // The min safe angle of the endpoint to
                                                                               // the horizontal //TODO set
     // angle of endpoint at this angle is -104.33
@@ -72,7 +73,7 @@ public class Arm extends SubsystemBase {
     private static final Rotation2d WRIST_ANGLE_WHEN_ELBOW_IS_HORIZONTAL = Rotation2d.fromDegrees(-34.903); // TODO
                                                                                                             // check
 
-    private ArmFeedforward armFeedforward = new ArmFeedforward(0, 0, 0);                                                                                                     
+    private ArmFeedforward armFeedforward = new ArmFeedforward(0, 0.2, 0);                                                                                                     
     private static final double J1Length = 0.19 - Units.inchesToMeters(2);
     private double j1PrevPos;
     private double j2PrevPos;
@@ -115,7 +116,8 @@ public class Arm extends SubsystemBase {
         // TrapezoidProfile.Constraints constraints = new
         // TrapezoidProfile.Constraints(MAX_VELOCITY, MAX_ACCELERATION);
         armMotor = new SparkMax(29, MotorType.kBrushless);
-        elbowEncoder = new DutyCycleEncoder(0, 1 , ELBOW_ENCODER_OFFSET)
+        elbowEncoder = new DutyCycleEncoder(0, 1 , ELBOW_ENCODER_OFFSET/360);
+        elbowEncoder.setInverted(true);
         ; // 1st number is port, 2nd is
                                                                                          // range in this case 1
                                                                                          // rotation
@@ -128,7 +130,7 @@ public class Arm extends SubsystemBase {
                                                                   // (1 here), 3rd is initial offset (TODO to be
                                                                   // measured)
         // pidController = new ProfiledPIDController(30.0, 0.0, 0.0, constraints);
-        pidController = new PIDController(100, 0, 0);
+        pidController = new PIDController(35, 5, 0);
         pidController.setTolerance(1.0 / 360.0);
         pidController.enableContinuousInput(-0.5, 0.5);
 
@@ -188,9 +190,14 @@ public class Arm extends SubsystemBase {
 
     public double getPercentRotation() {
 
-        double distance = PoseUtils.getAngleDistance(getEndpointAngle(), MIN_ANGLE).getDegrees();
-        double interval = PoseUtils.getAngleDistance(MAX_ANGLE, MIN_ANGLE).getDegrees();
-
+        double max = 32;
+        double min = -56;
+        // double distance = PoseUtils.getAngleDistance(getEndpointAngle(), MIN_ANGLE).getDegrees();
+        // double interval = PoseUtils.getAngleDistance(MAX_ANGLE, MIN_ANGLE).getDegrees();
+        // interval = MAX_ANGLE.getDegrees() - MIN_ANGLE.getDegrees();
+        // distance = getEndpointAngle().getDegrees() + MIN_ANGLE.getDegrees();
+        double interval = max - min;
+        double distance = getElbowAngle().getDegrees() +56;
         return distance / interval;
     }
 
@@ -204,7 +211,7 @@ public class Arm extends SubsystemBase {
      * Returns the angle of the elbow to the horizontal
      */
     public Rotation2d getElbowAngle() {
-        return Rotation2d.fromRotations(elbowEncoder.get());
+        return (RobotContainer.drivetrain.wrapAngle(Rotation2d.fromRotations(elbowEncoder.get())));
     }
 
     /**
@@ -249,12 +256,15 @@ public class Arm extends SubsystemBase {
         double wristVoltage = pidController.calculate(getEndpointAngle().getRotations(), target);
 
         //needs feedforward only when we have algae, because algae is heavy!
-        if(RobotContainer.rollers.hasAlgae()) wristVoltage += armFeedforward.calculate(getElbowAngle().getRadians(), 0);
-
+        // if(RobotContainer.rollers.hasAlgae()) 
+        if(getElbowAngle().getDegrees() > 0)
+        wristVoltage += -armFeedforward.calculate(getElbowAngle().getRadians(), 0);
+        else wristVoltage += armFeedforward.calculate(getElbowAngle().getRadians(), 0);
+    
         wristVoltage = MathUtil.clamp(wristVoltage, -12, 12);
         // TODO do we need feedforward? If so we have to figure out the equation
         // negative voltage brings it up, positive brings it down AFAIK
-        armMotor.setVoltage(-wristVoltage);
+        armMotor.setVoltage(wristVoltage/2);
 
     }
 
@@ -267,7 +277,7 @@ public class Arm extends SubsystemBase {
 
         //percentRot is based on endpoint rotation, which moves in the opposite direction as the motor
         if (voltage > 0) {
-            if (percentRot <= 0.009) {
+            if (percentRot <= 0.1) {
                 voltage = 0;
                 accelLimiter.reset(0);
             } else if (percentRot <= 0.07) {
@@ -276,7 +286,7 @@ public class Arm extends SubsystemBase {
             }
         }
         if (voltage < 0) {
-            if (percentRot >= 0.996) {
+            if (percentRot >= 0.9) {
                 voltage = 0;
                 accelLimiter.reset(0);
             } else if (percentRot >= 0.93) {
@@ -287,7 +297,10 @@ public class Arm extends SubsystemBase {
         
         // double ffVoltage = armSim.feedforward(VecBuilder.fill(getElbowAngle().getRadians(), getWristAngle().getRadians())).get(0,0);
         // voltage = voltage - ffVol
-        if(RobotContainer.rollers.hasAlgae()) voltage += armFeedforward.calculate(getElbowAngle().getRadians(), 0);
+        // if(RobotContainer.rollers.hasAlgae()) 
+        if(getElbowAngle().getDegrees() > 0)
+        voltage += -armFeedforward.calculate(getElbowAngle().getRadians(), 0);
+        else voltage += armFeedforward.calculate(getElbowAngle().getRadians(), 0);
         voltage = MathUtil.clamp(voltage, -1, 1);
 
         voltagePub.set(voltage);

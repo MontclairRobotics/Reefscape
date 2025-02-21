@@ -94,7 +94,6 @@ public class LEDs extends SubsystemBase {
         return basedProgress;  
     }   
     public Command playPatternCommand(LEDPattern pattern) {
-        System.out.println(pattern);
         return Commands.run(() -> pattern.applyTo(ledBuffer), this).ignoringDisable(true);
     }
 

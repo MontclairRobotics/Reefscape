@@ -396,7 +396,7 @@ public class Elevator extends SubsystemBase {
 
         voltage = voltage + elevatorFeedforward.calculate(0);
         if (voltage < 0) {
-            if (percentExtension <= 0.004) {
+            if (percentExtension <= 0.01) {
                 voltage = 0;
                 accelerationLimiter.reset(0);
             } else if (percentExtension <= 0.07) {
@@ -405,7 +405,7 @@ public class Elevator extends SubsystemBase {
             }
         }
         if (voltage > 0) {
-            if (percentExtension >= 0.996) {
+            if (percentExtension >= 0.99) {
                 voltage = 0;
                 accelerationLimiter.reset(0);
             } else if (percentExtension >= 0.93) {
