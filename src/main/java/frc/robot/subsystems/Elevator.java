@@ -67,7 +67,7 @@ public class Elevator extends SubsystemBase {
     public static final double STARTING_HEIGHT = 0.98;// 0.9718607; // (meters) - distance between top bar and ground
                                                       // (no
                                                       // extension)
-    public static final double MAX_EXTENSION = 1.4189392089843749; // (meters) - distance bewteen max height and
+    public static final double MAX_EXTENSION = 1.22; //1.4189392089843749; // (meters) - distance bewteen max height and
                                                                    // starting height
     public static final double MAX_HEIGHT = MAX_EXTENSION + STARTING_HEIGHT; // (meters) - distance between top bar and
                                                                              // ground (fully extended)
@@ -181,12 +181,15 @@ public class Elevator extends SubsystemBase {
             // bottomLimitPub = debug.getBooleanTopic("Elevator Bottom Limit").publish();
         }
 
-        leftTalonFX = new TalonFX(LEFT_MOTOR_ID, "rio");
-        rightTalonFX = new TalonFX(RIGHT_MOTOR_ID, "rio");
+        leftTalonFX = new TalonFX(LEFT_MOTOR_ID, "Drivetrain");
+        rightTalonFX = new TalonFX(RIGHT_MOTOR_ID, "Drivetrain");
 
+        // slot0Configs = new Slot0Configs()
+        //         .withKP(1.4973).withKI(0).withKD(0.098147)
+        //         .withKS(0.058548).withKV(0.10758).withKA(0.0013553).withKG(0.069812)
         slot0Configs = new Slot0Configs()
                 .withKP(1.4973).withKI(0).withKD(0.098147)
-                .withKS(0.058548).withKV(0.10758).withKA(0.0013553).withKG(0.069812)
+                .withKS(0.058548).withKV(0.10758).withKA(0.0013553).withKG(0.22)
                 .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign);
 
         // TODO check this for kv
@@ -349,7 +352,7 @@ public class Elevator extends SubsystemBase {
     public double getExtensionRotations() {
         double leftDisplacement = (leftTalonFX.getPosition().getValueAsDouble());
         double rightDisplacement = (rightTalonFX.getPosition().getValueAsDouble());
-        if (Math.abs(leftDisplacement - rightDisplacement) < 0.2) { // TODO: lower
+        if (Math.abs(leftDisplacement - rightDisplacement) > 0.2) { // TODO: lower
             // when things get more reliable
             Elastic.sendNotification(new Notification(
                     NotificationLevel.WARNING, "Elevator Height Mismatch",
@@ -369,9 +372,9 @@ public class Elevator extends SubsystemBase {
      * 
      */
     public void joystickControl() {
-        extensionSetpointMeters = getExtension(); // TODO needed? Worried atSetpoint will misbehave, though it shouldn't
+        // extensionSetpointMeters = getExtension(); // TODO needed? Worried atSetpoint will misbehave, though it shouldn't
                                                   // ever be used unless PID control is running
-        double voltage = Math.pow(-MathUtil.applyDeadband(RobotContainer.operatorController.getLeftY(), 0.04), 3) * 12;
+        double voltage = Math.pow(-MathUtil.applyDeadband(RobotContainer.operatorController.getLeftY(), 0.2), 3) * 12;
 
         // voltage = accelerationLimiter.calculate(voltage);
 
@@ -381,6 +384,7 @@ public class Elevator extends SubsystemBase {
         // System.out.println("Elevator ff Voltage: " +
         // elevatorFeedforward.calculate(0));
 
+        voltage = voltage + elevatorFeedforward.calculate(0);
         if (voltage < 0) {
             if (percentExtension <= 0.004) {
                 voltage = 0;
@@ -399,9 +403,8 @@ public class Elevator extends SubsystemBase {
                         SLOW_DOWN_ZONE)), 3.2)) + SLOWEST_SPEED);
             }
         }
-
-        voltage = voltage + elevatorFeedforward.calculate(0);
-
+        // System.out.println(voltage);
+        // System.out.println("After: " + voltage);
         voltage = MathUtil.clamp(voltage, -12, 12);
         voltagePub.set(voltage);
 
@@ -567,7 +570,7 @@ public class Elevator extends SubsystemBase {
 
     @Override
     public void periodic() {
-        heightPub.set(getHeight());
+        heightPub.set(getExtension());
         percentHeightPub.set(getExtension() / MAX_EXTENSION);
         if (RobotContainer.debugMode) {
             rightHeightPub.set(rightTalonFX.getPosition().getValueAsDouble());

@@ -60,7 +60,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     public static final double FORWARD_ACCEL = 9; // m / s^2
     public static final double SIDE_ACCEL = 9; //m / s^2
     public static final double ROT_ACCEL = 9; // radians / s^2
-    public static final boolean IS_LIMITING_ACCEL = false;
+    public static final boolean IS_LIMITING_ACCEL = true;
 
     public static final Pose2d[] BLUE_SCORING_POSES = {
        // new Pose2d(new Translation2d(1.091, 1.060), new Rotation2d(Math.toRadians(-127.000))), //top coral station
@@ -171,7 +171,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
      * 
     */
     public double getVelocityXFromController(){
-        double xInput = -MathUtil.applyDeadband(RobotContainer.driverController.getLeftX(), 0.04);
+        double xInput = -MathUtil.applyDeadband(RobotContainer.driverController.getLeftX(), 0.07);
         if(IS_LIMITING_ACCEL) return forwardLimiter.calculate(
             Math.pow(xInput, 3) * MAX_SPEED
             );
@@ -182,7 +182,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
      * 
     */
     public double getVelocityYFromController(){
-        double yInput = -MathUtil.applyDeadband(RobotContainer.driverController.getLeftY(), 0.04);
+        double yInput = -MathUtil.applyDeadband(RobotContainer.driverController.getLeftY(), 0.07);
         if(IS_LIMITING_ACCEL) return strafeLimiter.calculate(Math.pow(yInput, 3) * MAX_SPEED);
        
         else return Math.pow(yInput, 3)* MAX_SPEED;
@@ -194,7 +194,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
      * 
      */
     public void driveJoystick() {
-        double rotInput = -MathUtil.applyDeadband(RobotContainer.driverController.getRightX(), 0.04);
+        double rotInput = -MathUtil.applyDeadband(RobotContainer.driverController.getRightX(), 0.07);
         double rotVelocity = Math.pow(rotInput, 3) * MAX_ROT_SPEED;
         if(IS_LIMITING_ACCEL) { 
             rotVelocity = rotationLimiter.calculate(

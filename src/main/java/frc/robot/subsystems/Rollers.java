@@ -2,26 +2,37 @@ package frc.robot.subsystems;
 
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.SparkBase.PersistMode;
+import com.revrobotics.spark.SparkBase.ResetMode;
+import com.revrobotics.spark.config.SparkMaxConfig;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.util.GamePiece;
 
 public class Rollers extends SubsystemBase {
-    private SparkMax rightMotor;
-    private SparkMax leftMotor;
-    public final double CORAL_INTAKE_SPEED = 1;
+    public SparkMax rightMotor;
+    public SparkMax leftMotor;
+    public final double CORAL_INTAKE_SPEED = 0.5;
     public final double CORAL_OUTTAKE_SPEED = -1;
-    public final double ALGAE_INTAKE_SPEED = 0.5;
+    public final double ALGAE_INTAKE_SPEED = 0.2;
     public final double ALGAE_OUTTAKE_SPEED = -0.5;
-    public final double ROLLER_STALL_CURRENT = 40; // TODO check/tune
+    public final double ROLLER_STALL_CURRENT = 43; // TODO check/tune
+    
 
     private GamePiece heldPiece = GamePiece.None; // TODO init to Coral for auton? not needed?
 
     public Rollers() {
-        rightMotor = new SparkMax(13, MotorType.kBrushless);
-        leftMotor = new SparkMax(14, MotorType.kBrushless);
+        rightMotor = new SparkMax(31, MotorType.kBrushless);
+        leftMotor = new SparkMax(30, MotorType.kBrushless);
+
+        var config = new SparkMaxConfig();
+        config.smartCurrentLimit(20).idleMode(IdleMode.kBrake);
+        rightMotor.configure(config.inverted(true), ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+        leftMotor.configure(config.inverted(false), ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     }
 
     public GamePiece getHeldPiece() {
@@ -34,7 +45,7 @@ public class Rollers extends SubsystemBase {
                 || leftMotor.getOutputCurrent() > ROLLER_STALL_CURRENT;
     }
 
-    private void setSpeed(double speed) {
+    public void setSpeed(double speed) {
         setSpeed(speed, speed);
     }
 
@@ -53,15 +64,16 @@ public class Rollers extends SubsystemBase {
     }
 
     public Command intakeAlgaeCommand() {
-        return Commands.run(() -> setSpeed(ALGAE_INTAKE_SPEED, 0), this)
+        return Commands.run(() -> setSpeed(ALGAE_INTAKE_SPEED), this)
                 .finallyDo(() -> {
-                    stopMotors();
+                    setSpeed(0);
                     this.heldPiece = GamePiece.Algae;
-                }).until(this::isStalled);
+                });
+                // .until(this::isStalled);
     }
 
     public Command outtakeAlgaeCommand() {
-        return Commands.run(() -> setSpeed(ALGAE_OUTTAKE_SPEED, 0), this)
+        return Commands.run(() -> setSpeed(ALGAE_OUTTAKE_SPEED), this)
                 .finallyDo(() -> {
                     stopMotors();
                     this.heldPiece = GamePiece.None;
@@ -73,7 +85,13 @@ public class Rollers extends SubsystemBase {
                 .finallyDo(() -> {
                     stopMotors();
                     this.heldPiece = GamePiece.Coral;
-                }).until(this::isStalled);
+                })
+                
+                
+                 .until(this::isStalled);
+                // .andThen(
+                //     () -> setSpeed(CORAL_INTAKE_SPEED), this
+                // ).withTimeout(0.2);
     }
 
     public Command outtakeCoralCommand() {
@@ -82,5 +100,10 @@ public class Rollers extends SubsystemBase {
                     stopMotors();
                     this.heldPiece = GamePiece.None;
                 }).withTimeout(2); // TODO find timeout
+    }
+
+    public void periodic() {
+        SmartDashboard.putNumber("Right Motor Current", rightMotor.getOutputCurrent());
+        SmartDashboard.putNumber("Left Motor Current", leftMotor.getOutputCurrent());
     }
 }

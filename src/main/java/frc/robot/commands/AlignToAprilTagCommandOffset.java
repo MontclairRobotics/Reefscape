@@ -35,6 +35,7 @@ public class AlignToAprilTagCommandOffset extends Command {
         yController = new PIDController(5, 0, 0);
         yController.setTolerance(0.5); //degrees
         thetaController = RobotContainer.drivetrain.thetaController;
+        addRequirements(RobotContainer.drivetrain);
     }
 
     @Override

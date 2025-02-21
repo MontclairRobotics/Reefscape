@@ -477,7 +477,7 @@ public class Auto extends SubsystemBase {
                         TagOffset offset = TagOffset.CENTER; //default to 0?
                         if (fourth == "1") {
                             offset = TagOffset.LEFT_INTAKE;
-                        }
+                        } // TODO finish
                         autoCommand.addCommands(new AlignToAprilTagCommandOffset(RobotContainer.topLimelight, raiseTime, pathTime, raiseTime, i));
 
                     } else {

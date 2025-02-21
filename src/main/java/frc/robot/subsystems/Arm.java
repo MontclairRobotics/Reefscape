@@ -7,6 +7,7 @@ import java.util.GregorianCalendar;
 
 import org.dyn4j.geometry.Rotation;
 
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.revrobotics.sim.SparkMaxSim;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
@@ -107,7 +108,7 @@ public class Arm extends SubsystemBase {
     public Arm() {
         // TrapezoidProfile.Constraints constraints = new
         // TrapezoidProfile.Constraints(MAX_VELOCITY, MAX_ACCELERATION);
-        armMotor = new SparkMax(-1, MotorType.kBrushless);
+        armMotor = new SparkMax(29, MotorType.kBrushless);
         elbowEncoder = new DutyCycleEncoder(0, 1 * ENCODER_TO_ELBOW, 0); // 1st number is port, 2nd is
                                                                                          // range in this case 1
                                                                                          // rotation
@@ -115,7 +116,7 @@ public class Arm extends SubsystemBase {
                                                                                          // offset (whatever number you
                                                                                          // have to add so it reads zero
                                                                                          // degrees when horizontal)
-        wristEncoder = new DutyCycleEncoder(1, 1, 0); // 1st # is port, 2nd is ratio to rotations of
+        // wristEncoder = new DutyCycleEncoder(1, 1, 0); // 1st # is port, 2nd is ratio to rotations of
                                                                   // mechanism
                                                                   // (1 here), 3rd is initial offset (TODO to be
                                                                   // measured)
@@ -129,10 +130,10 @@ public class Arm extends SubsystemBase {
                     "J1 arm encoder not connected!"));
         }
 
-        if (!wristEncoder.isConnected()) {
-            Elastic.sendNotification(new Notification(NotificationLevel.ERROR, "Encoder disconnected!",
-                    "J2 arm encoder not connected!"));
-        }
+        // if (!wristEncoder.isConnected()) {
+        //     Elastic.sendNotification(new Notification(NotificationLevel.ERROR, "Encoder disconnected!",
+        //             "J2 arm encoder not connected!"));
+        // }
 
         SparkMaxConfig cfg = new SparkMaxConfig();
         cfg
@@ -201,7 +202,8 @@ public class Arm extends SubsystemBase {
      * Returns the angle from the elbow to the wrist
      */
     public Rotation2d getWristAngle() {
-        return Rotation2d.fromRotations(wristEncoder.get());
+        // return Rotation2d.fromRotations(wristEncoder.get());
+         return Rotation2d.fromRotations((elbowEncoder.get() * (-30.0 / 14.0)) + 0);
     }
 
     /*
@@ -255,28 +257,28 @@ public class Arm extends SubsystemBase {
         double percentRot = getPercentRotation();
 
         // percentRot is based on endpoint rotation, which moves in the opposite direction as the motor
-        if (voltage > 0) {
-            if (percentRot <= 0.009) {
-                voltage = 0;
-                accelLimiter.reset(0);
-            } else if (percentRot <= 0.07) {
-                voltage = Math.max(voltage,
-                        (-12 * Math.pow((percentRot * (100.0 / SLOW_DOWN_ZONE)), 3.2)) - SLOWEST_SPEED);
-            }
-        }
-        if (voltage < 0) {
-            if (percentRot >= 0.996) {
-                voltage = 0;
-                accelLimiter.reset(0);
-            } else if (percentRot >= 0.93) {
-                voltage = Math.min(voltage,
-                        (12 * Math.pow((percentRot * (100.0 / SLOW_DOWN_ZONE)), 3.2)) + SLOWEST_SPEED);
-            }
-        }
+        // if (voltage > 0) {
+        //     if (percentRot <= 0.009) {
+        //         voltage = 0;
+        //         accelLimiter.reset(0);
+        //     } else if (percentRot <= 0.07) {
+        //         voltage = Math.max(voltage,
+        //                 (-12 * Math.pow((percentRot * (100.0 / SLOW_DOWN_ZONE)), 3.2)) - SLOWEST_SPEED);
+        //     }
+        // }
+        // if (voltage < 0) {
+        //     if (percentRot >= 0.996) {
+        //         voltage = 0;
+        //         accelLimiter.reset(0);
+        //     } else if (percentRot >= 0.93) {
+        //         voltage = Math.min(voltage,
+        //                 (12 * Math.pow((percentRot * (100.0 / SLOW_DOWN_ZONE)), 3.2)) + SLOWEST_SPEED);
+        //     }
+        // }
         
         // double ffVoltage = armSim.feedforward(VecBuilder.fill(getElbowAngle().getRadians(), getWristAngle().getRadians())).get(0,0);
         // voltage = voltage - ffVoltage; 
-        voltage = MathUtil.clamp(voltage, -12, 12);
+        voltage = MathUtil.clamp(voltage, -1, 1);
 
         voltagePub.set(voltage);
 
