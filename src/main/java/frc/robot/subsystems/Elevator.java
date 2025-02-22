@@ -19,7 +19,9 @@ import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
 import com.ctre.phoenix6.sim.ChassisReference;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.controller.ElevatorFeedforward;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose3d;
@@ -256,6 +258,26 @@ public class Elevator extends SubsystemBase {
         elevatorMechanism = rootMechanism
                 .append(new MechanismLigament2d("Elevator", STARTING_HEIGHT, 90));
 
+
+                Tunable kG = new Tunable("Elevator kG", slot0Configs.kG, (val) -> {
+                    elevatorFeedforward = new ElevatorFeedforward(elevatorFeedforward.getKs(), val, elevatorFeedforward.getKv());
+                });
+            
+                Tunable kV = new Tunable("Elevator kV", slot0Configs.kV, (val) -> {
+                    elevatorFeedforward = new ElevatorFeedforward(elevatorFeedforward.getKs(), elevatorFeedforward.getKg(), val);
+                });
+            
+                Tunable kP = new Tunable("Elevator kP", 8.2697, (val) -> {
+                    pidController = new ProfiledPIDController(val, pidController.getI(), pidController.getD(), new Constraints(MAX_VELOCITY_RPS, MAX_ACCEL_RPS));
+                });
+            
+                Tunable kI = new Tunable("Elevator kI", 0, (val) -> {
+                    pidController = new ProfiledPIDController(pidController.getP(), val, pidController.getD(), new Constraints(MAX_VELOCITY_RPS, MAX_ACCEL_RPS));
+                });
+            
+                Tunable kD = new Tunable("Elevator kD", .068398, (val) -> {
+                    pidController = new ProfiledPIDController(pidController.getP(), pidController.getI(), val, new Constraints(MAX_VELOCITY_RPS, MAX_ACCEL_RPS));
+                });
     }
 
     /**

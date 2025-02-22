@@ -30,6 +30,7 @@ import com.pathplanner.lib.util.swerve.SwerveSetpoint;
 import com.pathplanner.lib.util.swerve.SwerveSetpointGenerator;
 
 import frc.robot.util.PoseUtils;
+import frc.robot.util.Tunable;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
@@ -61,10 +62,24 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
     public static final double MAX_SPEED = 5; // TODO: actually set this with units
     public static final double MAX_ROT_SPEED = Math.PI * 4;
-    public static final double FORWARD_ACCEL = 9; // m / s^2
-    public static final double SIDE_ACCEL = 9; // m / s^2
-    public static final double ROT_ACCEL = 9; // radians / s^2
-    public static final boolean IS_LIMITING_ACCEL = true;
+    public static double FORWARD_ACCEL = 9; // m / s^2
+    public static double SIDE_ACCEL = 9; // m / s^2
+    public static double ROT_ACCEL = 9; // radians / s^2
+    public static boolean IS_LIMITING_ACCEL = true;
+
+
+     /* Acceleration limiters for our drivetrain */
+     private SlewRateLimiter forwardLimiter = new SlewRateLimiter(FORWARD_ACCEL); // TODO: actually set this
+     private SlewRateLimiter strafeLimiter = new SlewRateLimiter(SIDE_ACCEL); // TODO: actually set this
+     private SlewRateLimiter rotationLimiter = new SlewRateLimiter(ROT_ACCEL); // TODO: actually set this
+
+    public Tunable forwardAccelTunable = new Tunable("Forward Accel Limit", 9, (value) -> {RobotContainer.drivetrain.forwardLimiter = new SlewRateLimiter(value);});
+    public Tunable sideAccelTunable = new Tunable("Side Accel Limit", 9, (value) -> {RobotContainer.drivetrain.strafeLimiter = new SlewRateLimiter(value);});
+    public Tunable rotAccelTunable = new Tunable("Rotation Accel Limit", 9, (value) -> {RobotContainer.drivetrain.rotationLimiter = new SlewRateLimiter(value);});
+    public Tunable isLimitAccel = new Tunable("Is limiting accel", 1, (value) -> {
+        if(value == 1) IS_LIMITING_ACCEL = true;
+        if(value == 0) IS_LIMITING_ACCEL = false;
+    });
 
     public static final Pose2d[] BLUE_SCORING_POSES = {
             // new Pose2d(new Translation2d(1.091, 1.060), new
@@ -107,13 +122,8 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
     private Pose2d targetPose;
 
-    /* Acceleration limiters for our drivetrain */
-    private SlewRateLimiter forwardLimiter = new SlewRateLimiter(FORWARD_ACCEL); // TODO: actually set this
-    private SlewRateLimiter strafeLimiter = new SlewRateLimiter(SIDE_ACCEL); // TODO: actually set this
-    private SlewRateLimiter rotationLimiter = new SlewRateLimiter(ROT_ACCEL); // TODO: actually set this
-
     /* Heading PID Controller for things like automatic alignment buttons */
-    public PIDController thetaController = new PIDController(6, 0, .2);
+    public PIDController thetaController = new PIDController(4.5, 0, .2);
 
     /* variable to store our heading */
     private Rotation2d odometryHeading;
@@ -188,7 +198,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     public double getVelocityXFromController() {
         double xInput = -MathUtil.applyDeadband(RobotContainer.driverController.getLeftX(), 0.07);
         if (IS_LIMITING_ACCEL)
-            return forwardLimiter.calculate(
+            return strafeLimiter.calculate(
                     Math.pow(xInput, 3) * MAX_SPEED);
         else
             return Math.pow(xInput, 3) * MAX_SPEED;
@@ -201,7 +211,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     public double getVelocityYFromController() {
         double yInput = -MathUtil.applyDeadband(RobotContainer.driverController.getLeftY(), 0.07);
         if (IS_LIMITING_ACCEL)
-            return strafeLimiter.calculate(Math.pow(yInput, 3) * MAX_SPEED);
+            return forwardLimiter.calculate(Math.pow(yInput, 3) * MAX_SPEED);
 
         else
             return Math.pow(yInput, 3) * MAX_SPEED;
@@ -699,6 +709,8 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
     @Override
     public void periodic() {
+
+       // System.out.println(forwardAccelTunable.getValue());
         // Not sure if this is correct at all
         odometryHeading = this.getState().Pose.getRotation();
         isRobotAtAngleSetPoint = thetaController.atSetpoint();

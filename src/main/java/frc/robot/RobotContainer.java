@@ -99,7 +99,7 @@ public class RobotContainer {
     //   }
     // , arm));
     elevator.setDefaultCommand(elevator.joystickControlCommand());
-    // arm.setDefaultCommand(arm.joystickControlCommand());
+    arm.setDefaultCommand(arm.joystickControlCommand());
    // elevator.setDefaultCommand(elevator.joystickControlCommand());
    //leds.setDefaultCommand(leds.playPatternCommand(LEDs.breathingPattern()));
     // operatorController.square().whileTrue(arm.goToAngleCommand(Rotation2d.fromDegrees(30)));
@@ -144,7 +144,7 @@ public class RobotContainer {
 
     //L3
     operatorController.triangle()
-    .whileTrue(arm.setState(RobotState.L3))//.alongWith(elevator.setState(RobotState.L3)))
+    .whileTrue(arm.setState(RobotState.L3).alongWith(elevator.setState(RobotState.L3)))
     .onFalse(arm.stopCommand().alongWith(elevator.stopCommand()));
     //L4
     // operatorController.circle()

@@ -45,6 +45,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Robot;
 import frc.robot.RobotContainer;
 import frc.robot.util.RobotState;
+import frc.robot.util.Tunable;
 import frc.robot.util.Elastic;
 import frc.robot.util.PoseUtils;
 import frc.robot.util.Elastic.Notification;
@@ -53,33 +54,37 @@ import frc.robot.util.simulation.DoubleJointedArmModel;
 
 public class Arm extends SubsystemBase {
 
-    public final double WRIST_SPEED = 0.5; // TODO set
-    public final double MAX_VELOCITY = 60.0 / 360.0;
-    public final double MAX_ACCELERATION = 20.0 / 360.0;
-    private final PIDController pidController;
-    private static final double ELBOW_ENCODER_OFFSET = -
-    83;
-    private static final Rotation2d MAX_ANGLE = Rotation2d.fromDegrees(36.8); // The min safe angle of the endpoint to
-                                                                              // the horizontal //TODO set
-    // angle of endpoint at this angle is -104.33
-    private static final Rotation2d MIN_ANGLE = Rotation2d.fromDegrees(-(180 - 102.143)); // The max safe angle of the
-                                                                                          // endpoint
-    // to the horizontal //TODO set
+    public final double MAX_VELOCITY = 60.0 / 360.0; // rotations per sec
+    public final double MAX_ACCELERATION = 20.0 / 360.0; // rotations per sec per sec
+    
+    private static final Rotation2d ELBOW_ENCODER_OFFSET = Rotation2d.fromDegrees(-83);
+    private static final Rotation2d ELBOW_MAX_ANGLE = Rotation2d.fromDegrees(34); //TODO: use protractor to get this for the real robot
+    private static final Rotation2d ELBOW_MIN_ANGLE = Rotation2d.fromDegrees(-56); //TODO: use protractor to get this for the real robot
+
+    // The max safe angle of the endpoint to the horizontal 
+    private static final Rotation2d MAX_ANGLE = Rotation2d.fromDegrees(36.8); 
+                                                                              
+    // The min safe angle of the endpoint to the horizontal
+    private static final Rotation2d MIN_ANGLE = Rotation2d.fromDegrees(-(180 - 102.143)); 
+
     // Angle of endpoint is -37.8
     private static final double ELBOW_ANGLE_TO_WRIST = 30.0 / 14.0; // TODO check
-    //private static final double ENCODER_TO_ELBOW = 12.0 / 18.0; // 12 teeth on gear near motor, 18 on gear near
-                                                                      // mechanism
-    private static final double MOTOR_TO_ENCODER = -1; // TODO can't get gearbox from CAD
-    private static final Rotation2d WRIST_ANGLE_WHEN_ELBOW_IS_HORIZONTAL = Rotation2d.fromDegrees(-34.903); // TODO
-                                                                                                            // check
 
-    private ArmFeedforward armFeedforward = new ArmFeedforward(0, 0.2, 0);                                                                                                     
+    // TODO: grab value from real robot using protractor
+    private static final Rotation2d WRIST_ANGLE_WHEN_ELBOW_IS_HORIZONTAL = Rotation2d.fromDegrees(-34.903); 
+
+    private ArmFeedforward armFeedforward = new ArmFeedforward(0, 0.2, 0); 
+
+    private PIDController pidController = new PIDController(17, 0, 0);
+
+
     private static final double J1Length = 0.19 - Units.inchesToMeters(2);
     private double j1PrevPos;
     private double j2PrevPos;
     private double j1Velocity = 0;
     private double j2Velocity = 0;
     private double prevLoopTime = Timer.getFPGATimestamp();
+    
     private SlewRateLimiter accelLimiter = new SlewRateLimiter(8); // accelerate fully in ~1.5 seconds (can tune value)
 
     private DoubleJointedArmModel armSim;
@@ -110,13 +115,33 @@ public class Arm extends SubsystemBase {
     private StructPublisher<Pose3d> elbowPosePub;
     private StructPublisher<Pose3d> wristPosePub;
 
+    public Tunable kG = new Tunable("Arm kV", 0.2, (val) -> {
+        armFeedforward = new ArmFeedforward(armFeedforward.getKs(), val, armFeedforward.getKv());
+    });
+
+    public Tunable kV = new Tunable("Arm kV", 0, (val) -> {
+        armFeedforward = new ArmFeedforward(armFeedforward.getKs(), armFeedforward.getKg(), val);
+    });
+
+    public Tunable kP = new Tunable("Arm kP", 17, (val) -> {
+        pidController = new PIDController(val, pidController.getI(), pidController.getD());
+    });
+
+    public Tunable kI = new Tunable("Arm kI", 0, (val) -> {
+        pidController = new PIDController(pidController.getP(), val, pidController.getD());
+    });
+
+    public Tunable kD = new Tunable("Arm kD", 0, (val) -> {
+        pidController = new PIDController(pidController.getP(), pidController.getI(), val);
+    });
+
     // double appliedVoltage = 0;
 
     public Arm() {
         TrapezoidProfile.Constraints constraints = new
         TrapezoidProfile.Constraints(MAX_VELOCITY, MAX_ACCELERATION);
         armMotor = new SparkMax(29, MotorType.kBrushless);
-        elbowEncoder = new DutyCycleEncoder(0, 1 , ELBOW_ENCODER_OFFSET/360);
+        elbowEncoder = new DutyCycleEncoder(0, 1 , ELBOW_ENCODER_OFFSET.getRotations());
         elbowEncoder.setInverted(true);
          // 1st number is port, 2nd is
                                                                                          // range in this case 1
@@ -129,7 +154,6 @@ public class Arm extends SubsystemBase {
                                                                   // mechanism
                                                                   // (1 here), 3rd is initial offset (TODO to be
                                                                   // measured)
-        pidController = new PIDController(17, 0, 0);
         // pidController = new PIDController(35, 0, 0);
         pidController.setTolerance(0.5 / 360.0);
         pidController.enableContinuousInput(-0.5, 0.5);

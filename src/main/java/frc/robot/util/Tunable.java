@@ -49,7 +49,8 @@ public class Tunable extends SubsystemBase{
     public void updateValue() {
         if(previousVal != getValue()) {
             previousVal = getValue();
-            updateCallback.accept(getValue());
+        
+           updateCallback.accept(getValue());
         }
     }
 
@@ -62,12 +63,12 @@ public class Tunable extends SubsystemBase{
 
     @Override
     public void periodic() {
-        if (DriverStation.getMatchType() == DriverStation.MatchType.None
-            || DriverStation.getMatchType() == DriverStation.MatchType.Practice
-            || DriverStation.isTest()
-           ) {
+        // if (DriverStation.getMatchType() == DriverStation.MatchType.None
+        //     || DriverStation.getMatchType() == DriverStation.MatchType.Practice
+        //     || DriverStation.isTest()
+        //    ) {
         updateValue();
-        }
+        // }
     }
 
 }
