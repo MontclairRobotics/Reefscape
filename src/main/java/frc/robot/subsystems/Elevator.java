@@ -90,7 +90,7 @@ public class Elevator extends SubsystemBase {
 
     // public static final double STAGE3_TO_2_HEIGHT = Units.inchesToMeters(23.743);
 
-    public static final double ELEVATOR_MASS = Units.lbsToKilograms(10);
+    public static final double ELEVATOR_MASS = Units.lbsToKilograms(40);
 
     public static final double ELEVATOR_RAISE_TIME = 2;
 

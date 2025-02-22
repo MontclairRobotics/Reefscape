@@ -1,4 +1,5 @@
 package frc.robot.subsystems;
+
 import frc.robot.Robot;
 import frc.robot.RobotContainer;
 import frc.robot.commands.GoToPoseCommand;
@@ -24,6 +25,9 @@ import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.path.PathConstraints;
+import com.pathplanner.lib.util.DriveFeedforwards;
+import com.pathplanner.lib.util.swerve.SwerveSetpoint;
+import com.pathplanner.lib.util.swerve.SwerveSetpointGenerator;
 
 import frc.robot.util.PoseUtils;
 import edu.wpi.first.math.MathUtil;
@@ -55,68 +59,70 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
      * 
      */
 
-    public static final double MAX_SPEED = 5; //TODO: actually set this with units
-    public static final double MAX_ROT_SPEED = Math.PI*4;
+    public static final double MAX_SPEED = 5; // TODO: actually set this with units
+    public static final double MAX_ROT_SPEED = Math.PI * 4;
     public static final double FORWARD_ACCEL = 9; // m / s^2
-    public static final double SIDE_ACCEL = 9; //m / s^2
+    public static final double SIDE_ACCEL = 9; // m / s^2
     public static final double ROT_ACCEL = 9; // radians / s^2
     public static final boolean IS_LIMITING_ACCEL = true;
 
     public static final Pose2d[] BLUE_SCORING_POSES = {
-       // new Pose2d(new Translation2d(1.091, 1.060), new Rotation2d(Math.toRadians(-127.000))), //top coral station
-       // new Pose2d(new Translation2d(1.091, 7.000), new Rotation2d(Math.toRadians(127.000))), //bottom coral station
-        new Pose2d(new Translation2d(3.680, 2.600), new Rotation2d(Math.toRadians(60.000))),
-        new Pose2d(new Translation2d(2.870, 4.030), new Rotation2d(Math.toRadians(0.000))),
-        new Pose2d(new Translation2d(3.670, 5.450), new Rotation2d(Math.toRadians(-60.000))),
-        new Pose2d(new Translation2d(5.320, 5.450), new Rotation2d(Math.toRadians(-120.000))),
-        new Pose2d(new Translation2d(6.130, 4.030), new Rotation2d(Math.toRadians(180.000))),
-        new Pose2d(new Translation2d(5.320, 2.600), new Rotation2d(Math.toRadians(120.000)))         
+            // new Pose2d(new Translation2d(1.091, 1.060), new
+            // Rotation2d(Math.toRadians(-127.000))), //top coral station
+            // new Pose2d(new Translation2d(1.091, 7.000), new
+            // Rotation2d(Math.toRadians(127.000))), //bottom coral station
+            new Pose2d(new Translation2d(3.680, 2.600), new Rotation2d(Math.toRadians(60.000))),
+            new Pose2d(new Translation2d(2.870, 4.030), new Rotation2d(Math.toRadians(0.000))),
+            new Pose2d(new Translation2d(3.670, 5.450), new Rotation2d(Math.toRadians(-60.000))),
+            new Pose2d(new Translation2d(5.320, 5.450), new Rotation2d(Math.toRadians(-120.000))),
+            new Pose2d(new Translation2d(6.130, 4.030), new Rotation2d(Math.toRadians(180.000))),
+            new Pose2d(new Translation2d(5.320, 2.600), new Rotation2d(Math.toRadians(120.000)))
     };
 
     public static final Pose2d[] LEFT_BLUE_SCORING_POSES = {
-        new Pose2d(new Translation2d(3.17,4.19), new Rotation2d(Math.toRadians(0))),
-        new Pose2d(new Translation2d(3.98,5.25), new Rotation2d(Math.toRadians(-60))),
-        new Pose2d(new Translation2d(5.3,5.09), new Rotation2d(Math.toRadians(-120))),
-        new Pose2d(new Translation2d(5.8,3.86), new Rotation2d(Math.toRadians(180))),
-        new Pose2d(new Translation2d(5,2.8), new Rotation2d(Math.toRadians(120))),
-        new Pose2d(new Translation2d(3.69,2.97), new Rotation2d(Math.toRadians(60))),
+            new Pose2d(new Translation2d(3.17, 4.19), new Rotation2d(Math.toRadians(0))),
+            new Pose2d(new Translation2d(3.98, 5.25), new Rotation2d(Math.toRadians(-60))),
+            new Pose2d(new Translation2d(5.3, 5.09), new Rotation2d(Math.toRadians(-120))),
+            new Pose2d(new Translation2d(5.8, 3.86), new Rotation2d(Math.toRadians(180))),
+            new Pose2d(new Translation2d(5, 2.8), new Rotation2d(Math.toRadians(120))),
+            new Pose2d(new Translation2d(3.69, 2.97), new Rotation2d(Math.toRadians(60))),
     };
 
     public static final Pose2d[] RIGHT_BLUE_SCORING_POSES = {
-        new Pose2d(new Translation2d(3.17,3.86), new Rotation2d(Math.toRadians(0))),
-        new Pose2d(new Translation2d(3.69,5.09), new Rotation2d(Math.toRadians(-60))),
-        new Pose2d(new Translation2d(5,5.25), new Rotation2d(Math.toRadians(-120))),
-        new Pose2d(new Translation2d(5.8,4.19), new Rotation2d(Math.toRadians(180))),
-        new Pose2d(new Translation2d(5.3,2.97), new Rotation2d(Math.toRadians(120))),
-        new Pose2d(new Translation2d(3.98,2.8), new Rotation2d(Math.toRadians(60))),
+            new Pose2d(new Translation2d(3.17, 3.86), new Rotation2d(Math.toRadians(0))),
+            new Pose2d(new Translation2d(3.69, 5.09), new Rotation2d(Math.toRadians(-60))),
+            new Pose2d(new Translation2d(5, 5.25), new Rotation2d(Math.toRadians(-120))),
+            new Pose2d(new Translation2d(5.8, 4.19), new Rotation2d(Math.toRadians(180))),
+            new Pose2d(new Translation2d(5.3, 2.97), new Rotation2d(Math.toRadians(120))),
+            new Pose2d(new Translation2d(3.98, 2.8), new Rotation2d(Math.toRadians(60))),
     };
 
-
-
-    //for go to pose command
+    // for go to pose command
     private boolean isAtPoseGoal;
     private ProfiledPIDController xController;
     private ProfiledPIDController yController;
     private ProfiledPIDController PoseThetaController;
+    private SwerveSetpointGenerator setpointGen;
+    private SwerveSetpoint prevSetpoint;
 
     private Pose2d targetPose;
 
     /* Acceleration limiters for our drivetrain */
-    private SlewRateLimiter forwardLimiter = new SlewRateLimiter(FORWARD_ACCEL); //TODO: actually set this
-    private SlewRateLimiter strafeLimiter = new SlewRateLimiter(SIDE_ACCEL); //TODO: actually set this
-    private SlewRateLimiter rotationLimiter = new SlewRateLimiter(ROT_ACCEL); //TODO: actually set this
-    
+    private SlewRateLimiter forwardLimiter = new SlewRateLimiter(FORWARD_ACCEL); // TODO: actually set this
+    private SlewRateLimiter strafeLimiter = new SlewRateLimiter(SIDE_ACCEL); // TODO: actually set this
+    private SlewRateLimiter rotationLimiter = new SlewRateLimiter(ROT_ACCEL); // TODO: actually set this
+
     /* Heading PID Controller for things like automatic alignment buttons */
-    public PIDController thetaController = new PIDController(6,0 ,.2 );
-    
-    /* variable to store our heading  */
+    public PIDController thetaController = new PIDController(6, 0, .2);
+
+    /* variable to store our heading */
     private Rotation2d odometryHeading;
 
-    // private Pigeon2 gyro = this.getPigeon2(); //they say not to use this like this, allegedly
-    //putting this here so we know how to get it
-    private boolean isRobotAtAngleSetPoint; //for angle turning
+    // private Pigeon2 gyro = this.getPigeon2(); //they say not to use this like
+    // this, allegedly
+    // putting this here so we know how to get it
+    private boolean isRobotAtAngleSetPoint; // for angle turning
     private boolean fieldRelative;
-
 
     /* Blue alliance sees forward as 0 degrees (toward red alliance wall) */
     private static final Rotation2d kBlueAlliancePerspectiveRotation = Rotation2d.kZero;
@@ -125,204 +131,269 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     /* Keep track if we've ever applied the operator perspective before or not */
     private boolean m_hasAppliedOperatorPerspective = false;
 
-
     /* Swerve requests to apply during SysId characterization */
     private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization = new SwerveRequest.SysIdSwerveTranslation();
     private final SwerveRequest.SysIdSwerveSteerGains m_steerCharacterization = new SwerveRequest.SysIdSwerveSteerGains();
     private final SwerveRequest.SysIdSwerveRotation m_rotationCharacterization = new SwerveRequest.SysIdSwerveRotation();
 
-    //TODO: Set these values
-    public static final PathConstraints DEFAULT_CONSTRAINTS = new PathConstraints(MAX_SPEED, FORWARD_ACCEL, MAX_ROT_SPEED, ROT_ACCEL);
+    // TODO: Set these values
+    public static final PathConstraints DEFAULT_CONSTRAINTS = new PathConstraints(MAX_SPEED, FORWARD_ACCEL,
+            MAX_ROT_SPEED, ROT_ACCEL);
 
     public Drivetrain() {
 
-   
-        
-
-        
-        super (
-            TunerConstants.DrivetrainConstants, 
-            TunerConstants.odometryUpdateFrequency, 
-            TunerConstants.odometryStandardDeviation, 
-            TunerConstants.visionStandardDeviation, 
-            MapleSimSwerveDrivetrain.regulateModuleConstantsForSimulation(
-                new SwerveModuleConstants<?, ?, ?>[]{ 
-                    TunerConstants.FrontLeft, 
-                    TunerConstants.FrontRight, 
-                    TunerConstants.BackLeft, 
-                    TunerConstants.BackRight 
-                }
-            )
-        );
+        super(
+                TunerConstants.DrivetrainConstants,
+                TunerConstants.odometryUpdateFrequency,
+                TunerConstants.odometryStandardDeviation,
+                TunerConstants.visionStandardDeviation,
+                MapleSimSwerveDrivetrain.regulateModuleConstantsForSimulation(
+                        new SwerveModuleConstants<?, ?, ?>[] {
+                                TunerConstants.FrontLeft,
+                                TunerConstants.FrontRight,
+                                TunerConstants.BackLeft,
+                                TunerConstants.BackRight
+                        }));
         if (Utils.isSimulation()) {
             startSimThread();
         }
 
-        thetaController.setTolerance(1 * Math.PI / 180); //degrees converted to radians
+        thetaController.setTolerance(1 * Math.PI / 180); // degrees converted to radians
         thetaController.enableContinuousInput(-Math.PI, Math.PI);
         configurePathPlanner();
 
         resetPose(new Pose2d(3, 3, Rotation2d.fromDegrees(0)));
-        
+
+        RobotConfig config = null;
+        try {
+            config = RobotConfig.fromGUISettings();
+        } catch (Exception e) {
+            // Handle exception as needed
+            e.printStackTrace();
+        }
+
+        setpointGen = new SwerveSetpointGenerator(
+                config, // The robot configuration. This is the same config used for generating
+                        // trajectories and running path following commands.
+                10.0 * 2 * Math.PI // The max rotation velocity of a swerve module in radians per second.
+                                               // This should probably be stored in your Constants file
+        );
+        prevSetpoint = new SwerveSetpoint(getCurrentSpeeds(), getState().ModuleStates, DriveFeedforwards.zeros(config.numModules));
     }
 
-  
-    /* RETURNS X VELOCITY FROM CONTROLLER 
+    /*
+     * RETURNS X VELOCITY FROM CONTROLLER
      * 
-    */
-    public double getVelocityXFromController(){
+     */
+    public double getVelocityXFromController() {
         double xInput = -MathUtil.applyDeadband(RobotContainer.driverController.getLeftX(), 0.07);
-        if(IS_LIMITING_ACCEL) return forwardLimiter.calculate(
-            Math.pow(xInput, 3) * MAX_SPEED
-            );
-        else return Math.pow(xInput, 3)* MAX_SPEED;
+        if (IS_LIMITING_ACCEL)
+            return forwardLimiter.calculate(
+                    Math.pow(xInput, 3) * MAX_SPEED);
+        else
+            return Math.pow(xInput, 3) * MAX_SPEED;
     }
 
-    /* RETURNS Y VELOCITY FROM CONTROLLER 
+    /*
+     * RETURNS Y VELOCITY FROM CONTROLLER
      * 
-    */
-    public double getVelocityYFromController(){
+     */
+    public double getVelocityYFromController() {
         double yInput = -MathUtil.applyDeadband(RobotContainer.driverController.getLeftY(), 0.07);
-        if(IS_LIMITING_ACCEL) return strafeLimiter.calculate(Math.pow(yInput, 3) * MAX_SPEED);
-       
-        else return Math.pow(yInput, 3)* MAX_SPEED;
+        if (IS_LIMITING_ACCEL)
+            return strafeLimiter.calculate(Math.pow(yInput, 3) * MAX_SPEED);
+
+        else
+            return Math.pow(yInput, 3) * MAX_SPEED;
 
     }
 
-    /* DEFAULT DRIVE METHOD
+    /*
+     * DEFAULT DRIVE METHOD
      * 
      * 
      */
     public void driveJoystick() {
         double rotInput = -MathUtil.applyDeadband(RobotContainer.driverController.getRightX(), 0.07);
         double rotVelocity = Math.pow(rotInput, 3) * MAX_ROT_SPEED;
-        if(IS_LIMITING_ACCEL) { 
+        if (IS_LIMITING_ACCEL) {
             rotVelocity = rotationLimiter.calculate(
-            Math.pow(rotInput,3) * MAX_ROT_SPEED
-            );
+                    Math.pow(rotInput, 3) * MAX_ROT_SPEED);
         }
-        drive(getVelocityYFromController(), getVelocityXFromController(), rotVelocity, fieldRelative, true); //drives using supposed velocities, rot velocity, and field relative boolean
+        drive(getVelocityYFromController(), getVelocityXFromController(), rotVelocity, fieldRelative, true); // drives
+                                                                                                             // using
+                                                                                                             // supposed
+                                                                                                             // velocities,
+                                                                                                             // rot
+                                                                                                             // velocity,
+                                                                                                             // and
+                                                                                                             // field
+                                                                                                             // relative
+                                                                                                             // boolean
         // drive(0, 1, 0, true);
     }
 
     public void drive(ChassisSpeeds speeds, boolean fieldRelative, boolean respectOperatorPerspective) {
-        drive(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond, fieldRelative, respectOperatorPerspective);
+        drive(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond, fieldRelative,
+                respectOperatorPerspective);
     }
 
-    /* DRIVES GIVEN ROBOT RELATIVE CHASSIS SPEEDS, FOR PATHPLANNER 
+    /*
+     * DRIVES GIVEN ROBOT RELATIVE CHASSIS SPEEDS, FOR PATHPLANNER
      * 
      * 
-    */
+     */
     // public void drive(ChassisSpeeds chassisSpeeds){
-    //     //robot relative chassis speeds
-    //     SwerveRequest.ApplyRobotSpeeds request = new SwerveRequest.ApplyRobotSpeeds()
-    //     .withDriveRequestType(DriveRequestType.Velocity)
-    //     .withSteerRequestType(SteerRequestType.Position)
-    //     .withSpeeds(chassisSpeeds);
+    // //robot relative chassis speeds
+    // SwerveRequest.ApplyRobotSpeeds request = new SwerveRequest.ApplyRobotSpeeds()
+    // .withDriveRequestType(DriveRequestType.Velocity)
+    // .withSteerRequestType(SteerRequestType.Position)
+    // .withSpeeds(chassisSpeeds);
 
-    //     this.setControl(request);
+    // this.setControl(request);
     // }
 
-    /* DRIVES USING CLOSED LOOP VELOCITY CONTROL 
+    /*
+     * DRIVES USING CLOSED LOOP VELOCITY CONTROL
      * 
      * 
      * 
-    */
-    public void drive(double velocityX, double velocityY, double rotationalVelocity, boolean fieldRelative, boolean respectOperatorPerspective){
-        if(fieldRelative){
+     */
+    public void drive(double velocityX, double velocityY, double rotationalVelocity, boolean fieldRelative,
+            boolean respectOperatorPerspective) {
+        if (fieldRelative) {
             SwerveRequest.FieldCentric driveRequest = new SwerveRequest.FieldCentric()
-                // .withDeadband(0.03) //TODO: set these
-                // .withRotationalDeadband(1) 
-                .withDriveRequestType(DriveRequestType.Velocity) //Velocity is closed-loop velocity control
-                .withSteerRequestType(SteerRequestType.Position);
+                    // .withDeadband(0.03) //TODO: set these
+                    // .withRotationalDeadband(1)
+                    .withDriveRequestType(DriveRequestType.Velocity) // Velocity is closed-loop velocity control
+                    .withSteerRequestType(SteerRequestType.Position)
+                    .withDesaturateWheelSpeeds(true); // TODO check
 
-                if (!respectOperatorPerspective) {
-                    driveRequest = driveRequest.withForwardPerspective(ForwardPerspectiveValue.BlueAlliance);
-                }
-        
+            if (!respectOperatorPerspective) {
+                driveRequest = driveRequest.withForwardPerspective(ForwardPerspectiveValue.BlueAlliance);
+            }
+
             this.setControl(
-                driveRequest
-                .withVelocityX(velocityX)
-                .withVelocityY(velocityY)
-                .withRotationalRate(rotationalVelocity)
-            );
+                    driveRequest
+                            .withVelocityX(velocityX)
+                            .withVelocityY(velocityY)
+                            .withRotationalRate(rotationalVelocity));
         } else {
-            //Creates robot relative swerve request
+            // Creates robot relative swerve request
             SwerveRequest.RobotCentric driveRequest = new SwerveRequest.RobotCentric()
-                //.withDeadband(2) //TODO: set these
-                //.withRotationalDeadband(3) 
-                .withDriveRequestType(DriveRequestType.Velocity) //Velocity is closed-loop velocity control
-                .withSteerRequestType(SteerRequestType.Position);            
+                    // .withDeadband(2) //TODO: set these
+                    // .withRotationalDeadband(3)
+                    .withDriveRequestType(DriveRequestType.Velocity) // Velocity is closed-loop velocity control
+                    .withSteerRequestType(SteerRequestType.Position)
+                    .withDesaturateWheelSpeeds(true); // TODO check
 
-            //sets the control for the drivetrain
+            // sets the control for the drivetrain
             this.setControl(
-                driveRequest
-                .withVelocityX(velocityX)
-                .withVelocityY(velocityY)
-                .withRotationalRate(rotationalVelocity)
-            );
+                    driveRequest
+                            .withVelocityX(velocityX)
+                            .withVelocityY(velocityY)
+                            .withRotationalRate(rotationalVelocity));
 
         }
     }
 
-    /* SysId routine for characterizing translation. This is used to find PID gains for the drive motors. */
-    private final SysIdRoutine m_sysIdRoutineTranslation = new SysIdRoutine(
-        new SysIdRoutine.Config(
-            null,        // Use default ramp rate (1 V/s)
-            Volts.of(2), // Reduce dynamic step voltage to 4 V to prevent brownout
-            null,        // Use default timeout (10 s)
-            // Log state with SignalLogger class
-            state -> SignalLogger.writeString("SysIdTranslation_State", state.toString())
-        ),
-        new SysIdRoutine.Mechanism(
-            output -> setControl(m_translationCharacterization.withVolts(output)),
-            null,
-            this
-        )
-    );
+    //TODO Check
+    public void driveWithSetpoint(double xSpeed, double ySpeed, double thetaSpeed, boolean fieldRelative,
+    boolean respectOperatorPerspective) {
 
-    /* SysId routine for characterizing steer. This is used to find PID gains for the steer motors. */
+        if (respectOperatorPerspective) {
+            if (DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get() == Alliance.Red && fieldRelative)  {
+     
+                xSpeed *= -1;
+                ySpeed *= -1;
+             }
+        }
+        ChassisSpeeds speeds = new ChassisSpeeds(xSpeed, ySpeed, thetaSpeed);
+
+        if (fieldRelative) {
+            speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds, getWrappedHeading());
+        }
+
+        prevSetpoint = setpointGen.generateSetpoint(
+            prevSetpoint, // The previous setpoint
+            speeds, // The desired target speeds
+            0.02 // The loop time of the robot code, in seconds
+        );
+
+
+
+
+        SwerveRequest req = new SwerveRequest.ApplyRobotSpeeds()
+                                    .withSpeeds(speeds)
+                                    .withWheelForceFeedforwardsX(prevSetpoint.feedforwards().robotRelativeForcesXNewtons())
+                                    .withWheelForceFeedforwardsY(prevSetpoint.feedforwards().robotRelativeForcesYNewtons());
+
+        setControl(req);
+    
+        
+    }
+
+    public void driveWithSetpoint(ChassisSpeeds speeds, boolean fieldRelative, boolean respectOperatorPerspective) {
+        driveWithSetpoint(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond, fieldRelative, respectOperatorPerspective);
+    }
+
+    /*
+     * SysId routine for characterizing translation. This is used to find PID gains
+     * for the drive motors.
+     */
+    private final SysIdRoutine m_sysIdRoutineTranslation = new SysIdRoutine(
+            new SysIdRoutine.Config(
+                    null, // Use default ramp rate (1 V/s)
+                    Volts.of(2), // Reduce dynamic step voltage to 4 V to prevent brownout
+                    null, // Use default timeout (10 s)
+                    // Log state with SignalLogger class
+                    state -> SignalLogger.writeString("SysIdTranslation_State", state.toString())),
+            new SysIdRoutine.Mechanism(
+                    output -> setControl(m_translationCharacterization.withVolts(output)),
+                    null,
+                    this));
+
+    /*
+     * SysId routine for characterizing steer. This is used to find PID gains for
+     * the steer motors.
+     */
     private final SysIdRoutine m_sysIdRoutineSteer = new SysIdRoutine(
-        new SysIdRoutine.Config(
-            null,        // Use default ramp rate (1 V/s)
-            Volts.of(7), // Use dynamic voltage of 7 V
-            null,        // Use default timeout (10 s)
-            // Log state with SignalLogger class
-            state -> SignalLogger.writeString("SysIdSteer_State", state.toString())
-        ),
-        new SysIdRoutine.Mechanism(
-            volts -> setControl(m_steerCharacterization.withVolts(volts)),
-            null,
-            this
-        )
-    );
+            new SysIdRoutine.Config(
+                    null, // Use default ramp rate (1 V/s)
+                    Volts.of(7), // Use dynamic voltage of 7 V
+                    null, // Use default timeout (10 s)
+                    // Log state with SignalLogger class
+                    state -> SignalLogger.writeString("SysIdSteer_State", state.toString())),
+            new SysIdRoutine.Mechanism(
+                    volts -> setControl(m_steerCharacterization.withVolts(volts)),
+                    null,
+                    this));
 
     /*
      * SysId routine for characterizing rotation.
-     * This is used to find PID gains for the FieldCentricFacingAngle HeadingController.
-     * See the documentation of SwerveRequest.SysIdSwerveRotation for info on importing the log to SysId.
+     * This is used to find PID gains for the FieldCentricFacingAngle
+     * HeadingController.
+     * See the documentation of SwerveRequest.SysIdSwerveRotation for info on
+     * importing the log to SysId.
      */
     private final SysIdRoutine m_sysIdRoutineRotation = new SysIdRoutine(
-        new SysIdRoutine.Config(
-            /* This is in radians per second², but SysId only supports "volts per second" */
-            Volts.of(Math.PI / 6).per(Second),
-            /* This is in radians per second, but SysId only supports "volts" */
-            Volts.of(Math.PI),
-            null, // Use default timeout (10 s)
-            // Log state with SignalLogger class
-            state -> SignalLogger.writeString("SysIdRotation_State", state.toString())
-        ),
-        new SysIdRoutine.Mechanism(
-            output -> {
-                /* output is actually radians per second, but SysId only supports "volts" */
-                setControl(m_rotationCharacterization.withRotationalRate(output.in(Volts)));
-                /* also log the requested output for SysId */
-                SignalLogger.writeDouble("Rotational_Rate", output.in(Volts));
-            },
-            null,
-            this
-        )
-    );
+            new SysIdRoutine.Config(
+                    /* This is in radians per second², but SysId only supports "volts per second" */
+                    Volts.of(Math.PI / 6).per(Second),
+                    /* This is in radians per second, but SysId only supports "volts" */
+                    Volts.of(Math.PI),
+                    null, // Use default timeout (10 s)
+                    // Log state with SignalLogger class
+                    state -> SignalLogger.writeString("SysIdRotation_State", state.toString())),
+            new SysIdRoutine.Mechanism(
+                    output -> {
+                        /* output is actually radians per second, but SysId only supports "volts" */
+                        setControl(m_rotationCharacterization.withRotationalRate(output.in(Volts)));
+                        /* also log the requested output for SysId */
+                        SignalLogger.writeDouble("Rotational_Rate", output.in(Volts));
+                    },
+                    null,
+                    this));
 
     /* The SysId routine to test */
     private SysIdRoutine m_sysIdRoutineToApply = m_sysIdRoutineTranslation;
@@ -349,9 +420,9 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         return m_sysIdRoutineToApply.dynamic(direction);
     }
 
-    /** 
-     * WRAPS THE ANGLE FROM -180 TO 180 DEGREES 
-    */
+    /**
+     * WRAPS THE ANGLE FROM -180 TO 180 DEGREES
+     */
     public static Rotation2d wrapAngle(Rotation2d ang) {
         double angle = ang.getDegrees();
         angle = (angle + 180) % 360; // Step 1 and 2
@@ -359,37 +430,35 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
             angle += 360; // Make sure it's positive
         }
         return Rotation2d.fromDegrees(angle - 180); // Step 3
-      }
+    }
 
     public double getDistanceBetweenPoses(Pose2d pos1, Pose2d pos2) {
         return Math.sqrt(
-            Math.pow(
-                (pos1.getX()-pos2.getX())
-                ,2
-            ) + 
-            Math.pow(
-                (pos1.getY()-pos2.getY())
-                , 2
-            )
-        );
+                Math.pow(
+                        (pos1.getX() - pos2.getX()), 2) +
+                        Math.pow(
+                                (pos1.getY() - pos2.getY()), 2));
     }
 
     public Pose2d getClosestScoringPose(Pose2d[] posArr) {
         Pose2d closestPose;
         Pose2d currentPose;
-        //if(!Robot.isReal()) 
+        // if(!Robot.isReal())
         // currentPose = this.mapleSimSwerveDrivetrain.getSimulatedPose();
-         currentPose = this.getRobotPose();
+        currentPose = this.getRobotPose();
         System.out.println(currentPose);
         closestPose = PoseUtils.flipPoseAlliance(posArr[0]);
-        for(Pose2d pos: posArr) {
+        for (Pose2d pos : posArr) {
             pos = PoseUtils.flipPoseAlliance(pos);
             // System.out.println("Current pose: " + currentPose);
-            // System.out.println("Distance between current and pos: "  + getDistanceBetweenPoses(currentPose, pos));
-            // System.out.println("Distance between closest and current: " + getDistanceBetweenPoses(closestPose, currentPose));
+            // System.out.println("Distance between current and pos: " +
+            // getDistanceBetweenPoses(currentPose, pos));
+            // System.out.println("Distance between closest and current: " +
+            // getDistanceBetweenPoses(closestPose, currentPose));
             double distanceFromCurrentToPose = currentPose.getTranslation().getDistance(pos.getTranslation());
-            double distanceFromCurrentToClosest = currentPose.getTranslation().getDistance(closestPose.getTranslation());
-            if(distanceFromCurrentToPose < distanceFromCurrentToClosest) {
+            double distanceFromCurrentToClosest = currentPose.getTranslation()
+                    .getDistance(closestPose.getTranslation());
+            if (distanceFromCurrentToPose < distanceFromCurrentToClosest) {
                 closestPose = pos;
                 System.out.println("YAYA YAYAY AYAYAYClosest pose: " + closestPose);
             }
@@ -398,41 +467,41 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         return closestPose;
     }
 
-    //TODO: input correct poses
-    public Pose2d getPoseToPathFindTo(Limelight camera){
-            switch(camera.getTagID()){
-                case 12:
-                    return new Pose2d(new Translation2d(1.091, 1.060), new Rotation2d(Math.toRadians(-127.000)));
-                case 13:
-                    return new Pose2d(new Translation2d(1.091, 7.000), new Rotation2d(Math.toRadians(127.000)));
-                case 17:
-                    return new Pose2d(new Translation2d(3.680, 2.600), new Rotation2d(Math.toRadians(60.000)));
-                case 18: 
-                    return new Pose2d(new Translation2d(2.870, 4.030), new Rotation2d(Math.toRadians(0.000)));
-                case 19:
-                    return new Pose2d(new Translation2d(3.670, 5.450), new Rotation2d(Math.toRadians(-60.000)));
-                case 20:
-                    return new Pose2d(new Translation2d(5.320, 5.450), new Rotation2d(Math.toRadians(-120.000)));
-                case 21: 
-                    return new Pose2d(new Translation2d(6.130, 4.030), new Rotation2d(Math.toRadians(180.000)));
-                case 22: 
-                    return new Pose2d(new Translation2d(5.320, 2.600), new Rotation2d(Math.toRadians(120.000)));
-                case 1:
-                    return new Pose2d(new Translation2d(), new Rotation2d());
-                case 2:
-                    return new Pose2d(new Translation2d(), new Rotation2d());
-                case 6:
-                    return new Pose2d(new Translation2d(), new Rotation2d());
-                case 7: 
-                    return new Pose2d(new Translation2d(), new Rotation2d());
-                case 8:
-                    return new Pose2d(new Translation2d(), new Rotation2d());
-                case 9:
-                    return new Pose2d(new Translation2d(), new Rotation2d());
-                case 10: 
-                    return new Pose2d(new Translation2d(), new Rotation2d());
-                case 11: 
-                    return new Pose2d(new Translation2d(), new Rotation2d());
+    // TODO: input correct poses
+    public Pose2d getPoseToPathFindTo(Limelight camera) {
+        switch (camera.getTagID()) {
+            case 12:
+                return new Pose2d(new Translation2d(1.091, 1.060), new Rotation2d(Math.toRadians(-127.000)));
+            case 13:
+                return new Pose2d(new Translation2d(1.091, 7.000), new Rotation2d(Math.toRadians(127.000)));
+            case 17:
+                return new Pose2d(new Translation2d(3.680, 2.600), new Rotation2d(Math.toRadians(60.000)));
+            case 18:
+                return new Pose2d(new Translation2d(2.870, 4.030), new Rotation2d(Math.toRadians(0.000)));
+            case 19:
+                return new Pose2d(new Translation2d(3.670, 5.450), new Rotation2d(Math.toRadians(-60.000)));
+            case 20:
+                return new Pose2d(new Translation2d(5.320, 5.450), new Rotation2d(Math.toRadians(-120.000)));
+            case 21:
+                return new Pose2d(new Translation2d(6.130, 4.030), new Rotation2d(Math.toRadians(180.000)));
+            case 22:
+                return new Pose2d(new Translation2d(5.320, 2.600), new Rotation2d(Math.toRadians(120.000)));
+            case 1:
+                return new Pose2d(new Translation2d(), new Rotation2d());
+            case 2:
+                return new Pose2d(new Translation2d(), new Rotation2d());
+            case 6:
+                return new Pose2d(new Translation2d(), new Rotation2d());
+            case 7:
+                return new Pose2d(new Translation2d(), new Rotation2d());
+            case 8:
+                return new Pose2d(new Translation2d(), new Rotation2d());
+            case 9:
+                return new Pose2d(new Translation2d(), new Rotation2d());
+            case 10:
+                return new Pose2d(new Translation2d(), new Rotation2d());
+            case 11:
+                return new Pose2d(new Translation2d(), new Rotation2d());
         }
         return null;
     }
@@ -441,167 +510,179 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         try {
             var config = RobotConfig.fromGUISettings();
             AutoBuilder.configure(
-                () -> this.getState().Pose,   // Supplier of current robot pose
-                this::resetPose,         // Consumer for seeding pose against auto
-                () -> this.getState().Speeds, // Supplier of current robot speeds
-                // Consumer of ChassisSpeeds and feedforwards to drive the robot
-                (speeds, feedforwards) -> this.setControl(
-                    new SwerveRequest.ApplyRobotSpeeds().withSpeeds(speeds)
-                        .withWheelForceFeedforwardsX(feedforwards.robotRelativeForcesXNewtons())
-                        .withWheelForceFeedforwardsY(feedforwards.robotRelativeForcesYNewtons())
-                ),
-                new PPHolonomicDriveController(
-                    // PID constants for translation
-                    new PIDConstants(10, 0, 0),
-                    // PID constants for rotation
-                    new PIDConstants(7, 0, 0)
-                ),
-                config,
-                // Assume the path needs to be flipped for Red vs Blue, this is normally the case
-                () -> DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red,
-                this // Subsystem for requirements
+                    () -> this.getState().Pose, // Supplier of current robot pose
+                    this::resetPose, // Consumer for seeding pose against auto
+                    () -> this.getState().Speeds, // Supplier of current robot speeds
+                    // Consumer of ChassisSpeeds and feedforwards to drive the robot
+                    (speeds, feedforwards) -> this.setControl(
+                            new SwerveRequest.ApplyRobotSpeeds().withSpeeds(speeds)
+                                    .withWheelForceFeedforwardsX(feedforwards.robotRelativeForcesXNewtons())
+                                    .withWheelForceFeedforwardsY(feedforwards.robotRelativeForcesYNewtons())),
+                    new PPHolonomicDriveController(
+                            // PID constants for translation
+                            new PIDConstants(10, 0, 0),
+                            // PID constants for rotation
+                            new PIDConstants(7, 0, 0)),
+                    config,
+                    // Assume the path needs to be flipped for Red vs Blue, this is normally the
+                    // case
+                    () -> DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red,
+                    this // Subsystem for requirements
             );
         } catch (Exception ex) {
-            DriverStation.reportError("Failed to load PathPlanner config and configure AutoBuilder", ex.getStackTrace());
+            DriverStation.reportError("Failed to load PathPlanner config and configure AutoBuilder",
+                    ex.getStackTrace());
         }
     }
 
     // public PathPlannerPath generatePathToAprilTagLocation(){
-    //     Pose2d finalPose = getPoseToPathFindTo();
-    //     if(finalPose != null) {
-    //         Pose2d currentPose = RobotContainer.limelight.getCurrentOdometryPose2d();
-    //         List<PathPoint> pathList = Arrays.asList(
-    //             new PathPoint(
-    //                 currentPose.getTranslation(), 
-    //                 new RotationTarget(
-    //                     odometryHeading, 
-    //                     new Rotation2d(Math.toRadians(odometryHeading))
-    //                 )
-    //             ), 
-    //             new PathPoint(
-    //                 finalPose.getTranslation(), 
-    //                 new RotationTarget(
-    //                     odometryHeading, 
-    //                     finalPose.getRotation()
-    //                 )
-    //             )
-    //         );
-    //         GoalEndState goalEndState = new GoalEndState(0, finalPose.getRotation());
-    //         //TODO: set these path constraints
-    //         PathConstraints pathConstraints = new PathConstraints(null, null, null, null);
-    //         return PathPlannerPath.fromPathPoints(pathList, pathConstraints, goalEndState);
-    //     }    
-    //     else return new PathPlannerPath(null, null, null, null);
+    // Pose2d finalPose = getPoseToPathFindTo();
+    // if(finalPose != null) {
+    // Pose2d currentPose = RobotContainer.limelight.getCurrentOdometryPose2d();
+    // List<PathPoint> pathList = Arrays.asList(
+    // new PathPoint(
+    // currentPose.getTranslation(),
+    // new RotationTarget(
+    // odometryHeading,
+    // new Rotation2d(Math.toRadians(odometryHeading))
+    // )
+    // ),
+    // new PathPoint(
+    // finalPose.getTranslation(),
+    // new RotationTarget(
+    // odometryHeading,
+    // finalPose.getRotation()
+    // )
+    // )
+    // );
+    // GoalEndState goalEndState = new GoalEndState(0, finalPose.getRotation());
+    // //TODO: set these path constraints
+    // PathConstraints pathConstraints = new PathConstraints(null, null, null,
+    // null);
+    // return PathPlannerPath.fromPathPoints(pathList, pathConstraints,
+    // goalEndState);
+    // }
+    // else return new PathPlannerPath(null, null, null, null);
     // }
 
-    public Command followPathToAprilTagLocation(){
+    public Command followPathToAprilTagLocation() {
         return AutoBuilder.pathfindToPose(getPoseToPathFindTo(RobotContainer.bottomLimelight), DEFAULT_CONSTRAINTS);
     }
 
-    /* ROBOT RELATIVE SETPOINT METHOD 
-     * 
-    */
-  public void setRobotRelativeAngle(Rotation2d angDeg){
-    double wrappedSetPoint = wrapAngle(odometryHeading.plus(angDeg)).getRadians();
-    thetaController.setSetpoint(wrappedSetPoint);
-  }
-
-   /* ALIGN TO ANGLE ROBOT RELATIVE 
-    * 
-   */
-  public void alignToAngleRobotRelative(boolean lockDrive) {
-        //calculates the input for the drive function (NO IDEA IF I SHOULD MULTIPLY THIS BY SOMETHING)
-        //inputs field relative angle (set point is also converted to field relative)
-        double response = thetaController.calculate(odometryHeading.getRadians());
-
-        if(lockDrive) drive(0,0,response, false, true); //perspective doesn't matter in robot relative
-        else drive(getVelocityYFromController(), getVelocityXFromController(), response, false, true);
-    }
-
-
-    /* SETS ANGLE SETPOINT FOR FIELD RELATIVE TURNING
+    /*
+     * ROBOT RELATIVE SETPOINT METHOD
      * 
      */
-    public void setFieldRelativeAngle(Rotation2d angle){
+    public void setRobotRelativeAngle(Rotation2d angDeg) {
+        double wrappedSetPoint = wrapAngle(odometryHeading.plus(angDeg)).getRadians();
+        thetaController.setSetpoint(wrappedSetPoint);
+    }
+
+    /*
+     * ALIGN TO ANGLE ROBOT RELATIVE
+     * 
+     */
+    public void alignToAngleRobotRelative(boolean lockDrive) {
+        // calculates the input for the drive function (NO IDEA IF I SHOULD MULTIPLY
+        // THIS BY SOMETHING)
+        // inputs field relative angle (set point is also converted to field relative)
+        double response = thetaController.calculate(odometryHeading.getRadians());
+
+        if (lockDrive)
+            drive(0, 0, response, false, true); // perspective doesn't matter in robot relative
+        else
+            drive(getVelocityYFromController(), getVelocityXFromController(), response, false, true);
+    }
+
+    /*
+     * SETS ANGLE SETPOINT FOR FIELD RELATIVE TURNING
+     * 
+     */
+    public void setFieldRelativeAngle(Rotation2d angle) {
         double wrappedAngle = wrapAngle(angle).getRadians();
         thetaController.setSetpoint(wrappedAngle);
     }
 
-    /* ALIGNS TO ANGLE FIELD RELATIVE 
+    /*
+     * ALIGNS TO ANGLE FIELD RELATIVE
      * 
      */
-    public void alignToAngleFieldRelative(boolean lockDrive){
-        //Response must be in Radians per second for the .drive method.
+    public void alignToAngleFieldRelative(boolean lockDrive) {
+        // Response must be in Radians per second for the .drive method.
         double response = thetaController.calculate(odometryHeading.getRadians());
-        if(lockDrive) drive(0,0, response, true, true);
-        //swapped because pos X means forward
-        else drive(getVelocityYFromController(), getVelocityXFromController(), response, true, true);
+        if (lockDrive)
+            drive(0, 0, response, true, true);
+        // swapped because pos X means forward
+        else
+            drive(getVelocityYFromController(), getVelocityXFromController(), response, true, true);
     }
 
-    /* ALIGNS TO ANGLE ROBOT RELATIVE WITH CHANGING SETPOINT
+    /*
+     * ALIGNS TO ANGLE ROBOT RELATIVE WITH CHANGING SETPOINT
      * 
      */
-    public void alignToAngleRobotRelativeContinuous(Supplier<Rotation2d> angleSup, boolean lockDrive){
+    public void alignToAngleRobotRelativeContinuous(Supplier<Rotation2d> angleSup, boolean lockDrive) {
         setRobotRelativeAngle(angleSup.get());
         alignToAngleRobotRelative(lockDrive);
     }
 
-    public void toRobotRelative(){
+    public void toRobotRelative() {
         fieldRelative = false;
     }
-    public void toFieldRelative(){
+
+    public void toFieldRelative() {
         fieldRelative = true;
     }
-    public void zeroGyro(){
+
+    public void zeroGyro() {
         this.getPigeon2().setYaw(0);
     }
 
     /*
      * default drive command
      */
-    public Command driveJoystickInputCommand(){
+    public Command driveJoystickInputCommand() {
         return Commands.run(() -> driveJoystick(), this);
     }
 
-     /* zeros the gyro */
-     public Command zeroGyroCommand() {
+    /* zeros the gyro */
+    public Command zeroGyroCommand() {
         return Commands.runOnce(() -> zeroGyro(), RobotContainer.drivetrain);
-    } 
-    
+    }
+
     /* turns boolean to robot relative */
     public Command toRobotRelativeCommand() {
         return Commands.runOnce(() -> toRobotRelative(), RobotContainer.drivetrain);
-      }
+    }
 
     /* turns boolean to field relative */
-    public Command toFieldRelativeCommand (){
+    public Command toFieldRelativeCommand() {
         return Commands.runOnce(() -> toFieldRelative(), RobotContainer.drivetrain);
     }
 
     /* aligns to angle robot relative */
     public Command alignToAngleRobotRelativeCommand(Rotation2d angle, boolean lockDrive) {
         return Commands.sequence(
-            Commands.runOnce(() -> setRobotRelativeAngle(angle), RobotContainer.drivetrain),
-            Commands.run(() -> alignToAngleRobotRelative(lockDrive), RobotContainer.drivetrain)
-                .until(() -> isRobotAtAngleSetPoint)
-        );
+                Commands.runOnce(() -> setRobotRelativeAngle(angle), RobotContainer.drivetrain),
+                Commands.run(() -> alignToAngleRobotRelative(lockDrive), RobotContainer.drivetrain)
+                        .until(() -> isRobotAtAngleSetPoint));
     }
 
-    /* aligns to angle robot relative but angle can change
+    /*
+     * aligns to angle robot relative but angle can change
      * 
      */
-    public Command alignToAngleRobotRelativeContinuousCommand(Supplier<Rotation2d> angle, boolean lockDrive){
+    public Command alignToAngleRobotRelativeContinuousCommand(Supplier<Rotation2d> angle, boolean lockDrive) {
         return Commands.run(() -> alignToAngleRobotRelativeContinuous(angle, lockDrive), this)
-            .until(() -> isRobotAtAngleSetPoint);
+                .until(() -> isRobotAtAngleSetPoint);
     }
-    
+
     /* aligns to angle field relative! */
-    public Command alignToAngleFieldRelativeCommand(Rotation2d angle, boolean lockDrive){
+    public Command alignToAngleFieldRelativeCommand(Rotation2d angle, boolean lockDrive) {
         return Commands.sequence(
-            Commands.runOnce(() -> setFieldRelativeAngle(angle), RobotContainer.drivetrain),
-            Commands.run(() -> alignToAngleFieldRelative(lockDrive), this)
-                .until(() -> isRobotAtAngleSetPoint)
-        );
+                Commands.runOnce(() -> setFieldRelativeAngle(angle), RobotContainer.drivetrain),
+                Commands.run(() -> alignToAngleFieldRelative(lockDrive), this)
+                        .until(() -> isRobotAtAngleSetPoint));
     }
 
     public Rotation2d getWrappedHeading() {
@@ -617,27 +698,29 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     }
 
     @Override
-    public void periodic(){
-        //Not sure if this is correct at all
+    public void periodic() {
+        // Not sure if this is correct at all
         odometryHeading = this.getState().Pose.getRotation();
         isRobotAtAngleSetPoint = thetaController.atSetpoint();
         fieldRelative = !RobotContainer.driverController.L2().getAsBoolean();
 
-
         /*
          * Periodically try to apply the operator perspective.
-         * If we haven't applied the operator perspective before, then we should apply it regardless of DS state.
-         * This allows us to correct the perspective in case the robot code restarts mid-match.
-         * Otherwise, only check and apply the operator perspective if the DS is disabled.
-         * This ensures driving behavior doesn't change until an explicit disable event occurs during testing.
+         * If we haven't applied the operator perspective before, then we should apply
+         * it regardless of DS state.
+         * This allows us to correct the perspective in case the robot code restarts
+         * mid-match.
+         * Otherwise, only check and apply the operator perspective if the DS is
+         * disabled.
+         * This ensures driving behavior doesn't change until an explicit disable event
+         * occurs during testing.
          */
         if (!m_hasAppliedOperatorPerspective || DriverStation.isDisabled()) {
             DriverStation.getAlliance().ifPresent(allianceColor -> {
                 setOperatorPerspectiveForward(
-                    allianceColor == Alliance.Red
-                        ? kRedAlliancePerspectiveRotation
-                        : kBlueAlliancePerspectiveRotation
-                );
+                        allianceColor == Alliance.Red
+                                ? kRedAlliancePerspectiveRotation
+                                : kBlueAlliancePerspectiveRotation);
                 m_hasAppliedOperatorPerspective = true;
             });
         }
@@ -645,6 +728,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
     private Notifier m_simNotifier = null;
     private MapleSimSwerveDrivetrain mapleSimSwerveDrivetrain = null;
+
     @SuppressWarnings("unchecked")
     private void startSimThread() {
         mapleSimSwerveDrivetrain = new MapleSimSwerveDrivetrain(
@@ -666,5 +750,5 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         /* Run simulation at a faster rate so PID gains behave more reasonably */
         m_simNotifier = new Notifier(mapleSimSwerveDrivetrain::update);
         m_simNotifier.startPeriodic(0.002);
-     }
+    }
 }

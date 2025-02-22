@@ -99,7 +99,7 @@ public class RobotContainer {
     //   }
     // , arm));
     elevator.setDefaultCommand(elevator.joystickControlCommand());
-    arm.setDefaultCommand(arm.joystickControlCommand());
+    // arm.setDefaultCommand(arm.joystickControlCommand());
    // elevator.setDefaultCommand(elevator.joystickControlCommand());
    //leds.setDefaultCommand(leds.playPatternCommand(LEDs.breathingPattern()));
     // operatorController.square().whileTrue(arm.goToAngleCommand(Rotation2d.fromDegrees(30)));

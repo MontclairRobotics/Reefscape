@@ -155,12 +155,12 @@ public class Arm extends SubsystemBase {
 
         armMotorSim = new SparkMaxSim(armMotor, DCMotor.getNEO(1));
         armSim = new DoubleJointedArmModel(2, 0.25, 1.5, 0.5, DCMotor.getNEO(1),
-                6, 0.25, 0.5, DCMotor.getNEO(1), 0.009); // TODO how to handle 2nd,
+                6, 0.25, 0.5, DCMotor.getNEO(1), 0.001); // TODO how to handle 2nd,
                                                                                            // motor?
 
         if (Robot.isSimulation()) {
             elbowEncoderSim = new DutyCycleEncoderSim(elbowEncoder);
-            //wristEncoderSim = new DutyCycleEncoderSim(wristEncoder);
+            wristEncoderSim = new DutyCycleEncoderSim(wristEncoder);
             elbowEncoderSim.set(0);
             // wristEncoderSim.set(WRIST_ANGLE_WHEN_ELBOW_IS_HORIZONTAL.getRotations());
             // wristEncoderSim.set(0);
@@ -211,7 +211,7 @@ public class Arm extends SubsystemBase {
      * Returns the angle of the elbow to the horizontal
      */
     public Rotation2d getElbowAngle() {
-        return (RobotContainer.drivetrain.wrapAngle(Rotation2d.fromRotations(elbowEncoder.get())));
+        return Drivetrain.wrapAngle(Rotation2d.fromRotations(elbowEncoder.get()));
     }
 
     /**
@@ -219,7 +219,10 @@ public class Arm extends SubsystemBase {
      */
     public Rotation2d getWristAngle() {
         // return Rotation2d.fromRotations(wristEncoder.get());
+        if (Robot.isReal()) {
          return Rotation2d.fromRotations((getElbowAngle().getRotations() * (-ELBOW_ANGLE_TO_WRIST)) + WRIST_ANGLE_WHEN_ELBOW_IS_HORIZONTAL.getRotations());
+        }
+        return Rotation2d.fromRotations(wristEncoder.get());
     }
 
     /*
@@ -351,17 +354,19 @@ public class Arm extends SubsystemBase {
     public void simulationPeriodic() {
         // double dt = 0.02; //Timer.getFPGATimestamp() - prevLoopTime;
         // Matrix<N2, N2> stateMatrix = new Matrix<N2, N2>(N2.instance, N2.instance);
-        // stateMatrix.set(0, 0, getElbowAngle().getRadians());
+        // stateMatrix.set(0, 0, -getElbowAngle().getRadians());
         // stateMatrix.set(1, 0, getWristAngle().getRadians());
-        // double voltage = appliedVoltage;
-        // double voltage2 = MathUtil.clamp(0, -12, 12);
-        // System.out.println(voltage);
+        // // double voltage = appliedVoltage;
+        // double voltage = Math.pow(-MathUtil.applyDeadband(RobotContainer.operatorController.getRightY(), 0.04), 3) * 12;
+        // // double voltage2 = MathUtil.clamp((voltage * -30.0 / 14.0), -12, 12);
+        // double voltage2 = 0;
+        // // System.out.println(voltage);
 
         // stateMatrix.set(0, 1, j1Velocity);
         // stateMatrix.set(1, 1, j2Velocity);
         // // double voltage = armMotorSim.getAppliedOutput() * RobotController.getBatteryVoltage();
         // // System.out.println(voltage);
-        // if (true) {
+        // // if (true) {
         // // System.out.println(voltage);
         // Matrix<N2, N2> nextStates = armSim.simulate(stateMatrix,
         // VecBuilder.fill(voltage, voltage2), dt);
@@ -370,17 +375,19 @@ public class Arm extends SubsystemBase {
         // SmartDashboard.putNumber("Modified J2 Velocity", j2Velocity * (14.0 /30.0));
 
 
-        // armMotorSim.iterate(Units.radiansPerSecondToRotationsPerMinute(nextStates.get(0,1) / ENCODER_TO_ELBOW), RobotController.getBatteryVoltage(), dt);
+        // // armMotorSim.iterate(Units.radiansPerSecondToRotationsPerMinute(nextStates.get(0,1) / ENCODER_TO_ELBOW), RobotController.getBatteryVoltage(), dt);
         // j1Velocity = nextStates.get(0, 1);
-        // j2Velocity = nextStates.get(1, 1);
-        // j2Velocity = 0;
+        // // j2Velocity = nextStates.get(1, 1);
+        // j2Velocity = nextStates.get(1, 1);//j1Velocity * (-30.0 / 14.0);
+        // System.out.println(j1Velocity * (180.0 / Math.PI));
 
         // // System.out.println(nextStates.get(0,0));
-        // System.out.println(nextStates.get(0,1));
+        // // System.out.println(nextStates.get(0,1));
         
         // elbowEncoderSim.set(Units.radiansToRotations(nextStates.get(0, 0)) % 1);
-        // wristEncoderSim.set(Units.radiansToRotations(nextStates.get(0, 1)) % 1);
-        // }
+        // wristEncoderSim.set((getElbowAngle().getRotations() * (-ELBOW_ANGLE_TO_WRIST)) + WRIST_ANGLE_WHEN_ELBOW_IS_HORIZONTAL.getRotations());
+        // // wristEncoderSim.set(Units.radiansToRotations(nextStates.get(1, 0)) % 1);
+        // // }
 
         // Increment the simulation of the motor
         armMotorSim.iterate(armMotorSim.getAppliedOutput() * MAX_VELOCITY, RobotController.getBatteryVoltage(), 0.02);
@@ -397,10 +404,10 @@ public class Arm extends SubsystemBase {
         // that the encoders always read between 0 and 1 rotation (0 and 360 degrees)
 
         elbowEncoderSim.set(
-                ((getElbowAngle().getRotations() + (armMotorSim.getAppliedOutput() * MAX_VELOCITY) * 0.02)) % 1);
-        // wristEncoderSim.set(
-        //         ((getWristAngle().getRotations()
-        //                 - (armMotorSim.getAppliedOutput() * MAX_VELOCITY * ELBOW_ANGLE_TO_WRIST) * 0.02)) % 1);
+                ((getElbowAngle().getRotations() + (armMotor.getAppliedOutput() * MAX_VELOCITY) * 0.02)) % 1);
+        wristEncoderSim.set(
+                ((getWristAngle().getRotations()
+                        - (armMotor.getAppliedOutput() * MAX_VELOCITY * ELBOW_ANGLE_TO_WRIST) * 0.02)) % 1);
 
         // Publish sim encoder positions to the network
 
