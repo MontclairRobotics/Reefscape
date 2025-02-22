@@ -22,7 +22,7 @@ public class Rollers extends SubsystemBase {
     public final double CORAL_INTAKE_SPEED = 0.5;
     public final double CORAL_OUTTAKE_SPEED = -1;
     public final double ALGAE_INTAKE_SPEED = 0.2;
-    public final double ALGAE_OUTTAKE_SPEED = -0.5;
+    public final double ALGAE_OUTTAKE_SPEED = -1;
     public final double ROLLER_STALL_CURRENT = 43; // TODO check/tune
     public final double CORAL_HOLDING_SPEED = 0.1;
     public final double ALGAE_HOLDING_SPEED = 0.5;
@@ -67,8 +67,9 @@ public class Rollers extends SubsystemBase {
 
     // TODO need to be debounced? probably not?
     public boolean isStalled() {
-        return rightMotor.getOutputCurrent() > ROLLER_STALL_CURRENT
-                || leftMotor.getOutputCurrent() > ROLLER_STALL_CURRENT;
+        // return rightMotor.getOutputCurrent() > ROLLER_STALL_CURRENT
+        //         || leftMotor.getOutputCurrent() > ROLLER_STALL_CURRENT;
+        return false;
     }
 
     public void setSpeed(double speed) {
@@ -86,7 +87,7 @@ public class Rollers extends SubsystemBase {
     }
 
     public Command stopCommand() {
-        return Commands.runOnce(() -> stopMotors());
+        return Commands.runOnce(() -> stopMotors(), this);
     }
 
     public Command intakeAlgaeCommand() {
@@ -130,12 +131,17 @@ public class Rollers extends SubsystemBase {
         boolean isHeld = (heldPiece != GamePiece.None)&&!(DriverStation.isAutonomousEnabled());
         entry.setBoolean(isHeld);
 
-        if(hasCoral()) {
-            this.setSpeed(CORAL_HOLDING_SPEED);
-        }
+    }
 
-        if(hasAlgae()) {
-            this.setSpeed(ALGAE_HOLDING_SPEED);
-        }
+    public Command getDefaultCommand() {
+        return Commands.run(() -> {
+            if(hasCoral()) {
+                this.setSpeed(CORAL_HOLDING_SPEED);
+            }
+    
+            if(hasAlgae()) {
+                this.setSpeed(ALGAE_HOLDING_SPEED);
+            }
+        }, this);
     }
 }

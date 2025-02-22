@@ -220,7 +220,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
             rotVelocity = rotationLimiter.calculate(
                     Math.pow(rotInput, 3) * MAX_ROT_SPEED);
         }
-        drive(getVelocityYFromController(), getVelocityXFromController(), rotVelocity, fieldRelative, true); // drives
+        driveWithSetpoint(getVelocityYFromController(), getVelocityXFromController(), rotVelocity, fieldRelative, true); // drives
                                                                                                              // using
                                                                                                              // supposed
                                                                                                              // velocities,
@@ -635,7 +635,8 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     }
 
     public void zeroGyro() {
-        this.getPigeon2().setYaw(0);
+        // this.getPigeon2().setYaw(0);
+        resetRotation(Rotation2d.fromDegrees(0));
     }
 
     /*

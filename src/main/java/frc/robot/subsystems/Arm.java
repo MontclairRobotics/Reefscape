@@ -264,7 +264,7 @@ public class Arm extends SubsystemBase {
         wristVoltage += -armFeedforward.calculate(getElbowAngle().getRadians(), 0);
         else wristVoltage += armFeedforward.calculate(getElbowAngle().getRadians(), 0);
     
-        wristVoltage = MathUtil.clamp(wristVoltage, -12, 12);
+        wristVoltage = MathUtil.clamp(wristVoltage, -3, 3);
         System.out.println(-wristVoltage);
         // TODO do we need feedforward? If so we have to figure out the equation
         // negative voltage brings it up, positive brings it down AFAIK
@@ -281,7 +281,7 @@ public class Arm extends SubsystemBase {
 
         //percentRot is based on endpoint rotation, which moves in the opposite direction as the motor
         if (voltage > 0) {
-            if (percentRot <= 0.1) {
+            if (percentRot <= 0.02) {
                 voltage = 0;
                 accelLimiter.reset(0);
             } else if (percentRot <= 0.07) {
@@ -290,7 +290,7 @@ public class Arm extends SubsystemBase {
             }
         }
         if (voltage < 0) {
-            if (percentRot >= 0.9) {
+            if (percentRot >= 0.98) {
                 voltage = 0;
                 accelLimiter.reset(0);
             } else if (percentRot >= 0.93) {
