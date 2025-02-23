@@ -115,7 +115,7 @@ public class Arm extends SubsystemBase {
     private StructPublisher<Pose3d> elbowPosePub;
     private StructPublisher<Pose3d> wristPosePub;
 
-    public Tunable kG = new Tunable("Arm kV", 0.2, (val) -> {
+    public Tunable kG = new Tunable("Arm kG", 0.2, (val) -> {
         armFeedforward = new ArmFeedforward(armFeedforward.getKs(), val, armFeedforward.getKv());
     });
 
@@ -216,12 +216,12 @@ public class Arm extends SubsystemBase {
 
         double max = 32;
         double min = -56;
-        double distance = PoseUtils.getAngleDistance(getEndpointAngle(), MIN_ANGLE).getDegrees();
-        double interval = PoseUtils.getAngleDistance(MAX_ANGLE, MIN_ANGLE).getDegrees();
+      //  double distance = PoseUtils.getAngleDistance(getEndpointAngle(), MIN_ANGLE).getDegrees();
+       // double interval = PoseUtils.getAngleDistance(MAX_ANGLE, MIN_ANGLE).getDegrees();
         // interval = MAX_ANGLE.getDegrees() - MIN_ANGLE.getDegrees();
         // distance = getEndpointAngle().getDegrees() + MIN_ANGLE.getDegrees();
-        // double interval = max - min;
-        // double distance = getElbowAngle().getDegrees() +56;
+         double interval = max - min;
+         double distance = getElbowAngle().getDegrees() - min;
         return distance / interval;
     }
 
@@ -262,7 +262,7 @@ public class Arm extends SubsystemBase {
         return getElbowAngle().plus(getWristAngle());
     }
 
-    private void setWristAngle(Rotation2d targetAngle) {
+    private void setEndpointAngle(Rotation2d targetAngle) {
         double target = targetAngle.getRotations();
 
         setpointPub.set(target * 360);
@@ -284,9 +284,9 @@ public class Arm extends SubsystemBase {
 
         //needs feedforward only when we have algae, because algae is heavy!
         // if(RobotContainer.rollers.hasAlgae()) 
-        if(getElbowAngle().getDegrees() > 0)
-        wristVoltage += -armFeedforward.calculate(getElbowAngle().getRadians(), 0);
-        else wristVoltage += armFeedforward.calculate(getElbowAngle().getRadians(), 0);
+        // if(getElbowAngle().getDegrees() > 0)
+        // wristVoltage += -armFeedforward.calculate(getElbowAngle().getRadians(), 0);
+        // else wristVoltage += armFeedforward.calculate(getElbowAngle().getRadians(), 0);
     
         wristVoltage = MathUtil.clamp(wristVoltage, -3, 3);
         System.out.println(-wristVoltage);
@@ -304,8 +304,13 @@ public class Arm extends SubsystemBase {
         double percentRot = getPercentRotation();
 
         //percentRot is based on endpoint rotation, which moves in the opposite direction as the motor
+<<<<<<< Updated upstream
         if (voltage > 0) {
             if (percentRot <= 0.02) {
+=======
+        if (voltage < 0) {
+            if (percentRot <= 0.1) {
+>>>>>>> Stashed changes
                 voltage = 0;
                 accelLimiter.reset(0);
             } else if (percentRot <= 0.07) {
@@ -313,8 +318,13 @@ public class Arm extends SubsystemBase {
                         (-12 * Math.pow((percentRot * (100.0 / SLOW_DOWN_ZONE)), 3.2)) - SLOWEST_SPEED);
             }
         }
+<<<<<<< Updated upstream
         if (voltage < 0) {
             if (percentRot >= 0.98) {
+=======
+        if (voltage > 0) {
+            if (percentRot >= 0.9) {
+>>>>>>> Stashed changes
                 voltage = 0;
                 accelLimiter.reset(0);
             } else if (percentRot >= 0.93) {
@@ -469,7 +479,7 @@ public class Arm extends SubsystemBase {
     }
 
     public Command goToAngleCommand(Rotation2d angle) {
-        return Commands.run(() -> setWristAngle(angle), this).until(this::atSetpoint).finallyDo(this::stop);
+        return Commands.run(() -> setEndpointAngle(angle), this).until(this::atSetpoint).finallyDo(this::stop);
     }
 
     public Command joystickControlCommand() {

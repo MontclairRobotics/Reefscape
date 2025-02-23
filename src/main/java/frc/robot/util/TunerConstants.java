@@ -27,7 +27,7 @@ public class TunerConstants {
     private static final Slot0Configs steerGains = new Slot0Configs()
         //.withKP(41.168).withKI(0).withKD(2.6092*2)
         //.withKS(0.16649*0).withKV(2.6372*0).withKA(0.10901)
-        .withKP(49.193).withKI(0).withKD(2*0)
+        .withKP(49.193*0.8).withKI(0).withKD(2*0)
         .withKS(0).withKV(2.6678*0).withKA(0)
         .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign);
     // When using closed-loop control, the drive motor uses the control

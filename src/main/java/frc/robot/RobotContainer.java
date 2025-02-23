@@ -143,7 +143,10 @@ public class RobotContainer {
 
     /* SETS DIFFERENT ROBOT STATES */
 
+    operatorController.povDown().whileTrue(arm.setState(RobotState.Intake)).onFalse(arm.stopCommand());
+    
     //L3
+<<<<<<< Updated upstream
     // operatorController.triangle()
     // .whileTrue(arm.setState(RobotState.L3).alongWith(elevator.setState(RobotState.L4)))
     // .onFalse(arm.stopCommand().alongWith(elevator.stopCommand()));
@@ -151,6 +154,14 @@ public class RobotContainer {
     operatorController.triangle().whileTrue(arm.setState(RobotState.L4));
     operatorController.square().whileTrue(arm.setState(RobotState.Intake));
 
+=======
+    operatorController.triangle()
+    .whileTrue(arm.setState(RobotState.L3))
+    
+    //.alongWith(elevator.setState(RobotState.L3)))
+    .onFalse(arm.stopCommand());
+    //.alongWith(elevator.stopCommand()));
+>>>>>>> Stashed changes
     //L4
     // operatorController.circle()
     // .whileTrue(arm.goToLocationCommand(RobotState.L4).alongWith(elevator.setScoringHeightCommand(RobotState.L4)))
@@ -160,9 +171,17 @@ public class RobotContainer {
     // .whileTrue(arm.goToLocationCommand(RobotState.L1).alongWith(elevator.setScoringHeightCommand(RobotState.L1)))
     // .onFalse(arm.stopCommand().alongWith(elevator.stopCommand()));
     //L2
+<<<<<<< Updated upstream
     // operatorController.square()
     // .whileTrue(arm.setState(RobotState.L2).alongWith(elevator.setState(RobotState.L2)))
     // .onFalse(arm.stopCommand().alongWith(elevator.stopCommand()));
+=======
+    operatorController.square()
+    .whileTrue(arm.setState(RobotState.L2))
+    //.alongWith(elevator.setState(RobotState.L2)))
+    .onFalse(arm.stopCommand());
+    //.alongWith(elevator.stopCommand());
+>>>>>>> Stashed changes
     
     // operatorController.circle().whileTrue(Commands.sequence(
     //   Commands.runOnce(() -> SignalLogger.start()),
