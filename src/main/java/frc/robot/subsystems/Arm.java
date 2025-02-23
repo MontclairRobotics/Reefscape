@@ -208,7 +208,7 @@ public class Arm extends SubsystemBase {
         return pidController.atSetpoint();
     }
 
-    public void stopMotor() {
+    public void stopMotor(){
         armMotor.stopMotor();
     }
 
@@ -292,6 +292,7 @@ public class Arm extends SubsystemBase {
         System.out.println(-wristVoltage);
         // TODO do we need feedforward? If so we have to figure out the equation
         // negative voltage brings it up, positive brings it down AFAIK
+        voltagePub.set(-wristVoltage);
         armMotor.setVoltage(-wristVoltage);
 
     }
@@ -305,7 +306,7 @@ public class Arm extends SubsystemBase {
 
         //percentRot is based on endpoint rotation, which moves in the opposite direction as the motor
         if (voltage < 0) {
-            if (percentRot <= 0.1) {
+            if (percentRot <= 0.01) {
                 voltage = 0;
                 accelLimiter.reset(0);
             } else if (percentRot <= 0.07) {
@@ -314,7 +315,7 @@ public class Arm extends SubsystemBase {
             }
         }
         if (voltage > 0) {
-            if (percentRot >= 0.9) {
+            if (percentRot >= 0.99) {
                 voltage = 0;
                 accelLimiter.reset(0);
             } else if (percentRot >= 0.93) {
@@ -358,6 +359,7 @@ public class Arm extends SubsystemBase {
 
     @Override
     public void periodic() {
+        SmartDashboard.putBoolean("Arm/At Setpoint", atSetpoint());
         percentRotPub.set(getPercentRotation());
 
         // These lines are for an actual physics simulator
