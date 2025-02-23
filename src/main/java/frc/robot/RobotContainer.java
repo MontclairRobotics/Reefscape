@@ -84,31 +84,34 @@ public class RobotContainer {
     /*     Default commands */
     drivetrain.setDefaultCommand(drivetrain.driveJoystickInputCommand());
     rollers.setDefaultCommand(rollers.getDefaultCommand());
-    // elevator.setDefaultCommand(Commands.run(() -> {
-    //   RobotState pos = RobotState.getDefaultForPiece(rollers.getHeldPiece());
-    //   System.out.println(pos.getHeight());
-    //     elevator.setState(pos);
-    //   }
-    // , elevator));
+    elevator.setDefaultCommand(Commands.run(() -> {
+      RobotState pos = RobotState.getDefaultForPiece(rollers.getHeldPiece());
+      System.out.println(pos.getHeight());
+      elevator.setExtension(pos.getHeight());
+      }
+    , elevator));
     // elevator.setDefaultCommand(
     //   RobotContainer.elevator.setExtensionCommand(0)
     // );
 
-    // arm.setDefaultCommand(Commands.run(() -> {
-    //   RobotState pos = RobotState.getDefaultForPiece(rollers.getHeldPiece());
-    //     arm.setWristLocation(pos);
-    //   }
-    // , arm));
+    arm.setDefaultCommand(Commands.run(() -> {
+        RobotState pos = RobotState.getDefaultForPiece(rollers.getHeldPiece());
+        arm.setEndpointAngle(pos.getAngle());
+      }
+    , arm));
     // elevator.setDefaultCommand(elevator.joystickControlCommand());
-    arm.setDefaultCommand(arm.joystickControlCommand());
-   // elevator.setDefaultCommand(elevator.joystickControlCommand());
+    // arm.setDefaultCommand(arm.joystickControlCommand());
+    // elevator.setDefaultCommand(elevator.joystickControlCommand());
    //leds.setDefaultCommand(leds.playPatternCommand(LEDs.breathingPattern()));
     // operatorController.square().whileTrue(arm.goToAngleCommand(Rotation2d.fromDegrees(30)));
 
     /* Operator bindings */
 
     //elevator height commands
-    // operatorController.L1().whileTrue(elevator.joystickControlCommand()).whileTrue(arm.joystickControlCommand());
+    operatorController.L1().whileTrue(elevator.joystickControlCommand()).whileTrue(arm.joystickControlCommand()).onFalse(Commands.runOnce(() -> {
+      elevator.stop();
+      arm.stopMotor();
+    }));
     // operatorController.triangle().whileTrue(Commands.run(() -> elevator.setHeight(1.7), elevator)); //L1 //66.93 inches
     
 
@@ -130,7 +133,7 @@ public class RobotContainer {
 
     
     //Arm coast mode
-    operatorController.circle().onTrue(arm.setIdleModeCommand(IdleMode.kCoast)).onFalse(arm.setIdleModeCommand(IdleMode.kBrake));
+    testingController.circle().onTrue(arm.setIdleModeCommand(IdleMode.kCoast)).onFalse(arm.setIdleModeCommand(IdleMode.kBrake));
     
     //Coral intake outtake
     operatorController.L1()
@@ -147,37 +150,29 @@ public class RobotContainer {
     
     //L3
 
-    // operatorController.triangle()
-    // .whileTrue(arm.setState(RobotState.L3).alongWith(elevator.setState(RobotState.L4)))
-    // .onFalse(arm.stopCommand().alongWith(elevator.stopCommand()));
 
-    operatorController.triangle().whileTrue(arm.setState(RobotState.L4));
-    operatorController.square().whileTrue(arm.setState(RobotState.Intake));
+    // operatorController.triangle().whileTrue(arm.setState(RobotState.L4));
+    // operatorController.square().whileTrue(arm.setState(RobotState.Intake));
 
     operatorController.triangle()
-    .whileTrue(arm.setState(RobotState.L3))
-    
-    //.alongWith(elevator.setState(RobotState.L3)))
-    .onFalse(arm.stopCommand());
-    //.alongWith(elevator.stopCommand()));
+    .whileTrue((arm.setState(RobotState.L3))
+    .alongWith(elevator.setState(RobotState.L3)))
+    .onFalse((arm.stopCommand())
+    .alongWith(elevator.stopCommand()));
     //L4
-    // operatorController.circle()
-    // .whileTrue(arm.goToLocationCommand(RobotState.L4).alongWith(elevator.setScoringHeightCommand(RobotState.L4)))
-    // .onFalse(arm.stopCommand().alongWith(elevator.stopCommand()));
-    //L1
-    // operatorController.cross()
-    // .whileTrue(arm.goToLocationCommand(RobotState.L1).alongWith(elevator.setScoringHeightCommand(RobotState.L1)))
-    // .onFalse(arm.stopCommand().alongWith(elevator.stopCommand()));
-    //L2
+    operatorController.circle()
+    .whileTrue(arm.setState(RobotState.L4).alongWith(elevator.setState(RobotState.L4)))
+    .onFalse(arm.stopCommand().alongWith(elevator.stopCommand()));
+   // L1
+    operatorController.cross()
+    .whileTrue(arm.setState(RobotState.L1).alongWith(elevator.setState(RobotState.L1)))
+    .onFalse(arm.stopCommand().alongWith(elevator.stopCommand()));
+   // L2
 
-    // operatorController.square()
-    // .whileTrue(arm.setState(RobotState.L2).alongWith(elevator.setState(RobotState.L2)))
-    // .onFalse(arm.stopCommand().alongWith(elevator.stopCommand()));
     operatorController.square()
-    .whileTrue(arm.setState(RobotState.L2))
-    //.alongWith(elevator.setState(RobotState.L2)))
-    .onFalse(arm.stopCommand());
-    //.alongWith(elevator.stopCommand());
+    .whileTrue(arm.setState(RobotState.L2).alongWith(elevator.setState(RobotState.L2)))
+    .onFalse(arm.stopCommand().alongWith(elevator.stopCommand()));
+  
     
     // operatorController.circle().whileTrue(Commands.sequence(
     //   Commands.runOnce(() -> SignalLogger.start()),
@@ -197,7 +192,7 @@ public class RobotContainer {
     );
 
     //Coast mode elevator
-    operatorController.cross()
+    testingController.cross()
       .onTrue(
         Commands.runOnce(() -> elevator.setNeutralMode(NeutralModeValue.Coast))
         .ignoringDisable(true)

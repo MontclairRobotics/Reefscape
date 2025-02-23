@@ -21,9 +21,9 @@ public class Rollers extends SubsystemBase {
     public SparkMax leftMotor;
     public final double CORAL_INTAKE_SPEED = 0.5;
     public final double CORAL_OUTTAKE_SPEED = -1;
-    public final double ALGAE_INTAKE_SPEED = 0.2;
+    public final double ALGAE_INTAKE_SPEED = 0.3;
     public final double ALGAE_OUTTAKE_SPEED = -1;
-    public final double ROLLER_STALL_CURRENT = 43; // TODO check/tune
+    public final double ROLLER_STALL_CURRENT = 30; // TODO check/tune
     public final double CORAL_HOLDING_SPEED = 0.1;
     public final double ALGAE_HOLDING_SPEED = 0.5;
 
@@ -67,9 +67,8 @@ public class Rollers extends SubsystemBase {
 
     // TODO need to be debounced? probably not?
     public boolean isStalled() {
-        // return rightMotor.getOutputCurrent() > ROLLER_STALL_CURRENT
-        //         || leftMotor.getOutputCurrent() > ROLLER_STALL_CURRENT;
-        return false;
+        return rightMotor.getOutputCurrent() > ROLLER_STALL_CURRENT
+                || leftMotor.getOutputCurrent() > ROLLER_STALL_CURRENT;
     }
 
     public void setSpeed(double speed) {

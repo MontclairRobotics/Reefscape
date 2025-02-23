@@ -75,7 +75,7 @@ public class Arm extends SubsystemBase {
 
     private ArmFeedforward armFeedforward = new ArmFeedforward(0, 0.2, 0); 
 
-    private PIDController pidController = new PIDController(17, 0, 0);
+    private PIDController pidController = new PIDController(130, 0, 5);
 
 
     private static final double J1Length = 0.19 - Units.inchesToMeters(2);
@@ -123,7 +123,7 @@ public class Arm extends SubsystemBase {
         armFeedforward = new ArmFeedforward(armFeedforward.getKs(), armFeedforward.getKg(), val);
     });
 
-    public Tunable kP = new Tunable("Arm kP", 17, (val) -> {
+    public Tunable kP = new Tunable("Arm kP", 130, (val) -> {
         pidController = new PIDController(val, pidController.getI(), pidController.getD());
     });
 
@@ -131,7 +131,7 @@ public class Arm extends SubsystemBase {
         pidController = new PIDController(pidController.getP(), val, pidController.getD());
     });
 
-    public Tunable kD = new Tunable("Arm kD", 0, (val) -> {
+    public Tunable kD = new Tunable("Arm kD", 5, (val) -> {
         pidController = new PIDController(pidController.getP(), pidController.getI(), val);
     });
 
@@ -155,7 +155,7 @@ public class Arm extends SubsystemBase {
                                                                   // (1 here), 3rd is initial offset (TODO to be
                                                                   // measured)
         // pidController = new PIDController(35, 0, 0);
-        pidController.setTolerance(0.5 / 360.0);
+        pidController.setTolerance(0.5 / 360.0, 1.0 / 360.0);
         pidController.enableContinuousInput(-0.5, 0.5);
 
         if (!elbowEncoder.isConnected()) {
@@ -216,12 +216,12 @@ public class Arm extends SubsystemBase {
 
         double max = 32;
         double min = -56;
-      //  double distance = PoseUtils.getAngleDistance(getEndpointAngle(), MIN_ANGLE).getDegrees();
-       // double interval = PoseUtils.getAngleDistance(MAX_ANGLE, MIN_ANGLE).getDegrees();
+        double distance = PoseUtils.getAngleDistance(getEndpointAngle(), MIN_ANGLE).getDegrees();
+        double interval = PoseUtils.getAngleDistance(MAX_ANGLE, MIN_ANGLE).getDegrees();
         // interval = MAX_ANGLE.getDegrees() - MIN_ANGLE.getDegrees();
         // distance = getEndpointAngle().getDegrees() + MIN_ANGLE.getDegrees();
-         double interval = max - min;
-         double distance = getElbowAngle().getDegrees() - min;
+         //double interval = max - min;
+        // double distance = getElbowAngle().getDegrees() - min;
         return distance / interval;
     }
 
@@ -262,10 +262,9 @@ public class Arm extends SubsystemBase {
         return getElbowAngle().plus(getWristAngle());
     }
 
-    private void setEndpointAngle(Rotation2d targetAngle) {
+    public void setEndpointAngle(Rotation2d targetAngle) {
         double target = targetAngle.getRotations();
 
-        setpointPub.set(target * 360);
         if (target > MAX_ANGLE.getRotations()) {
             Elastic.sendNotification(new Notification(
                     NotificationLevel.WARNING, "Setting the elevator height outside of range",
@@ -279,8 +278,13 @@ public class Arm extends SubsystemBase {
                     5000));
         }
 
+        SmartDashboard.putNumber("Arm/preclamped Target", target);
         target = MathUtil.clamp(target, MIN_ANGLE.getRotations(), MAX_ANGLE.getRotations());
+        System.out.println("Target: " + target);
+        SmartDashboard.putNumber("Arm/Clamped Target", target);
         double wristVoltage = pidController.calculate(getEndpointAngle().getRotations(), target);
+
+        setpointPub.set(target * 360);
 
         //needs feedforward only when we have algae, because algae is heavy!
         // if(RobotContainer.rollers.hasAlgae()) 
@@ -288,7 +292,7 @@ public class Arm extends SubsystemBase {
         // wristVoltage += -armFeedforward.calculate(getElbowAngle().getRadians(), 0);
         // else wristVoltage += armFeedforward.calculate(getElbowAngle().getRadians(), 0);
     
-        wristVoltage = MathUtil.clamp(wristVoltage, -3, 3);
+        wristVoltage = MathUtil.clamp(wristVoltage, -1, 1);
         System.out.println(-wristVoltage);
         // TODO do we need feedforward? If so we have to figure out the equation
         // negative voltage brings it up, positive brings it down AFAIK
@@ -304,9 +308,14 @@ public class Arm extends SubsystemBase {
 
         double percentRot = getPercentRotation();
 
+        if(getElbowAngle().getDegrees() > 0)
+            voltage += armFeedforward.calculate(getElbowAngle().getRadians(), 0);
+        else 
+            voltage += -armFeedforward.calculate(getElbowAngle().getRadians(), 0);
+
         //percentRot is based on endpoint rotation, which moves in the opposite direction as the motor
-        if (voltage < 0) {
-            if (percentRot <= 0.01) {
+        if (voltage > 0) {
+            if (percentRot <= 0.04) {
                 voltage = 0;
                 accelLimiter.reset(0);
             } else if (percentRot <= 0.07) {
@@ -314,7 +323,7 @@ public class Arm extends SubsystemBase {
                         (-12 * Math.pow((percentRot * (100.0 / SLOW_DOWN_ZONE)), 3.2)) - SLOWEST_SPEED);
             }
         }
-        if (voltage > 0) {
+        if (voltage < 0) {
             if (percentRot >= 0.99) {
                 voltage = 0;
                 accelLimiter.reset(0);
@@ -328,13 +337,10 @@ public class Arm extends SubsystemBase {
         // voltage = voltage - ffVol
         // if(RobotContainer.rollers.hasAlgae())
         //TODO check safeties after ff 
-        if(getElbowAngle().getDegrees() > 0)
-        voltage += armFeedforward.calculate(getElbowAngle().getRadians(), 0);
-        else voltage += -armFeedforward.calculate(getElbowAngle().getRadians(), 0);
+
         voltage = MathUtil.clamp(voltage, -1, 1);
         // System.out.println(voltage);
         voltagePub.set(voltage);
-
         // voltage = MathUtil.clamp(voltage, -(12 * Math.pow((percentRot * (100.0 /
         // SLOW_DOWN_ZONE)), 3.0)
         // - SLOWEST_SPEED), /* lowest voltage allowed */
@@ -471,7 +477,7 @@ public class Arm extends SubsystemBase {
     }
 
     public Command goToAngleCommand(Rotation2d angle) {
-        return Commands.run(() -> setEndpointAngle(angle), this).until(this::atSetpoint).finallyDo(this::stop);
+        return Commands.run(() -> setEndpointAngle(angle), this).until(this::atSetpoint).finallyDo(this::stopMotor);
     }
 
     public Command joystickControlCommand() {
