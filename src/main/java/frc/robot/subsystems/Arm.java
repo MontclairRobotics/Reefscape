@@ -116,6 +116,7 @@ public class Arm extends SubsystemBase {
     private StructPublisher<Pose3d> wristPosePub;
 
     public Tunable kG = new Tunable("Arm kG", 0.2, (val) -> {
+    public Tunable kG = new Tunable("Arm kG", 0.2, (val) -> {
         armFeedforward = new ArmFeedforward(armFeedforward.getKs(), val, armFeedforward.getKv());
     });
 
@@ -305,7 +306,7 @@ public class Arm extends SubsystemBase {
 
         //percentRot is based on endpoint rotation, which moves in the opposite direction as the motor
 <<<<<<< Updated upstream
-        if (voltage > 0) {
+        if (voltage < 0) {
             if (percentRot <= 0.02) {
 =======
         if (voltage < 0) {
@@ -319,7 +320,7 @@ public class Arm extends SubsystemBase {
             }
         }
 <<<<<<< Updated upstream
-        if (voltage < 0) {
+        if (voltage > 0) {
             if (percentRot >= 0.98) {
 =======
         if (voltage > 0) {

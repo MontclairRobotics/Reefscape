@@ -156,12 +156,8 @@ public class RobotContainer {
 
 =======
     operatorController.triangle()
-    .whileTrue(arm.setState(RobotState.L3))
-    
-    //.alongWith(elevator.setState(RobotState.L3)))
-    .onFalse(arm.stopCommand());
-    //.alongWith(elevator.stopCommand()));
->>>>>>> Stashed changes
+    .whileTrue(arm.setState(RobotState.L3).alongWith(elevator.setState(RobotState.L3)))
+    .onFalse(arm.stopCommand().alongWith(elevator.stopCommand()));
     //L4
     // operatorController.circle()
     // .whileTrue(arm.goToLocationCommand(RobotState.L4).alongWith(elevator.setScoringHeightCommand(RobotState.L4)))
@@ -177,11 +173,8 @@ public class RobotContainer {
     // .onFalse(arm.stopCommand().alongWith(elevator.stopCommand()));
 =======
     operatorController.square()
-    .whileTrue(arm.setState(RobotState.L2))
-    //.alongWith(elevator.setState(RobotState.L2)))
-    .onFalse(arm.stopCommand());
-    //.alongWith(elevator.stopCommand());
->>>>>>> Stashed changes
+    .whileTrue(arm.setState(RobotState.L2).alongWith(elevator.setState(RobotState.L2)))
+    .onFalse(arm.stopCommand().alongWith(elevator.stopCommand()));
     
     // operatorController.circle().whileTrue(Commands.sequence(
     //   Commands.runOnce(() -> SignalLogger.start()),
