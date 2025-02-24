@@ -4,10 +4,19 @@ import java.util.function.DoubleSupplier;
 
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.RobotContainer;
+import frc.robot.vision.LimelightHelpers.PoseEstimate;
 
 public class Limelight extends SubsystemBase {
 
@@ -42,6 +51,8 @@ public class Limelight extends SubsystemBase {
     private double cameraOffsetX; // right is positive
     private double cameraOffsetY; //forward is positive
 
+    private StructPublisher<Pose2d> posePublisher;
+
     public Limelight(String cameraName, double cameraHeightMeters, double cameraAngle, double cameraOffsetX, double cameraOffsetY) {
         this.cameraName = cameraName;
         this.cameraHeightMeters = cameraHeightMeters;
@@ -49,6 +60,10 @@ public class Limelight extends SubsystemBase {
         this.cameraOffsetX = cameraOffsetX;
         this.cameraOffsetY = cameraOffsetY;
         LimelightHelpers.SetFiducialIDFiltersOverride(cameraName, validIDs);
+
+        NetworkTableInstance inst = NetworkTableInstance.getDefault();
+        NetworkTable limelightTable = inst.getTable(cameraName);
+        posePublisher = limelightTable.getStructTopic("Pose", Pose2d.struct).publish();
     }
 
     // might not be needed
@@ -199,10 +214,25 @@ public class Limelight extends SubsystemBase {
 
     public void periodic() {
         // tagID = (int) Limetable.getEntry("tid").getDouble(-1);
-       // poseEstimationMegatag2();
+        // poseEstimationMegatag2();
+        PoseEstimate poseEstimate = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(cameraName);
+        if (poseEstimate != null && poseEstimate.pose != null) {
+            posePublisher.set(poseEstimate.pose);
+        }
     }
 
     public Command ifHasTarget(Command cmd) {
         return cmd.onlyWhile(this::hasValidTarget);
+    }
+
+    /**
+     * Returns the transform from the robot to the camera
+     * @return
+     */
+    public Transform3d getRobotToCamera() {
+        Translation3d robotToCameraTrl = new Translation3d(cameraOffsetX, cameraOffsetY, cameraHeightMeters);
+        Rotation3d robotToCameraRot = new Rotation3d(0, Units.degreesToRadians(cameraAngle), 0);
+        // return new Transform3d(robotToCameraTrl, Rotation3d.kZero);
+        return new Transform3d(robotToCameraTrl, robotToCameraRot);
     }
 }

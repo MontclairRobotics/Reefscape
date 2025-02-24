@@ -16,10 +16,8 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.pathplanner.lib.auto.NamedCommands;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.units.measure.Time;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -43,6 +41,9 @@ import frc.robot.util.PoseUtils;
 import frc.robot.util.TagOffset;
 import frc.robot.util.TunerConstants;
 import frc.robot.vision.Limelight;
+import frc.robot.vision.LimelightSim;
+import frc.robot.vision.LimelightSim.LimelightModel;
+import frc.robot.vision.LimelightSim.LimelightResolution;
 
 
 public class RobotContainer {
@@ -57,8 +58,9 @@ public class RobotContainer {
   //Subsystems
   public static Drivetrain drivetrain = new Drivetrain();
   public static Elevator elevator = new Elevator();
-  public static Limelight bottomLimelight = new Limelight("Limelight-Bottom", 0, 0, 0, 0);
+  public static Limelight bottomLimelight = new Limelight("Limelight-Bottom", Units.inchesToMeters(5), -5, Units.inchesToMeters(13.5), 0);
   public static Limelight topLimelight = new Limelight("Limelight-Top", 0, 0, 0, 0);
+  public static LimelightSim limelightSim;
   public static LEDs leds = new LEDs();
   public static Rollers rollers = new Rollers();
   public static Orchestra orchestra = new Orchestra();
@@ -69,10 +71,17 @@ public class RobotContainer {
   //Alliance
   public static boolean isBlueAlliance;
 
+
   public RobotContainer() {
     DriverStation.silenceJoystickConnectionWarning(true);
     configureBindings();
 
+    // Setup limelight sim
+    if (Robot.isSimulation())
+      limelightSim = new LimelightSim(() -> drivetrain.getRobotPose());
+
+      // Add bottom limelight to sim
+      limelightSim.addCamera(bottomLimelight.getRobotToCamera(), "Limelight-Bottom", LimelightModel.LIMELIGHT_4, LimelightResolution.RESOLUTION_720x480, 20, 30);
   }
 
   private void configureBindings() {
