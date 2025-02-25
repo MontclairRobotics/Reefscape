@@ -50,6 +50,7 @@ import frc.robot.Robot;
 import frc.robot.RobotContainer;
 import frc.robot.util.RobotState;
 import frc.robot.util.Elastic;
+import frc.robot.subsystems.Ratchet;
 
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.controls.Follower;
@@ -62,7 +63,7 @@ import frc.robot.util.LimitSwitch;
 import frc.robot.util.Tunable;
 
 public class Elevator extends SubsystemBase {
-
+    // Subsystems
     // Constants
     private static final double METERS_PER_ROTATION = 36 * 5 / 1000.0 * (1.0 / 12.0);
     private static final double ROTATIONS_PER_METER = 1.0 / METERS_PER_ROTATION;
@@ -540,8 +541,12 @@ public class Elevator extends SubsystemBase {
      * @param extension meters, the distance from top bar to floor
      */
     public void setHeight(double height) {
+        if(!RobotContainer.ratchet.ratchetEngaged){
         double extension = height - STARTING_HEIGHT;
         setExtension(extension);
+        }else{
+            Commands.none();
+        }
     }
 
     /**

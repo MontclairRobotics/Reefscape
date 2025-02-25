@@ -28,6 +28,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.commands.AlignToReefTagCommand;
 import frc.robot.commands.GoToPoseCommand;
 import frc.robot.leds.LEDs;
+import frc.robot.subsystems.Ratchet;
 import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.Auto;
 import frc.robot.subsystems.Drivetrain;
@@ -55,6 +56,7 @@ public class RobotContainer {
   public static final boolean debugMode = true;
 
   //Subsystems
+  public static Ratchet ratchet = new Ratchet();
   public static Drivetrain drivetrain = new Drivetrain();
   public static Elevator elevator = new Elevator();
   public static Limelight bottomLimelight = new Limelight("Limelight-Bottom", 0, 0, 0, 0);
@@ -143,7 +145,11 @@ public class RobotContainer {
       .whileTrue(rollers.outtakeCoralCommand())
       .onFalse(rollers.stopCommand());
 
-
+    //Ratchet Bindings
+    operatorController.L3()
+      .onTrue(ratchet.engageServos());
+    operatorController.R3()
+      .onTrue(ratchet.engageServos());
     /* SETS DIFFERENT ROBOT STATES */
 
     operatorController.povDown().whileTrue(arm.setState(RobotState.Intake)).onFalse(arm.stopCommand());
