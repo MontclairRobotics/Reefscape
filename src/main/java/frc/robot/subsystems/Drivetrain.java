@@ -51,31 +51,35 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.util.DynamicSlewRateLimiter;
 
 public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
     /*
      * 
      * CONSTANTS
-     * 
+     * owo :3
      */
 
     public static final double MAX_SPEED = 5; // TODO: actually set this with units
     public static final double MAX_ROT_SPEED = Math.PI * 1;
+    public static final double MIN_ROT_SPEED = Math.PI * (1.0 / 3.0);
     public static double FORWARD_ACCEL = 9; // m / s^2
     public static double SIDE_ACCEL = 9; // m / s^2
     public static double ROT_ACCEL = 9; // radians / s^2
+    public static double MIN_TRANSLATIONAL_ACCEL = 0.5;
+    public static double MIN_ROT_ACCEL = 0.3;
     public static boolean IS_LIMITING_ACCEL = true;
 
 
      /* Acceleration limiters for our drivetrain */
-     private SlewRateLimiter forwardLimiter = new SlewRateLimiter(FORWARD_ACCEL); // TODO: actually set this
-     private SlewRateLimiter strafeLimiter = new SlewRateLimiter(SIDE_ACCEL); // TODO: actually set this
-     private SlewRateLimiter rotationLimiter = new SlewRateLimiter(ROT_ACCEL); // TODO: actually set this
+     private DynamicSlewRateLimiter forwardLimiter = new DynamicSlewRateLimiter(FORWARD_ACCEL); // TODO: actually set this
+     private DynamicSlewRateLimiter strafeLimiter = new DynamicSlewRateLimiter(SIDE_ACCEL); // TODO: actually set this
+     private DynamicSlewRateLimiter rotationLimiter = new DynamicSlewRateLimiter(ROT_ACCEL); // TODO: actually set this
 
-    public Tunable forwardAccelTunable = new Tunable("Forward Accel Limit", 9, (value) -> {RobotContainer.drivetrain.forwardLimiter = new SlewRateLimiter(value);});
-    public Tunable sideAccelTunable = new Tunable("Side Accel Limit", 9, (value) -> {RobotContainer.drivetrain.strafeLimiter = new SlewRateLimiter(value);});
-    public Tunable rotAccelTunable = new Tunable("Rotation Accel Limit", 9, (value) -> {RobotContainer.drivetrain.rotationLimiter = new SlewRateLimiter(value);});
+    public Tunable forwardAccelTunable = new Tunable("Forward Accel Limit", 9, (value) -> forwardLimiter.setLimit(value));
+    public Tunable sideAccelTunable = new Tunable("Side Accel Limit", 9, (value) -> strafeLimiter.setLimit(value));
+    public Tunable rotAccelTunable = new Tunable("Rotation Accel Limit", 9, (value) -> rotationLimiter.setLimit(value));
     public Tunable isLimitAccel = new Tunable("Is limiting accel", 1, (value) -> {
         if(value == 1) IS_LIMITING_ACCEL = true;
         if(value == 0) IS_LIMITING_ACCEL = false;
@@ -193,7 +197,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
     /*
      * RETURNS X VELOCITY FROM CONTROLLER
-     * 
+     * lemon
      */
     public double getVelocityXFromController() {
         double xInput = -MathUtil.applyDeadband(RobotContainer.driverController.getLeftX(), 0.07);
@@ -202,6 +206,26 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
                     Math.pow(xInput, 3) * MAX_SPEED);
         else
             return Math.pow(xInput, 3) * MAX_SPEED;
+    }
+
+    public double getMaxForwardAccel() {
+        double percentHeight = RobotContainer.elevator.getPercentHeight();
+        return Math.max(-(FORWARD_ACCEL * percentHeight) + FORWARD_ACCEL, MIN_TRANSLATIONAL_ACCEL);
+    }
+
+    public double getMaxHorizontalAccel() {
+        double percentHeight = RobotContainer.elevator.getPercentHeight();
+        return Math.max(-(SIDE_ACCEL * percentHeight) + SIDE_ACCEL, MIN_TRANSLATIONAL_ACCEL);
+    }
+
+    public double getMaxRotAccel() {
+        double percentHeight = RobotContainer.elevator.getPercentHeight();
+        return Math.max(-(ROT_ACCEL * percentHeight) + ROT_ACCEL, MIN_ROT_ACCEL);
+    }
+
+    public double getMaxRotSpeed() {
+        double percentHeight = RobotContainer.elevator.getPercentHeight();
+        return Math.max(-(MAX_ROT_SPEED * percentHeight) + MAX_ROT_SPEED, MIN_ROT_SPEED);
     }
 
     /*
@@ -225,10 +249,10 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
      */
     public void driveJoystick() {
         double rotInput = -MathUtil.applyDeadband(RobotContainer.driverController.getRightX(), 0.07);
-        double rotVelocity = Math.pow(rotInput, 3) * MAX_ROT_SPEED;
+        double rotVelocity = Math.pow(rotInput, 3) * getMaxRotSpeed();
         if (IS_LIMITING_ACCEL) {
             rotVelocity = rotationLimiter.calculate(
-                    Math.pow(rotInput, 3) * MAX_ROT_SPEED);
+                    Math.pow(rotInput, 3) * getMaxRotSpeed());
         }
         driveWithSetpoint(getVelocityYFromController(), getVelocityXFromController(), rotVelocity, fieldRelative, true); // drives
                                                                                                              // using
@@ -716,6 +740,9 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         odometryHeading = this.getState().Pose.getRotation();
         isRobotAtAngleSetPoint = thetaController.atSetpoint();
         fieldRelative = !RobotContainer.driverController.L2().getAsBoolean();
+        strafeLimiter.setLimit(getMaxHorizontalAccel());
+        forwardLimiter.setLimit(getMaxForwardAccel());
+        rotationLimiter.setLimit(getMaxRotAccel());
 
         /*
          * Periodically try to apply the operator perspective.

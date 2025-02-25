@@ -596,6 +596,10 @@ public class Elevator extends SubsystemBase {
         return Commands.run(() -> setExtension(state.getHeight()), this);
     }
 
+    public double getPercentHeight() {
+        return getExtension() / MAX_EXTENSION;
+    }
+
     @Override
     public void periodic() {
         heightPub.set(getExtension());
