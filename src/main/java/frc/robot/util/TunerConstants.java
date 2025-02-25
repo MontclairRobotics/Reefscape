@@ -217,7 +217,7 @@ public class TunerConstants {
 
      public static final Matrix<N3, N1> odometryStandardDeviation = VecBuilder.fill(1, 1, 1);
      public static final Matrix<N3, N1> visionStandardDeviation = VecBuilder.fill(1, 1, 1);
-    public static final double odometryUpdateFrequency = 100;
+    public static final double odometryUpdateFrequency = 250;
 
 
     /**

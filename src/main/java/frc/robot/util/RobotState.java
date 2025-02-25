@@ -4,7 +4,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 
 // height should be extension of elevator in meters
 public enum RobotState {
-    L4 (1.15,Rotation2d.fromDegrees(-57)),
+    L4 (1.15,Rotation2d.fromDegrees(-37)),
     L3 (0.424,Rotation2d.fromDegrees(-33)),
     L2 (0,Rotation2d.fromDegrees(-17)),
     L1 (0,Rotation2d.fromDegrees
@@ -14,7 +14,7 @@ public enum RobotState {
     Net(0, Rotation2d.fromDegrees(0)),
     DrivingAlgae(0, Rotation2d.fromDegrees(0)),
     DrivingCoral(0, Rotation2d.fromDegrees(0)),
-    DrivingNone(0, Rotation2d.fromDegrees(0)),
+    DrivingNone(0, Rotation2d.fromDegrees(-50)),
     L1Algae(0, Rotation2d.fromDegrees(0)),
     L2Algae(0, Rotation2d.fromDegrees(0));
 
