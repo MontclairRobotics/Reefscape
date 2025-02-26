@@ -1,20 +1,22 @@
 package frc.robot.util;
 
 import edu.wpi.first.math.geometry.Rotation2d;
+import frc.robot.RobotContainer;
+import frc.robot.subsystems.Arm;
 
 // height should be extension of elevator in meters
 public enum RobotState {
-    L4 (1.15,Rotation2d.fromDegrees(-57)),
+    L4 (1.15,Rotation2d.fromDegrees(-37)),
     L3 (0.424,Rotation2d.fromDegrees(-33)),
     L2 (0,Rotation2d.fromDegrees(-17)),
     L1 (0,Rotation2d.fromDegrees
     (0)),
-    Intake(0, Rotation2d.fromDegrees(36)),
+    Intake(0, Arm.MAX_ANGLE),
     Processor(0, Rotation2d.fromDegrees(0)),
     Net(0, Rotation2d.fromDegrees(0)),
     DrivingAlgae(0, Rotation2d.fromDegrees(0)),
-    DrivingCoral(0, Rotation2d.fromDegrees(0)),
-    DrivingNone(0, Rotation2d.fromDegrees(0)),
+    DrivingCoral(0, Arm.MIN_ANGLE),
+    DrivingNone(0, Intake.getAngle()),
     L1Algae(0, Rotation2d.fromDegrees(0)),
     L2Algae(0, Rotation2d.fromDegrees(0));
 

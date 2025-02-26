@@ -54,18 +54,18 @@ public class TunerConstants {
 
     // The stator current at which the wheels start to slip;
     // This needs to be tuned to your individual robot
-    private static final Current kSlipCurrent = Amps.of(73);
+    private static final Current kSlipCurrent = Amps.of(60);
 
     // Initial configs for the drive and steer motors and the azimuth encoder; these cannot be null.
     // Some configs will be overwritten; check the `with*InitialConfigs()` API documentation.
-    private static final TalonFXConfiguration driveInitialConfigs = new TalonFXConfiguration()
-        .withCurrentLimits(
-            new CurrentLimitsConfigs()
-                // Swerve azimuth does not require much torque output, so we can set a relatively low
-                // stator current limit to help avoid brownouts without impacting performance.
-                .withStatorCurrentLimit(Amps.of(47))
-                .withStatorCurrentLimitEnable(true)
-        );
+    private static final TalonFXConfiguration driveInitialConfigs = new TalonFXConfiguration();
+        // .withCurrentLimits(
+        //     new CurrentLimitsConfigs()
+        //         // Swerve azimuth does not require much torque output, so we can set a relatively low
+        //         // stator current limit to help avoid brownouts without impacting performance.
+        //         .withStatorCurrentLimit(Amps.of(60))
+        //         .withStatorCurrentLimitEnable(true)
+        // );
     private static final TalonFXConfiguration steerInitialConfigs = new TalonFXConfiguration()
         .withCurrentLimits(
             new CurrentLimitsConfigs()
@@ -217,7 +217,7 @@ public class TunerConstants {
 
      public static final Matrix<N3, N1> odometryStandardDeviation = VecBuilder.fill(1, 1, 1);
      public static final Matrix<N3, N1> visionStandardDeviation = VecBuilder.fill(1, 1, 1);
-    public static final double odometryUpdateFrequency = 100;
+    public static final double odometryUpdateFrequency = 250;
 
 
     /**
