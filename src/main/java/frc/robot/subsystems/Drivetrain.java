@@ -78,7 +78,6 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     DoublePublisher driveCurrentPub;
     DoublePublisher driveVelocityPub;
 
-
      /* Acceleration limiters for our drivetrain */
      private DynamicSlewRateLimiter forwardLimiter = new DynamicSlewRateLimiter(FORWARD_ACCEL); // TODO: actually set this
      private DynamicSlewRateLimiter strafeLimiter = new DynamicSlewRateLimiter(SIDE_ACCEL); // TODO: actually set this
@@ -691,6 +690,31 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         resetRotation(Rotation2d.fromDegrees(0));
     }
 
+    public Command toReefAlignBindings() {
+        return Commands.runOnce(() -> {
+            RobotContainer.driverController.triangle()
+            .onTrue(RobotContainer.drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(-60)), false));
+            RobotContainer.driverController.square()
+            .onTrue(RobotContainer.drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(60)), false));
+            RobotContainer.driverController.cross()
+            .onTrue(RobotContainer.drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(120)), false));
+            RobotContainer.driverController.circle()
+            .onTrue(RobotContainer.drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(-120)), false)); 
+        });
+    }
+
+    public Command toRegularAlignBindings() {
+        return Commands.runOnce(() -> {
+            RobotContainer.driverController.triangle()
+            .onTrue(RobotContainer.drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(0)), false));
+            RobotContainer.driverController.square()
+            .onTrue(RobotContainer.drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(90)), false));
+            RobotContainer.driverController.cross()
+            .onTrue(RobotContainer.drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(180)), false));
+            RobotContainer.driverController.circle()
+            .onTrue(RobotContainer.drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(270)), false)); 
+        });
+    }
     /*
      * default drive command
      */

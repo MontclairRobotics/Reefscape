@@ -62,10 +62,10 @@ public class Arm extends SubsystemBase {
     private static final Rotation2d ELBOW_MIN_ANGLE = Rotation2d.fromDegrees(-56); //TODO: use protractor to get this for the real robot
 
     // The max safe angle of the endpoint to the horizontal 
-    private static final Rotation2d MAX_ANGLE = Rotation2d.fromDegrees(36.8); 
+    public static final Rotation2d MAX_ANGLE = Rotation2d.fromDegrees(36.8); 
                                                                               
     // The min safe angle of the endpoint to the horizontal
-    private static final Rotation2d MIN_ANGLE = Rotation2d.fromDegrees(-(180 - 102.143)); 
+    public static final Rotation2d MIN_ANGLE = Rotation2d.fromDegrees(-(180 - 102.143)); 
 
     // Angle of endpoint is -37.8
     private static final double ELBOW_ANGLE_TO_WRIST = 30.0 / 14.0; // TODO check
