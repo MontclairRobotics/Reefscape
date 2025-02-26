@@ -9,6 +9,7 @@ import static edu.wpi.first.units.Units.Seconds;
 
 import java.util.Map;
 
+import edu.wpi.first.units.TimeUnit;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.AddressableLED;
@@ -16,6 +17,7 @@ import edu.wpi.first.wpilibj.AddressableLEDBuffer;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.LEDPattern;
+import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.LEDPattern.GradientType;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -42,29 +44,28 @@ public class LEDs extends SubsystemBase {
             ledBuffer = new AddressableLEDBuffer(LENGTH);
             led.start();
         }
-    // public static void scrollingRainbowProgress() {
-        
+    // Usually Returns Blinking Synched with RSL, Currently Not For Testing Purposes 
+    public static LEDPattern holding(Color color) {
+        LEDPattern object = LEDPattern.solid(color);
+        //LEDPattern blinkingObj = object.synchronizedBlink(RobotController::getRSLState);
+        LEDPattern blinkingObj = object.blink(Seconds.of(0.1));
+        return blinkingObj;
+    }
+
+    // public static LEDPattern shot(Color color) {
+    //     LEDPattern shotGamePiece;
+    //     if (DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get() == Alliance.Red){
+    //         shotGamePiece = LEDPattern.gradient(GradientType.kContinuous,Color.kFirstRed, color);
+    //     } else if (DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get() == Alliance.Blue) {
+    //         shotGamePiece = LEDPattern.gradient(GradientType.kContinuous,Color.kFirstBlue, color);
+    //     } else {
+    //         Map<Double, Color> maskSteps = Map.of(0.0, Color.kWhite, 0.5, Color.kBlack);
+    //         LEDPattern base = LEDPattern.rainbow(255, 255);
+    //         LEDPattern mask = LEDPattern.steps(maskSteps).scrollAtRelativeSpeed(Percent.per(Second).of(0.25));
+    //         shotGamePiece = base.mask(mask);
+    //     }
+    //     return shotGamePiece;
     // }
-
-    public static LEDPattern holding() {
-        LEDPattern objectInArm = LEDPattern.solid(Color.kBlue);
-        return objectInArm;
-    }
-
-    public static LEDPattern shot(Color color) {
-        LEDPattern shotGamePiece;
-        if (DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get() == Alliance.Red){
-            shotGamePiece = LEDPattern.gradient(GradientType.kContinuous,Color.kFirstRed, color);
-        } else if (DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get() == Alliance.Blue) {
-            shotGamePiece = LEDPattern.gradient(GradientType.kContinuous,Color.kFirstBlue, color);
-        } else {
-            Map<Double, Color> maskSteps = Map.of(0.0, Color.kWhite, 0.5, Color.kBlack);
-            LEDPattern base = LEDPattern.rainbow(255, 255);
-            LEDPattern mask = LEDPattern.steps(maskSteps).scrollAtRelativeSpeed(Percent.per(Second).of(0.25));
-            shotGamePiece = base.mask(mask);
-        }
-        return shotGamePiece;
-    }
     public static LEDPattern breathingPattern() {
         LEDPattern base;
         if (DriverStation.getAlliance().get() == Alliance.Red) {
@@ -96,22 +97,7 @@ public class LEDs extends SubsystemBase {
     public Command playPatternCommand(LEDPattern pattern) {
         return Commands.run(() -> pattern.applyTo(ledBuffer), this).ignoringDisable(true);
     }
-
     public void periodic(){
-        if(RobotContainer.rollers.getHeldPiece() == GamePiece.None) {
-            if(RobotContainer.elevator.isVelociatated()){
-                playPatternCommand(progress());
-            } else {
-                playPatternCommand(m_scrollingRainbow);
-            }
-        }
-        else if(RobotContainer.rollers.getHeldPiece() == GamePiece.Algae) {
-                playPatternCommand(shot(Color.kSkyBlue));   
-            } 
-        else if(RobotContainer.rollers.getHeldPiece() == GamePiece.Coral) {
-                playPatternCommand(shot(Color.kWhite));
-            }
-        led.setData(ledBuffer);
-        
+        led.setData(ledBuffer); 
     }
 }

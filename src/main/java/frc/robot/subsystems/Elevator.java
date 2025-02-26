@@ -353,6 +353,7 @@ public class Elevator extends SubsystemBase {
      * 
      * @return Height of elevator in meters averaged between the two encoders
      *         if the difference is two much it will send a warning using elastic
+     * uwu 
      */
     public double getExtension() {
         if (Robot.isReal()) {
@@ -364,12 +365,9 @@ public class Elevator extends SubsystemBase {
     public double getHeight() {
         return getExtension() + STARTING_HEIGHT;
     }
-    public double getVelocity(){
-        return leftTalonFX.get() + rightTalonFX.get();
-        
-    }
+
     public boolean isVelociatated(){
-        if(getVelocity() > 0){
+        if(Math.abs(leftTalonFX.get() + rightTalonFX.get()) > 0.1){
             return true;
         }
         else{

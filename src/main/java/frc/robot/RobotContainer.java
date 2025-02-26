@@ -102,7 +102,7 @@ public class RobotContainer {
     // elevator.setDefaultCommand(elevator.joystickControlCommand());
     // arm.setDefaultCommand(arm.joystickControlCommand());
     // elevator.setDefaultCommand(elevator.joystickControlCommand());
-   //leds.setDefaultCommand(leds.playPatternCommand(LEDs.breathingPattern()));
+   leds.setDefaultCommand(elevator.isVelociatated() ? leds.playPatternCommand(LEDs.progress()) : rollers.getHeldPiece() == GamePiece.Algae ? leds.playPatternCommand(LEDs.holding(GamePiece.Algae.getColor())) : rollers.getHeldPiece() == GamePiece.Coral ? leds.playPatternCommand(LEDs.holding(GamePiece.Coral.getColor())) : leds.playPatternCommand(LEDs.breathingPattern()));
     // operatorController.square().whileTrue(arm.goToAngleCommand(Rotation2d.fromDegrees(30)));
 
     /* Operator bindings */
