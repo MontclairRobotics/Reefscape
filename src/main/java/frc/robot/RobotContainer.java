@@ -146,9 +146,9 @@ public class RobotContainer {
       .onFalse(rollers.stopCommand());
 
     //Ratchet Bindings
-    operatorController.L3()
+    operatorController.povLeft()
       .onTrue(ratchet.engageServos());
-    operatorController.R3()
+    operatorController.povRight()
       .onTrue(ratchet.engageServos());
     /* SETS DIFFERENT ROBOT STATES */
 
