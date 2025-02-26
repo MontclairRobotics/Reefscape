@@ -84,12 +84,12 @@ public class RobotContainer {
     /*     Default commands */
     drivetrain.setDefaultCommand(drivetrain.driveJoystickInputCommand());
     rollers.setDefaultCommand(rollers.getDefaultCommand());
-    elevator.setDefaultCommand(Commands.run(() -> {
-      RobotState pos = RobotState.getDefaultForPiece(rollers.getHeldPiece());
-      System.out.println(pos.getHeight());
-      elevator.setExtension(pos.getHeight());
-      }
-    , elevator));
+    // elevator.setDefaultCommand(Commands.run(() -> {
+    //   RobotState pos = RobotState.getDefaultForPiece(rollers.getHeldPiece());
+    //   System.out.println(pos.getHeight());
+    //   elevator.setExtension(pos.getHeight());
+    //   }
+    // , elevator));
     // elevator.setDefaultCommand(
     //   RobotContainer.elevator.setExtensionCommand(0)
     // );
@@ -99,8 +99,8 @@ public class RobotContainer {
         arm.setEndpointAngle(pos.getAngle());
       }
     , arm));
-    // elevator.setDefaultCommand(elevator.joystickControlCommand());
-    // arm.setDefaultCommand(arm.joystickControlCommand());
+    elevator.setDefaultCommand(elevator.joystickControlCommand());
+    //m.setDefaultCommand(arm.joystickControlCommand());
     // elevator.setDefaultCommand(elevator.joystickControlCommand());
    //leds.setDefaultCommand(leds.playPatternCommand(LEDs.breathingPattern()));
     // operatorController.square().whileTrue(arm.goToAngleCommand(Rotation2d.fromDegrees(30)));
@@ -136,9 +136,9 @@ public class RobotContainer {
     testingController.circle().onTrue(arm.setIdleModeCommand(IdleMode.kCoast)).onFalse(arm.setIdleModeCommand(IdleMode.kBrake));
     
     //Coral intake outtake
-    operatorController.L1()
-      .whileTrue(rollers.intakeCoralCommand())
-      .onFalse(rollers.stopCommand());
+    // operatorController.L1()
+    //   .whileTrue(rollers.intakeCoralCommand())
+    //   .onFalse(rollers.stopCommand());
     operatorController.L2()
       .whileTrue(rollers.outtakeCoralCommand())
       .onFalse(rollers.stopCommand());
@@ -146,7 +146,9 @@ public class RobotContainer {
 
     /* SETS DIFFERENT ROBOT STATES */
 
-    operatorController.povDown().whileTrue(arm.setState(RobotState.Intake)).onFalse(arm.stopCommand());
+    operatorController.L1().whileTrue(arm.setState(RobotState.Intake).alongWith(rollers.intakeCoralCommand())).
+    
+    onFalse(arm.stopCommand().alongWith(rollers.stopCommand()));
     
     //L3
 
