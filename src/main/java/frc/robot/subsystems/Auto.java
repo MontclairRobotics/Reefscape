@@ -529,7 +529,7 @@ public class Auto extends SubsystemBase {
      * auto based on an input from
      */
     public void addRobotPoseProgressBar() {
-        isUsingProgressBar = true;
+        isUsingProgressBar = false;
         int index = (int) (
         // multiplies progress from 0 to 1 by the number of poses in our auto paths
         // altogether to get an index

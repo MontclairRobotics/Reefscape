@@ -68,9 +68,9 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     public static final double MAX_SPEED = 5; // TODO: actually set this with units
     public static double MAX_ROT_SPEED = 6.5;
     public static final double MIN_ROT_SPEED = Math.PI * (1.0 / 3.0);
-    public static double FORWARD_ACCEL = 9; // m / s^2
-    public static double SIDE_ACCEL = 9; // m / s^2
-    public static double ROT_ACCEL = 9; // radians / s^2
+    public static double FORWARD_ACCEL = 8; // m / s^2
+    public static double SIDE_ACCEL = 8; // m / s^2
+    public static double ROT_ACCEL = 12; // radians / s^2
     public static double MIN_TRANSLATIONAL_ACCEL = 0.5;
     public static double MIN_ROT_ACCEL = 0.3;
     public static boolean IS_LIMITING_ACCEL = true;
@@ -78,16 +78,15 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     DoublePublisher driveCurrentPub;
     DoublePublisher driveVelocityPub;
 
-
      /* Acceleration limiters for our drivetrain */
      private DynamicSlewRateLimiter forwardLimiter = new DynamicSlewRateLimiter(FORWARD_ACCEL); // TODO: actually set this
      private DynamicSlewRateLimiter strafeLimiter = new DynamicSlewRateLimiter(SIDE_ACCEL); // TODO: actually set this
      private DynamicSlewRateLimiter rotationLimiter = new DynamicSlewRateLimiter(ROT_ACCEL); // TODO: actually set this
 
-    public Tunable forwardAccelTunable = new Tunable("Forward Accel Limit", 9, (value) -> forwardLimiter.setLimit(value));
-    public Tunable sideAccelTunable = new Tunable("Side Accel Limit", 9, (value) -> strafeLimiter.setLimit(value));
-    public Tunable rotAccelTunable = new Tunable("Rotation Accel Limit", 9, (value) -> rotationLimiter.setLimit(value));
-    public Tunable rotMaxSpeedTunable = new Tunable("Rotation Max Speed", Math.PI * 1, (value) -> {
+    public Tunable forwardAccelTunable = new Tunable("Forward Accel Limit", 8, (value) -> forwardLimiter.setLimit(value));
+    public Tunable sideAccelTunable = new Tunable("Side Accel Limit", 8, (value) -> strafeLimiter.setLimit(value));
+    public Tunable rotAccelTunable = new Tunable("Rotation Accel Limit", 12, (value) -> rotationLimiter.setLimit(value));
+    public Tunable rotMaxSpeedTunable = new Tunable("Rotation Max Speed", 6.5, (value) -> {
         MAX_ROT_SPEED = value;
     });
     public Tunable isLimitAccel = new Tunable("Is limiting accel", 1, (value) -> {
@@ -691,6 +690,31 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         resetRotation(Rotation2d.fromDegrees(0));
     }
 
+    public Command toReefAlignBindings() {
+        return Commands.runOnce(() -> {
+            RobotContainer.driverController.triangle()
+            .onTrue(RobotContainer.drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(-60)), false));
+            RobotContainer.driverController.square()
+            .onTrue(RobotContainer.drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(60)), false));
+            RobotContainer.driverController.cross()
+            .onTrue(RobotContainer.drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(120)), false));
+            RobotContainer.driverController.circle()
+            .onTrue(RobotContainer.drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(-120)), false)); 
+        });
+    }
+
+    public Command toRegularAlignBindings() {
+        return Commands.runOnce(() -> {
+            RobotContainer.driverController.triangle()
+            .onTrue(RobotContainer.drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(0)), false));
+            RobotContainer.driverController.square()
+            .onTrue(RobotContainer.drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(90)), false));
+            RobotContainer.driverController.cross()
+            .onTrue(RobotContainer.drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(180)), false));
+            RobotContainer.driverController.circle()
+            .onTrue(RobotContainer.drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(270)), false)); 
+        });
+    }
     /*
      * default drive command
      */
@@ -758,9 +782,9 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         odometryHeading = this.getState().Pose.getRotation();
         isRobotAtAngleSetPoint = thetaController.atSetpoint();
         fieldRelative = !RobotContainer.driverController.L2().getAsBoolean();
-        // strafeLimiter.setLimit(getMaxHorizontalAccel());
-        // forwardLimiter.setLimit(getMaxForwardAccel());
-        // rotationLimiter.setLimit(getMaxRotAccel());
+        strafeLimiter.setLimit(getMaxHorizontalAccel());
+        forwardLimiter.setLimit(getMaxForwardAccel());
+        rotationLimiter.setLimit(getMaxRotAccel());
         
 
 

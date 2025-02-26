@@ -73,6 +73,7 @@ public class RobotContainer {
 
   public RobotContainer() {
     DriverStation.silenceJoystickConnectionWarning(true);
+    //configureDriveTryoutBindings();
     configureBindings();
 
   }
@@ -86,12 +87,12 @@ public class RobotContainer {
     /*     Default commands */
     drivetrain.setDefaultCommand(drivetrain.driveJoystickInputCommand());
     rollers.setDefaultCommand(rollers.getDefaultCommand());
-    elevator.setDefaultCommand(Commands.run(() -> {
-      RobotState pos = RobotState.getDefaultForPiece(rollers.getHeldPiece());
-      System.out.println(pos.getHeight());
-      elevator.setExtension(pos.getHeight());
-      }
-    , elevator));
+    // elevator.setDefaultCommand(Commands.run(() -> {
+    //   RobotState pos = RobotState.getDefaultForPiece(rollers.getHeldPiece());
+    //   System.out.println(pos.getHeight());
+    //   elevator.setExtension(pos.getHeight());
+    //   }
+    // , elevator));
     // elevator.setDefaultCommand(
     //   RobotContainer.elevator.setExtensionCommand(0)
     // );
@@ -101,10 +102,10 @@ public class RobotContainer {
         arm.setEndpointAngle(pos.getAngle());
       }
     , arm));
+    elevator.setDefaultCommand(elevator.joystickControlCommand());
+    //m.setDefaultCommand(arm.joystickControlCommand());
     // elevator.setDefaultCommand(elevator.joystickControlCommand());
-    // arm.setDefaultCommand(arm.joystickControlCommand());
-    // elevator.setDefaultCommand(elevator.joystickControlCommand());
-   //leds.setDefaultCommand(leds.playPatternCommand(LEDs.breathingPattern()));
+   leds.setDefaultCommand(elevator.isVelociatated() ? leds.playPatternCommand(LEDs.progress()) : rollers.getHeldPiece() == GamePiece.Algae ? leds.playPatternCommand(LEDs.holding(GamePiece.Algae.getColor())) : rollers.getHeldPiece() == GamePiece.Coral ? leds.playPatternCommand(LEDs.holding(GamePiece.Coral.getColor())) : leds.playPatternCommand(LEDs.breathingPattern()));
     // operatorController.square().whileTrue(arm.goToAngleCommand(Rotation2d.fromDegrees(30)));
 
     /* Operator bindings */
@@ -138,9 +139,9 @@ public class RobotContainer {
     testingController.circle().onTrue(arm.setIdleModeCommand(IdleMode.kCoast)).onFalse(arm.setIdleModeCommand(IdleMode.kBrake));
     
     //Coral intake outtake
-    operatorController.L1()
-      .whileTrue(rollers.intakeCoralCommand())
-      .onFalse(rollers.stopCommand());
+    // operatorController.L1()
+    //   .whileTrue(rollers.intakeCoralCommand())
+    //   .onFalse(rollers.stopCommand());
     operatorController.L2()
       .whileTrue(rollers.outtakeCoralCommand())
       .onFalse(rollers.stopCommand());
@@ -152,7 +153,9 @@ public class RobotContainer {
       .onTrue(ratchet.engageServos());
     /* SETS DIFFERENT ROBOT STATES */
 
-    operatorController.povDown().whileTrue(arm.setState(RobotState.Intake)).onFalse(arm.stopCommand());
+    operatorController.L1().whileTrue(arm.setState(RobotState.Intake).alongWith(rollers.intakeCoralCommand())).
+    
+    onFalse(arm.stopCommand().alongWith(rollers.stopCommand()));
     
     //L3
 
@@ -239,6 +242,75 @@ public class RobotContainer {
     //zeros gyro
     driverController.touchpad().onTrue(drivetrain.zeroGyroCommand());
     drivetrain.registerTelemetry(telemetryLogger::telemeterize);    
+
+    //Robot relative
+    driverController.L2()
+      .onTrue(drivetrain.toRobotRelativeCommand())
+      .onFalse(drivetrain.toFieldRelativeCommand());
+
+  }
+
+  public void configureDriveTryoutBindings() {
+
+    /* DRIVER BINDINGS */
+    drivetrain.setDefaultCommand(drivetrain.driveJoystickInputCommand());
+
+    //zeros gyro
+    driverController.touchpad().onTrue(drivetrain.zeroGyroCommand());
+    //robot relative
+    driverController.L2().onTrue(drivetrain.toRobotRelativeCommand()).onFalse(drivetrain.toFieldRelativeCommand());
+
+    //90 degree buttons
+    driverController.triangle()
+       .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(0)), false));
+    driverController.square()
+      .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(90)), false));
+    driverController.cross()
+      .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(180)), false));
+    driverController.circle()
+      .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(270)), false)); 
+    
+    driverController.R1().onTrue(drivetrain.toReefAlignBindings()).onFalse(drivetrain.toRegularAlignBindings());
+
+    /* OPERATOR BINDINGS */
+
+    arm.setDefaultCommand(Commands.run(() -> {
+      RobotState pos = RobotState.getDefaultForPiece(rollers.getHeldPiece());
+      arm.setEndpointAngle(pos.getAngle());
+    }, arm));
+
+    elevator.setDefaultCommand(
+      Commands.run(() -> {
+        RobotState pos = RobotState.getDefaultForPiece(rollers.getHeldPiece());
+        elevator.setExtension(pos.getHeight());
+      })
+    );
+
+    //L3
+    operatorController.triangle()
+    .whileTrue((arm.setState(RobotState.L3)).alongWith(elevator.setState(RobotState.L3)))
+    .onFalse((arm.stopCommand()).alongWith(elevator.stopCommand()));
+    //L4
+    operatorController.circle()
+    .whileTrue(arm.setState(RobotState.L4).alongWith(elevator.setState(RobotState.L4)))
+    .onFalse(arm.stopCommand().alongWith(elevator.stopCommand()));
+   // L1
+    operatorController.cross()
+    .whileTrue(arm.setState(RobotState.L1).alongWith(elevator.setState(RobotState.L1)))
+    .onFalse(arm.stopCommand().alongWith(elevator.stopCommand()));
+   // L2
+    operatorController.square()
+    .whileTrue(arm.setState(RobotState.L2).alongWith(elevator.setState(RobotState.L2)))
+    .onFalse(arm.stopCommand().alongWith(elevator.stopCommand()));
+  
+    //Intaking
+    operatorController.L2().whileTrue(rollers.intakeCoralCommand().alongWith(arm.setState(RobotState.Intake)))
+    .onFalse(rollers.stopCommand().alongWith(arm.stopCommand()));
+    //scoring
+    operatorController.R2().whileTrue(rollers.outtakeCoralCommand()).onFalse(rollers.stopCommand());
+    //enables joystick control
+    operatorController.L1().whileTrue(arm.joystickControlCommand()).whileTrue(elevator.joystickControlCommand());
+
 
   }
 
