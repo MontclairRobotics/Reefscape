@@ -9,8 +9,7 @@ public enum RobotState {
     L4 (1.2,Rotation2d.fromDegrees(-53)),
     L3 (0.514,Rotation2d.fromDegrees(-33)),
     L2 (0,Rotation2d.fromDegrees(-17)),
-    L1 (0,Rotation2d.fromDegrees
-    (0)),
+    L1 (0,Rotation2d.fromDegrees(-40)),
     Intake(0, Arm.MAX_ANGLE),
     Processor(0, Rotation2d.fromDegrees(0)),
     Net(0, Rotation2d.fromDegrees(0)),
@@ -64,6 +63,18 @@ public enum RobotState {
 
     public Rotation2d getAngle() {
         return angle;
+    }
+
+    
+    public static boolean isAt(RobotState state) {
+        //checks if arm is at the angle
+        if(Math.abs(state.getAngle().getDegrees() - RobotContainer.arm.getEndpointAngle().getDegrees()) < 1) {
+            //checks if elevator is at the height
+            if(Math.abs(state.getHeight() - RobotContainer.elevator.getExtension()) < .01) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }

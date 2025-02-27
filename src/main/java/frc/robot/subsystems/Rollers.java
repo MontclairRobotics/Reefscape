@@ -10,6 +10,7 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
+import frc.robot.util.RobotState;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -118,7 +119,14 @@ public class Rollers extends SubsystemBase {
     }
 
     public Command outtakeCoralCommand() {
-        return Commands.run(() -> setSpeed(CORAL_OUTTAKE_SPEED), this)
+        return Commands.run(() -> {
+            if(RobotState.isAt(RobotState.Intake)) {
+                setSpeed(0, CORAL_OUTTAKE_SPEED);
+            }
+            else  {
+                setSpeed(CORAL_OUTTAKE_SPEED);
+            }
+        }, this)
                 .finallyDo(() -> {
                     stopMotors();
                     this.heldPiece = GamePiece.None;
