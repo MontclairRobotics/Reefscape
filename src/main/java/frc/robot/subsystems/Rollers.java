@@ -133,6 +133,17 @@ public class Rollers extends SubsystemBase {
                 }).withTimeout(2); // TODO find timeout
     }
 
+    public Command intakeCoralJiggleCommand() {
+        return Commands.run(() -> setSpeed(CORAL_INTAKE_SPEED), this)
+            .until(this::isStalled)
+            .andThen(Commands.sequence(
+                Commands.run(() -> setSpeed(-0.1), this)
+                .withTimeout(0.1)
+                .andThen(intakeCoralCommand())
+            ));
+            
+    }
+
     @Override
     public void periodic() {
         SmartDashboard.putNumber("Right Motor Current", rightMotor.getOutputCurrent());

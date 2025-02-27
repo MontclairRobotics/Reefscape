@@ -280,7 +280,7 @@ public class Arm extends SubsystemBase {
 
         SmartDashboard.putNumber("Arm/preclamped Target", target);
         target = MathUtil.clamp(target, MIN_ANGLE.getRotations(), MAX_ANGLE.getRotations());
-        System.out.println("Target: " + target);
+        // System.out.println("Target: " + target);
         SmartDashboard.putNumber("Arm/Clamped Target", target);
         double wristVoltage = pidController.calculate(getEndpointAngle().getRotations(), target);
 
@@ -293,7 +293,7 @@ public class Arm extends SubsystemBase {
         // else wristVoltage += armFeedforward.calculate(getElbowAngle().getRadians(), 0);
     
         wristVoltage = MathUtil.clamp(wristVoltage, -1, 1);
-        System.out.println(-wristVoltage);
+        // System.out.println(-wristVoltage);
         // TODO do we need feedforward? If so we have to figure out the equation
         // negative voltage brings it up, positive brings it down AFAIK
         voltagePub.set(-wristVoltage);
