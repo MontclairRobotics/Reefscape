@@ -71,7 +71,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     public static double FORWARD_ACCEL = 8; // m / s^2
     public static double SIDE_ACCEL = 8; // m / s^2
     public static double ROT_ACCEL = 12; // radians / s^2
-    public static double MIN_TRANSLATIONAL_ACCEL = 0.5;
+    public static double MIN_TRANSLATIONAL_ACCEL = 1.5;
     public static double MIN_ROT_ACCEL = 0.3;
     public static boolean IS_LIMITING_ACCEL = true;
 
@@ -447,7 +447,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
                     this));
 
     /* The SysId routine to test */
-    private SysIdRoutine m_sysIdRoutineToApply = m_sysIdRoutineTranslation;
+    private SysIdRoutine m_sysIdRoutineToApply = m_sysIdRoutineSteer;
 
     /**
      * Runs the SysId Quasistatic test in the given direction for the routine
@@ -690,31 +690,6 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         resetRotation(Rotation2d.fromDegrees(0));
     }
 
-    public Command toReefAlignBindings() {
-        return Commands.runOnce(() -> {
-            RobotContainer.driverController.triangle()
-            .onTrue(RobotContainer.drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(-60)), false));
-            RobotContainer.driverController.square()
-            .onTrue(RobotContainer.drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(60)), false));
-            RobotContainer.driverController.cross()
-            .onTrue(RobotContainer.drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(120)), false));
-            RobotContainer.driverController.circle()
-            .onTrue(RobotContainer.drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(-120)), false)); 
-        });
-    }
-
-    public Command toRegularAlignBindings() {
-        return Commands.runOnce(() -> {
-            RobotContainer.driverController.triangle()
-            .onTrue(RobotContainer.drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(0)), false));
-            RobotContainer.driverController.square()
-            .onTrue(RobotContainer.drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(90)), false));
-            RobotContainer.driverController.cross()
-            .onTrue(RobotContainer.drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(180)), false));
-            RobotContainer.driverController.circle()
-            .onTrue(RobotContainer.drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(270)), false)); 
-        });
-    }
     /*
      * default drive command
      */

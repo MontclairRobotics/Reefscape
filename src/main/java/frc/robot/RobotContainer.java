@@ -59,8 +59,8 @@ public class RobotContainer {
   public static Ratchet ratchet = new Ratchet();
   public static Drivetrain drivetrain = new Drivetrain();
   public static Elevator elevator = new Elevator();
-  public static Limelight bottomLimelight = new Limelight("Limelight-Bottom", 0, 0, 0, 0);
-  public static Limelight topLimelight = new Limelight("Limelight-Top", 0, 0, 0, 0);
+  public static Limelight bottomLimelight = new Limelight("Limelight-Bottom", 0, 0, 0, 0, false);
+  public static Limelight topLimelight = new Limelight("Limelight-Top", 0, 0, 0, 0, true);
   public static LEDs leds = new LEDs();
   public static Rollers rollers = new Rollers();
   public static Orchestra orchestra = new Orchestra();
@@ -73,7 +73,7 @@ public class RobotContainer {
 
   public RobotContainer() {
     DriverStation.silenceJoystickConnectionWarning(true);
-    //configureDriveTryoutBindings();
+    // configureDriveTryoutBindings();
     configureBindings();
 
   }
@@ -87,22 +87,26 @@ public class RobotContainer {
     /*     Default commands */
     drivetrain.setDefaultCommand(drivetrain.driveJoystickInputCommand());
     rollers.setDefaultCommand(rollers.getDefaultCommand());
-    // elevator.setDefaultCommand(Commands.run(() -> {
-    //   RobotState pos = RobotState.getDefaultForPiece(rollers.getHeldPiece());
-    //   System.out.println(pos.getHeight());
-    //   elevator.setExtension(pos.getHeight());
-    //   }
-    // , elevator));
+    elevator.setDefaultCommand(Commands.run(() -> {
+      RobotState pos = RobotState.getDefaultForPiece(rollers.getHeldPiece());
+      System.out.println(pos.getHeight());
+      elevator.setExtension(pos.getHeight());
+      }
+    , elevator));
     // elevator.setDefaultCommand(
     //   RobotContainer.elevator.setExtensionCommand(0)
     // );
 
     arm.setDefaultCommand(Commands.run(() -> {
-        RobotState pos = RobotState.getDefaultForPiece(rollers.getHeldPiece());
-        arm.setEndpointAngle(pos.getAngle());
+      //  RobotState pos = RobotState.getDefaultForPiece(rollers.getHeldPiece());
+        arm.setEndpointAngle(
+          //pos.getAngle()
+          RobotState.Intake.getAngle()
+          );
       }
     , arm));
-    elevator.setDefaultCommand(elevator.joystickControlCommand());
+    
+    //elevator.setDefaultCommand(elevator.joystickControlCommand());
     //m.setDefaultCommand(arm.joystickControlCommand());
     // elevator.setDefaultCommand(elevator.joystickControlCommand());
    leds.setDefaultCommand(elevator.isVelociatated() ? leds.playPatternCommand(LEDs.progress()) : rollers.getHeldPiece() == GamePiece.Algae ? leds.playPatternCommand(LEDs.holding(GamePiece.Algae.getColor())) : rollers.getHeldPiece() == GamePiece.Coral ? leds.playPatternCommand(LEDs.holding(GamePiece.Coral.getColor())) : leds.playPatternCommand(LEDs.breathingPattern()));
@@ -153,9 +157,8 @@ public class RobotContainer {
       .onTrue(ratchet.engageServos());
     /* SETS DIFFERENT ROBOT STATES */
 
-    operatorController.L1().whileTrue(arm.setState(RobotState.Intake).alongWith(rollers.intakeCoralCommand())).
-    
-    onFalse(arm.stopCommand().alongWith(rollers.stopCommand()));
+    // operatorController.L1().whileTrue(arm.setState(RobotState.Intake).alongWith(rollers.intakeCoralCommand()))
+    // .onFalse(arm.stopCommand().alongWith(rollers.stopCommand()));
     
     //L3
 
@@ -193,6 +196,15 @@ public class RobotContainer {
     // ).onlyWhile(() -> {
     //   return elevator.isSysIDSafe();
     // }));
+
+    testingController.triangle().whileTrue(Commands.sequence(
+      Commands.runOnce(() -> SignalLogger.start()),
+      drivetrain.sysIdDynamic(Direction.kForward),
+      drivetrain.sysIdDynamic(Direction.kReverse),
+      drivetrain.sysIdQuasistatic(Direction.kForward),
+      drivetrain.sysIdQuasistatic(Direction.kReverse),
+      Commands.runOnce(() -> SignalLogger.stop())
+    ));
 
     //resets elevator encoders
     operatorController.touchpad().onTrue(
@@ -261,17 +273,24 @@ public class RobotContainer {
     driverController.L2().onTrue(drivetrain.toRobotRelativeCommand()).onFalse(drivetrain.toFieldRelativeCommand());
 
     //90 degree buttons
-    driverController.triangle()
+    driverController.triangle().and(driverController.R1().negate())
        .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(0)), false));
-    driverController.square()
+    driverController.square().and(driverController.R1().negate())
       .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(90)), false));
-    driverController.cross()
+    driverController.cross().and(driverController.R1().negate())
       .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(180)), false));
-    driverController.circle()
+    driverController.circle().and(driverController.R1().negate())
       .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(270)), false)); 
-    
-    driverController.R1().onTrue(drivetrain.toReefAlignBindings()).onFalse(drivetrain.toRegularAlignBindings());
 
+
+    driverController.triangle().and(driverController.R1())
+            .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(-60)), false));
+    driverController.square().and(driverController.R1())
+            .onTrue(RobotContainer.drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(60)), false));
+    driverController.cross().and(driverController.R1())
+            .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(120)), false));
+    driverController.circle().and(driverController.R1())
+            .onTrue(RobotContainer.drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(-120)), false));
     /* OPERATOR BINDINGS */
 
     arm.setDefaultCommand(Commands.run(() -> {
@@ -283,7 +302,7 @@ public class RobotContainer {
       Commands.run(() -> {
         RobotState pos = RobotState.getDefaultForPiece(rollers.getHeldPiece());
         elevator.setExtension(pos.getHeight());
-      })
+      }, elevator)
     );
 
     //L3
@@ -309,7 +328,7 @@ public class RobotContainer {
     //scoring
     operatorController.R2().whileTrue(rollers.outtakeCoralCommand()).onFalse(rollers.stopCommand());
     //enables joystick control
-    operatorController.L1().whileTrue(arm.joystickControlCommand()).whileTrue(elevator.joystickControlCommand());
+    operatorController.L1()/*.whileTrue(arm.joystickControlCommand())*/.whileTrue(elevator.joystickControlCommand());
 
 
   }

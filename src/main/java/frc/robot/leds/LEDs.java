@@ -68,9 +68,9 @@ public class LEDs extends SubsystemBase {
     // }
     public static LEDPattern breathingPattern() {
         LEDPattern base;
-        if (DriverStation.getAlliance().get() == Alliance.Red) {
+        if (DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get() == Alliance.Red) {
             base = LEDPattern.gradient(GradientType.kDiscontinuous,Color.kFirstRed, Color.kDarkRed);
-        } else if(DriverStation.getAlliance().get() == Alliance.Blue ) {
+        } else if(DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get() == Alliance.Blue ) {
             base = LEDPattern.gradient(GradientType.kDiscontinuous,Color.kFirstBlue, Color.kDarkBlue);
         } else {
             base = LEDPattern.solid(Color.kWhite);

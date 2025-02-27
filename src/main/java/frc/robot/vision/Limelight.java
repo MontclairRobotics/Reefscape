@@ -41,14 +41,20 @@ public class Limelight extends SubsystemBase {
     private double cameraAngle;
     private double cameraOffsetX; // right is positive
     private double cameraOffsetY; //forward is positive
+    private double angleMult;
 
-    public Limelight(String cameraName, double cameraHeightMeters, double cameraAngle, double cameraOffsetX, double cameraOffsetY) {
+    public Limelight(String cameraName, double cameraHeightMeters, double cameraAngle, double cameraOffsetX, double cameraOffsetY, boolean cameraUpsideDown) {
         this.cameraName = cameraName;
         this.cameraHeightMeters = cameraHeightMeters;
         this.cameraAngle = cameraAngle;
         this.cameraOffsetX = cameraOffsetX;
         this.cameraOffsetY = cameraOffsetY;
         LimelightHelpers.SetFiducialIDFiltersOverride(cameraName, validIDs);
+        if (cameraUpsideDown) {
+            angleMult = -1;
+        } else {
+            angleMult = 1;
+        }
     }
 
     // might not be needed
@@ -75,63 +81,61 @@ public class Limelight extends SubsystemBase {
         return targetDebouncer.calculate(hasMatch);
     }
 
-    // public void poseEstimationMegatag2() {
+    public void poseEstimationMegatag2() {
 
-    //     // TODO does the angle need to be wrapped between 0 and 360
-    //     LimelightHelpers.SetRobotOrientation(cameraName, RobotContainer.drivetrain.getWrappedHeading().getDegrees(), 0, 0, 0, 0, 0);
-    //     mt2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(cameraName);
+        // TODO does the angle need to be wrapped between 0 and 360
+        LimelightHelpers.SetRobotOrientation(cameraName, RobotContainer.drivetrain.getWrappedHeading().getDegrees(), 0, 0, 0, 0, 0);
+        mt2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(cameraName);
         
-    //     //TODO simulate limelight properly
-    //     if (mt2 != null) { 
-    //         if (mt2.tagCount == 0) {
-    //             //rejects current measurement if there are no aprilTags
-    //             shouldRejectUpdate = true;
-    //         }
-    //         if (Math.abs(RobotContainer.drivetrain.getCurrentSpeeds().omegaRadiansPerSecond) > angleVelocityTolerance) {
-    //             shouldRejectUpdate = true;
-    //         }
-    //         //adds vision measurement if conditions are met
-    //         if (!shouldRejectUpdate) {
-    //             // RobotContainer.drivetrain.swerveDrive.setVisionMeasurementStdDevs(VecBuilder.fill(.7,.7,9999999));
-    //             RobotContainer.drivetrain.addVisionMeasurement(
-    //                     mt2.pose,
-    //                     mt2.timestampSeconds);
-    //         }
-    //     }
-    // }
+        //TODO simulate limelight properly
+        if (mt2 != null) { 
+            if (mt2.tagCount == 0) {
+                //rejects current measurement if there are no aprilTags
+                shouldRejectUpdate = true;
+            }
+            if (Math.abs(RobotContainer.drivetrain.getCurrentSpeeds().omegaRadiansPerSecond) > angleVelocityTolerance) {
+                shouldRejectUpdate = true;
+            }
+            //adds vision measurement if conditions are met
+            if (!shouldRejectUpdate) {
+                // RobotContainer.drivetrain.swerveDrive.setVisionMeasurementStdDevs(VecBuilder.fill(.7,.7,9999999));
+                RobotContainer.drivetrain.addVisionMeasurement(
+                        mt2.pose,
+                        mt2.timestampSeconds);
+            }
+        }
+    }
 
     //TODO: Do we need these / check if the trig is right
     
 
     public double getDistanceToTag(double tagHeightMeters) {
         if (hasValidTarget()) {
-            double distance = (tagHeightMeters - cameraHeightMeters)
-                    / Math.tan(
-                            (Math.PI / 180.0)
-                                    * (cameraAngle + getTY()));
-            return distance;
+            double distance = getStraightDistanceToTag(tagHeightMeters) - cameraOffsetY;
+            return distance * Math.cos((Math.PI / 180.0) * getTX());
         }
         return 0;
     }
 
     public double getStraightDistanceToTag(double tagHeightMeters) {
         if (hasValidTarget()) {
-            double distance = getDistanceToTag(tagHeightMeters);
-            distance = distance / Math.cos(getTX() * (Math.PI / 180.0));
+            double distance = (tagHeightMeters - cameraHeightMeters)
+                    / Math.tan(
+                            (Math.PI / 180.0)
+                                    * (cameraAngle + getTY()));
             return distance + cameraOffsetY;
         }
         return 0;
     }
 
     public double getHorizontalDistanceToTag(double tagHeightMeters) {
-        double distance = getDistanceToTag(tagHeightMeters);
-        try {
-            distance = distance / Math.sin(getTX() * (Math.PI / 180.0));
-        } catch (Exception e) {
-            e.printStackTrace();
-            distance = 0;
+        if (hasValidTarget()) {
+            double distance = getStraightDistanceToTag(tagHeightMeters) - cameraOffsetY;
+            
+            distance = distance * Math.tan(getTX() * (Math.PI / 180.0));
+            return distance + cameraOffsetX;
         }
-        return distance + cameraOffsetX;
+        return 0;
     }
 
     public double getDistanceToCoralStation() {
@@ -163,11 +167,11 @@ public class Limelight extends SubsystemBase {
     }
 
     public double getTX() {
-        return LimelightHelpers.getTX(cameraName);
+        return LimelightHelpers.getTX(cameraName) * angleMult;
     }
 
     public double getTY() {
-        return LimelightHelpers.getTY(cameraName);
+        return LimelightHelpers.getTY(cameraName) * angleMult;
     }
 
     public DoubleSupplier tySupplier() {
