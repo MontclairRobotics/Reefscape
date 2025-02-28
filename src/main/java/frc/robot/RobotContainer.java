@@ -19,6 +19,7 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.net.PortForwarder;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -59,8 +60,8 @@ public class RobotContainer {
   public static Ratchet ratchet = new Ratchet();
   public static Drivetrain drivetrain = new Drivetrain();
   public static Elevator elevator = new Elevator();
-  public static Limelight bottomLimelight = new Limelight("Limelight-Bottom", 0, 0, 0, 0, false);
-  public static Limelight topLimelight = new Limelight("Limelight-Top", 0, 0, 0, 0, true);
+  public static Limelight leftLimelight = new Limelight("limelight-left", 0, 0, 0, 0, true);
+  public static Limelight rightLimelight = new Limelight("limelight-right", 0, 0, 0, 0, false);
   public static LEDs leds = new LEDs();
   public static Rollers rollers = new Rollers();
   public static Orchestra orchestra = new Orchestra();
@@ -73,8 +74,17 @@ public class RobotContainer {
 
   public RobotContainer() {
     DriverStation.silenceJoystickConnectionWarning(true);
-     configureDriveTryoutBindings();
-    //configureBindings();
+    //  configureDriveTryoutBindings();
+    configureBindings();
+    // Enables limelights when tethered over USB
+
+    // https://docs.limelightvision.io/docs/docs-limelight/getting-started/FRC/best-practices
+    // http://roborio-555-FRC.local:5801 will now forward to limelight-left.local:5801
+    // http://roborio-555-FRC.local:5811 will now forward to limelight-right.local:5801
+    for (int i = 5800; i <= 5807; i++) {
+      PortForwarder.add(i, "limelight-left.local", i);
+      PortForwarder.add(i+10, "limelight-right.local", i+10);
+    }
 
   }
 

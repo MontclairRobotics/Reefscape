@@ -478,7 +478,7 @@ public class Auto extends SubsystemBase {
                         if (fourth == "1") {
                             offset = TagOffset.LEFT_INTAKE;
                         } // TODO finish
-                        autoCommand.addCommands(new AlignToAprilTagCommandOffset(RobotContainer.topLimelight, raiseTime, pathTime, raiseTime, i));
+                        autoCommand.addCommands(new AlignToAprilTagCommandOffset(RobotContainer.rightLimelight, raiseTime, pathTime, raiseTime, i));
 
                     } else {
                         System.out.println("Ideal Trajectory failed to load, skipping path");

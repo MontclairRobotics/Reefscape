@@ -89,10 +89,10 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     public Tunable rotMaxSpeedTunable = new Tunable("Rotation Max Speed", 6.5, (value) -> {
         MAX_ROT_SPEED = value;
     });
-    public Tunable isLimitAccel = new Tunable("Is limiting accel", 1, (value) -> {
-        if(value == 1) IS_LIMITING_ACCEL = true;
-        if(value == 0) IS_LIMITING_ACCEL = false;
-    });
+    // public Tunable isLimitAccel = new Tunable("Is limiting accel", 1, (value) -> {
+    //     if(value == 1) IS_LIMITING_ACCEL = true;
+    //     if(value == 0) IS_LIMITING_ACCEL = false;
+    // });
 
     public static final Pose2d[] BLUE_SCORING_POSES = {
             // new Pose2d(new Translation2d(1.091, 1.060), new
@@ -139,7 +139,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     public PIDController thetaController = new PIDController(4.5, 0, .2);
 
     /* variable to store our heading */
-    private Rotation2d odometryHeading;
+    private Rotation2d odometryHeading = new Rotation2d();
 
     // private Pigeon2 gyro = this.getPigeon2(); //they say not to use this like
     // this, allegedly
@@ -617,7 +617,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     // }
 
     public Command followPathToAprilTagLocation() {
-        return AutoBuilder.pathfindToPose(getPoseToPathFindTo(RobotContainer.bottomLimelight), DEFAULT_CONSTRAINTS);
+        return AutoBuilder.pathfindToPose(getPoseToPathFindTo(RobotContainer.leftLimelight), DEFAULT_CONSTRAINTS);
     }
 
     /*
@@ -754,14 +754,16 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
        // System.out.println(forwardAccelTunable.getValue());
         // Not sure if this is correct at all
-        odometryHeading = this.getState().Pose.getRotation();
+        odometryHeading = getRobotPose().getRotation();
         isRobotAtAngleSetPoint = thetaController.atSetpoint();
         fieldRelative = !RobotContainer.driverController.L2().getAsBoolean();
         strafeLimiter.setLimit(getMaxHorizontalAccel());
         forwardLimiter.setLimit(getMaxForwardAccel());
         rotationLimiter.setLimit(getMaxRotAccel());
         
-
+        if (DriverStation.isTeleopEnabled()) {
+            Auto.field.setRobotPose(getRobotPose());
+        }
 
         double driveSpeedModule0 = getState().ModuleStates[0].speedMetersPerSecond;
         double driveCurrentModule0 = getModule(0).getDriveMotor().getStatorCurrent().getValueAsDouble();

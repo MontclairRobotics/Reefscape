@@ -70,8 +70,9 @@ public class Elevator extends SubsystemBase {
     public static final double STARTING_HEIGHT = 0.98;// 0.9718607; // (meters) - distance between top bar and ground
                                                       // (no
                                                       // extension)
-    public static final double MAX_EXTENSION = 1.22; //1.4189392089843749; // (meters) - distance bewteen max height and
-                                                                   // starting height
+    public static final double MAX_EXTENSION = 1.22; // 1.4189392089843749; // (meters) - distance bewteen max height
+                                                     // and
+                                                     // starting height
     public static final double MAX_HEIGHT = MAX_EXTENSION + STARTING_HEIGHT; // (meters) - distance between top bar and
                                                                              // ground (fully extended)
     private static final double SLOW_DOWN_ZONE = 7.0; // The percent at the top and bottom of the elevator out of the
@@ -187,8 +188,8 @@ public class Elevator extends SubsystemBase {
         rightTalonFX = new TalonFX(RIGHT_MOTOR_ID, "Drivetrain");
 
         // slot0Configs = new Slot0Configs()
-        //         .withKP(1.4973).withKI(0).withKD(0.098147)
-        //         .withKS(0.058548).withKV(0.10758).withKA(0.0013553).withKG(0.069812)
+        // .withKP(1.4973).withKI(0).withKD(0.098147)
+        // .withKS(0.058548).withKV(0.10758).withKA(0.0013553).withKG(0.069812)
         slot0Configs = new Slot0Configs()
                 .withKP(1.4973).withKI(0).withKD(0.098147)
                 .withKS(0.058548).withKV(0.10758).withKA(0.0013553).withKG(0.22)
@@ -259,40 +260,46 @@ public class Elevator extends SubsystemBase {
         elevatorMechanism = rootMechanism
                 .append(new MechanismLigament2d("Elevator", STARTING_HEIGHT, 90));
 
+        Tunable kG = new Tunable("Elevator kG", slot0Configs.kG, (val) -> {
+            elevatorFeedforward = new ElevatorFeedforward(elevatorFeedforward.getKs(), val,
+                    elevatorFeedforward.getKv());
+        });
 
-                Tunable kG = new Tunable("Elevator kG", slot0Configs.kG, (val) -> {
-                    elevatorFeedforward = new ElevatorFeedforward(elevatorFeedforward.getKs(), val, elevatorFeedforward.getKv());
-                });
-            
-                Tunable kV = new Tunable("Elevator kV", slot0Configs.kV, (val) -> {
-                    elevatorFeedforward = new ElevatorFeedforward(elevatorFeedforward.getKs(), elevatorFeedforward.getKg(), val);
-                });
-            
-                Tunable kP = new Tunable("Elevator kP", 8.2697, (val) -> {
-                    pidController = new ProfiledPIDController(val, pidController.getI(), pidController.getD(), new Constraints(MAX_VELOCITY_RPS, MAX_ACCEL_RPS));
-                });
-            
-                Tunable kI = new Tunable("Elevator kI", 0, (val) -> {
-                    pidController = new ProfiledPIDController(pidController.getP(), val, pidController.getD(), new Constraints(MAX_VELOCITY_RPS, MAX_ACCEL_RPS));
-                });
-            
-                Tunable kD = new Tunable("Elevator kD", .068398, (val) -> {
-                    pidController = new ProfiledPIDController(pidController.getP(), pidController.getI(), val, new Constraints(MAX_VELOCITY_RPS, MAX_ACCEL_RPS));
-                });
+        Tunable kV = new Tunable("Elevator kV", slot0Configs.kV, (val) -> {
+            elevatorFeedforward = new ElevatorFeedforward(elevatorFeedforward.getKs(), elevatorFeedforward.getKg(),
+                    val);
+        });
+
+        Tunable kP = new Tunable("Elevator kP", 8.2697, (val) -> {
+            pidController = new ProfiledPIDController(val, pidController.getI(), pidController.getD(),
+                    new Constraints(MAX_VELOCITY_RPS, MAX_ACCEL_RPS));
+        });
+
+        Tunable kI = new Tunable("Elevator kI", 0, (val) -> {
+            pidController = new ProfiledPIDController(pidController.getP(), val, pidController.getD(),
+                    new Constraints(MAX_VELOCITY_RPS, MAX_ACCEL_RPS));
+        });
+
+        Tunable kD = new Tunable("Elevator kD", .068398, (val) -> {
+            pidController = new ProfiledPIDController(pidController.getP(), pidController.getI(), val,
+                    new Constraints(MAX_VELOCITY_RPS, MAX_ACCEL_RPS));
+        });
     }
 
     /**
      * 
      * @param state the mechanism state to raise to
-     * @return the amount of estimated time, in seconds, that it will take to raise the elevator
+     * @return the amount of estimated time, in seconds, that it will take to raise
+     *         the elevator
      */
     public double getRaiseTime(RobotState state) {
-        double percentExtension = Math.abs((state.getHeight() - this.getExtension())/MAX_EXTENSION);
+        double percentExtension = Math.abs((state.getHeight() - this.getExtension()) / MAX_EXTENSION);
         System.out.println("Height of pose: " + state.getHeight());
         System.out.println("Extension: " + this.getExtension());
         System.out.println("Percent extension: " + percentExtension);
-        return Math.pow(percentExtension,0.3) + 0.8*percentExtension + 1;
+        return Math.pow(percentExtension, 0.3) + 0.8 * percentExtension + 1;
     }
+
     /*
      * Sets the elevator target to a height in meters off of the floor
      * NOT relative to the starting position
@@ -354,7 +361,7 @@ public class Elevator extends SubsystemBase {
      * 
      * @return Height of elevator in meters averaged between the two encoders
      *         if the difference is two much it will send a warning using elastic
-     * uwu 
+     *         uwu
      */
     public double getExtension() {
         if (Robot.isReal()) {
@@ -367,13 +374,12 @@ public class Elevator extends SubsystemBase {
         return getExtension() + STARTING_HEIGHT;
     }
 
-    public boolean isVelociatated(){
-        if(Math.abs(leftTalonFX.get() + rightTalonFX.get()) > 0.1){
-            return true;
-        }
-        else{
-            return false;
-        }
+    public double getVelocity() {
+        return (leftTalonFX.getVelocity().getValueAsDouble() + rightTalonFX.getVelocity().getValueAsDouble()) / 2.0;
+    }
+
+    public boolean isVelociatated() {
+        return Math.abs(getVelocity()) > 0.1;
     }
 
     public boolean atSetpoint() {
@@ -403,8 +409,9 @@ public class Elevator extends SubsystemBase {
      * 
      */
     public void joystickControl() {
-        // extensionSetpointMeters = getExtension(); // TODO needed? Worried atSetpoint will misbehave, though it shouldn't
-                                                  // ever be used unless PID control is running
+        // extensionSetpointMeters = getExtension(); // TODO needed? Worried atSetpoint
+        // will misbehave, though it shouldn't
+        // ever be used unless PID control is running
         double voltage = Math.pow(-MathUtil.applyDeadband(RobotContainer.operatorController.getLeftY(), 0.2), 3) * 12;
 
         // voltage = accelerationLimiter.calculate(voltage);
@@ -539,12 +546,11 @@ public class Elevator extends SubsystemBase {
      * @param extension meters, the distance from top bar to floor
      */
     public void setHeight(double height) {
-        if(!RobotContainer.ratchet.ratchetEngaged){
+        if (RobotContainer.ratchet.ratchetEngaged) {
+            return;
+        }
         double extension = height - STARTING_HEIGHT;
         setExtension(extension);
-        }else{
-            Commands.none();
-        }
     }
 
     /**
@@ -556,6 +562,9 @@ public class Elevator extends SubsystemBase {
      *                  top bar
      */
     public void setExtension(double extension) {
+        if (RobotContainer.ratchet.ratchetEngaged) {
+            return;
+        }
         extensionSetpointMeters = extension;
         if (extension > MAX_EXTENSION) {
             Elastic.sendNotification(new Notification(
@@ -623,8 +632,9 @@ public class Elevator extends SubsystemBase {
         // rightTalonFX.setPosition(0);
         // } //TODO: check
         double height = getHeight();
-        stage2PosePub.set(new Pose3d(-0.103, 0, 0.14 + Math.max(0, height-STAGE2_MAX_HEIGHT), Rotation3d.kZero));
-        // stage2PosePub.set(new Pose3d(0, 0, 0 + Math.max(0, height-STAGE2_MAX_HEIGHT), Rotation3d.kZero));
+        stage2PosePub.set(new Pose3d(-0.103, 0, 0.14 + Math.max(0, height - STAGE2_MAX_HEIGHT), Rotation3d.kZero));
+        // stage2PosePub.set(new Pose3d(0, 0, 0 + Math.max(0, height-STAGE2_MAX_HEIGHT),
+        // Rotation3d.kZero));
         stage3PosePub.set(new Pose3d(-0.103, 0, 0.165 + height - STARTING_HEIGHT, Rotation3d.kZero));
     }
 

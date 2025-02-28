@@ -4,6 +4,10 @@ import java.util.function.DoubleSupplier;
 
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
+import edu.wpi.first.networktables.DoublePublisher;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -30,19 +34,23 @@ public class Limelight extends SubsystemBase {
     /* INSTANCE VARIABLES */
     private int tagCount;
     private int[] validIDs = {}; // TODO: set these
-    private String cameraName;
+    public String cameraName;
     private Debouncer targetDebouncer = new Debouncer(TARGET_DEBOUNCE_TIME, DebounceType.kFalling);
-    private boolean shouldRejectUpdate;
-    private LimelightHelpers.PoseEstimate mt2;
 
-    private double angleVelocityTolerance = 540 * Math.PI / 180; // in radians per sec
+    public static final double angleVelocityTolerance = 540 * Math.PI / 180; // in radians per sec
 
     private double cameraHeightMeters;
-    private double cameraAngle;
+    public double cameraAngle;
     private double cameraOffsetX; // right is positive
     private double cameraOffsetY; //forward is positive
     private double angleMult;
+    
+    private DoublePublisher yDistPub;
+    private DoublePublisher xDistPub;
+    private DoublePublisher horizontalDistPub;
 
+    // TODO setup camera IPs?
+    // https://docs.limelightvision.io/docs/docs-limelight/getting-started/FRC/best-practices
     public Limelight(String cameraName, double cameraHeightMeters, double cameraAngle, double cameraOffsetX, double cameraOffsetY, boolean cameraUpsideDown) {
         this.cameraName = cameraName;
         this.cameraHeightMeters = cameraHeightMeters;
@@ -55,6 +63,14 @@ public class Limelight extends SubsystemBase {
         } else {
             angleMult = 1;
         }
+
+        NetworkTableInstance inst = NetworkTableInstance.getDefault();
+        NetworkTable lightTable = inst.getTable(cameraName);
+        
+        yDistPub = lightTable.getDoubleTopic("Y Distance").publish();
+        xDistPub = lightTable.getDoubleTopic("X Distance").publish();
+        horizontalDistPub = lightTable.getDoubleTopic("Horizontal Distance").publish();
+
     }
 
     // might not be needed
@@ -84,10 +100,24 @@ public class Limelight extends SubsystemBase {
     public void poseEstimationMegatag2() {
 
         // TODO does the angle need to be wrapped between 0 and 360
-        LimelightHelpers.SetRobotOrientation(cameraName, RobotContainer.drivetrain.getWrappedHeading().getDegrees(), 0, 0, 0, 0, 0);
-        mt2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(cameraName);
-        
-        //TODO simulate limelight properly
+
+        // https://docs.limelightvision.io/docs/docs-limelight/pipeline-apriltag/apriltag-robot-localization-megatag2#using-limelight-4s-built-in-imu-with-imumode_set--setimumode
+        // https://docs.limelightvision.io/docs/docs-limelight/software-change-log#limelight-os-20251-final-release---22425-test-release---21825
+        if (DriverStation.isDisabled()) {
+            LimelightHelpers.SetIMUMode(cameraName, 1); // If not moving reset internal IMU       
+            // LimelightHelpers.setLimelightNTDouble(cameraName, "throttle_set", 200); // manage thermals
+        } else {
+            LimelightHelpers.SetIMUMode(cameraName, 2); // if moving use builtin, maybe change to 4
+            // LimelightHelpers.setLimelightNTDouble(cameraName, "throttle_set", 0); //TODO check needs to be 1? // manage thermals
+        }
+
+        System.out.println(RobotContainer.drivetrain.getWrappedHeading().getDegrees());
+        double angle = (RobotContainer.drivetrain.getWrappedHeading().getDegrees() + 360) % 360;
+        LimelightHelpers.SetRobotOrientation(cameraName, angle, 0, 0, 0, 0, 0);
+        LimelightHelpers.PoseEstimate mt2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(cameraName);
+
+
+        boolean shouldRejectUpdate = false;
         if (mt2 != null) { 
             if (mt2.tagCount == 0) {
                 //rejects current measurement if there are no aprilTags
@@ -112,7 +142,7 @@ public class Limelight extends SubsystemBase {
     public double getDistanceToTag(double tagHeightMeters) {
         if (hasValidTarget()) {
             double distance = getStraightDistanceToTag(tagHeightMeters) - cameraOffsetY;
-            return distance * Math.cos((Math.PI / 180.0) * getTX());
+            return distance / Math.cos((Math.PI / 180.0) * getTX());
         }
         return 0;
     }
@@ -203,7 +233,10 @@ public class Limelight extends SubsystemBase {
 
     public void periodic() {
         // tagID = (int) Limetable.getEntry("tid").getDouble(-1);
-       // poseEstimationMegatag2();
+       poseEstimationMegatag2();
+       xDistPub.set(getHorizontalDistanceToReef());
+       yDistPub.set(getStraightDistanceToReef());
+       horizontalDistPub.set(getDistanceToReef());
     }
 
     public Command ifHasTarget(Command cmd) {
