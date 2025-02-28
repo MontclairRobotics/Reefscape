@@ -44,6 +44,7 @@ import frc.robot.util.GamePiece;
 import frc.robot.util.PoseUtils;
 import frc.robot.util.TagOffset;
 import frc.robot.util.TunerConstants;
+import frc.robot.vision.ElevatorLimelight;
 import frc.robot.vision.Limelight;
 
 
@@ -62,6 +63,7 @@ public class RobotContainer {
   public static Elevator elevator = new Elevator();
   public static Limelight leftLimelight = new Limelight("limelight-left", 0, 0, 0, 0, true);
   public static Limelight rightLimelight = new Limelight("limelight-right", 0, 0, 0, 0, false);
+  public static ElevatorLimelight elevatorLimelight = new ElevatorLimelight("limelight-elevator", 0, 0, 0, 0, true);
   public static LEDs leds = new LEDs();
   public static Rollers rollers = new Rollers();
   public static Orchestra orchestra = new Orchestra();

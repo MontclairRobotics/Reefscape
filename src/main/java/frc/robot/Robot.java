@@ -57,6 +57,9 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void disabledInit() {
+    RobotContainer.leftLimelight.disable();
+    RobotContainer.rightLimelight.disable();
+    RobotContainer.elevatorLimelight.disable();
   }
 
   @Override
@@ -71,6 +74,9 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void disabledExit() {
+    RobotContainer.leftLimelight.enable();
+    RobotContainer.rightLimelight.enable();
+    RobotContainer.elevatorLimelight.enable();
   }
 
   @Override
@@ -98,7 +104,7 @@ public class Robot extends LoggedRobot {
       m_autonomousCommand.cancel();
     }
 
-   // Elastic.selectTab("Teleoperated");
+    // Elastic.selectTab("Teleoperated");
   }
 
   @Override

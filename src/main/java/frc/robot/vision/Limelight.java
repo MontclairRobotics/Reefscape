@@ -97,19 +97,21 @@ public class Limelight extends SubsystemBase {
         return targetDebouncer.calculate(hasMatch);
     }
 
+    public void disable() {
+        // https://docs.limelightvision.io/docs/docs-limelight/pipeline-apriltag/apriltag-robot-localization-megatag2#using-limelight-4s-built-in-imu-with-imumode_set--setimumode
+        // https://docs.limelightvision.io/docs/docs-limelight/software-change-log#limelight-os-20251-final-release---22425-test-release---21825
+        LimelightHelpers.SetIMUMode(cameraName, 1); // If not moving reset internal IMU       
+        // LimelightHelpers.setLimelightNTDouble(cameraName, "throttle_set", 200); // manage thermals
+    }
+
+    public void enable() {
+        LimelightHelpers.SetIMUMode(cameraName, 2); // if moving use builtin, maybe change to 4
+        // LimelightHelpers.setLimelightNTDouble(cameraName, "throttle_set", 0); //TODO check needs to be 1? // manage thermals
+    }
+
     public void poseEstimationMegatag2() {
 
         // TODO does the angle need to be wrapped between 0 and 360
-
-        // https://docs.limelightvision.io/docs/docs-limelight/pipeline-apriltag/apriltag-robot-localization-megatag2#using-limelight-4s-built-in-imu-with-imumode_set--setimumode
-        // https://docs.limelightvision.io/docs/docs-limelight/software-change-log#limelight-os-20251-final-release---22425-test-release---21825
-        if (DriverStation.isDisabled()) {
-            LimelightHelpers.SetIMUMode(cameraName, 1); // If not moving reset internal IMU       
-            // LimelightHelpers.setLimelightNTDouble(cameraName, "throttle_set", 200); // manage thermals
-        } else {
-            LimelightHelpers.SetIMUMode(cameraName, 2); // if moving use builtin, maybe change to 4
-            // LimelightHelpers.setLimelightNTDouble(cameraName, "throttle_set", 0); //TODO check needs to be 1? // manage thermals
-        }
 
         System.out.println(RobotContainer.drivetrain.getWrappedHeading().getDegrees());
         double angle = (RobotContainer.drivetrain.getWrappedHeading().getDegrees() + 360) % 360;
