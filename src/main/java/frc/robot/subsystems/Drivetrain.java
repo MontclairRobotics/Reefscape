@@ -7,6 +7,7 @@ import frc.robot.util.TunerConstants;
 import frc.robot.util.TunerConstants.TunerSwerveDrivetrain;
 import frc.robot.util.simulation.MapleSimSwerveDrivetrain;
 import frc.robot.vision.Limelight;
+import frc.robot.vision.LimelightHelpers;
 
 import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Volts;
@@ -193,6 +194,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         configurePathPlanner();
 
         resetPose(new Pose2d(3, 3, Rotation2d.fromDegrees(0)));
+        // resetPose(LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight-left").pose);
 
         RobotConfig config = null;
         try {
@@ -368,6 +370,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         prevSetpoint = setpointGen.generateSetpoint(
             prevSetpoint, // The previous setpoint
             speeds, // The desired target speeds
+            new PathConstraints(MAX_SPEED, getMaxForwardAccel(), getMaxRotSpeed(), getMaxRotAccel()),
             0.02 // The loop time of the robot code, in seconds
         );
 
@@ -376,6 +379,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
         SwerveRequest req = new SwerveRequest.ApplyRobotSpeeds()
                                     .withSpeeds(speeds)
+                                    .withDriveRequestType(DriveRequestType.OpenLoopVoltage)
                                     .withWheelForceFeedforwardsX(prevSetpoint.feedforwards().robotRelativeForcesXNewtons())
                                     .withWheelForceFeedforwardsY(prevSetpoint.feedforwards().robotRelativeForcesYNewtons());
 
@@ -497,7 +501,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         // if(!Robot.isReal())
         // currentPose = this.mapleSimSwerveDrivetrain.getSimulatedPose();
         currentPose = this.getRobotPose();
-        System.out.println(currentPose);
+        // System.out.println(currentPose);
         closestPose = PoseUtils.flipPoseAlliance(posArr[0]);
         for (Pose2d pos : posArr) {
             pos = PoseUtils.flipPoseAlliance(pos);
@@ -751,7 +755,6 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
     @Override
     public void periodic() {
-
        // System.out.println(forwardAccelTunable.getValue());
         // Not sure if this is correct at all
         odometryHeading = getRobotPose().getRotation();

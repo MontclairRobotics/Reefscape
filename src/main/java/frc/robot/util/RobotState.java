@@ -68,9 +68,9 @@ public enum RobotState {
     
     public static boolean isAt(RobotState state) {
         //checks if arm is at the angle
-        if(Math.abs(state.getAngle().getDegrees() - RobotContainer.arm.getEndpointAngle().getDegrees()) < 1) {
+        if(Math.abs(state.getAngle().getDegrees() - RobotContainer.arm.getEndpointAngle().getDegrees()) < 5) {
             //checks if elevator is at the height
-            if(Math.abs(state.getHeight() - RobotContainer.elevator.getExtension()) < .01) {
+            if(Math.abs(state.getHeight() - RobotContainer.elevator.getExtension()) < .05) {
                 return true;
             }
         }

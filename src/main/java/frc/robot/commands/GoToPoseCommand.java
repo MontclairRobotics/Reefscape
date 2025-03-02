@@ -2,6 +2,7 @@ package frc.robot.commands;
 
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -19,6 +20,7 @@ import frc.robot.RobotContainer;
 import frc.robot.subsystems.Auto;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.util.TagOffset;
+import frc.robot.util.Tunable;
 import frc.robot.util.TunerConstants;
 
 public class GoToPoseCommand extends Command {
@@ -95,8 +97,8 @@ public class GoToPoseCommand extends Command {
     public GoToPoseCommand(TagOffset direction) {
         this.direction = direction; //sets the direction
         addRequirements(RobotContainer.drivetrain); //requires the drivetrain
-        xController = new PIDController(5, 0, .3); //creates the PIDControllers
-        yController = new PIDController(5, 0, .3);
+        xController = new PIDController(4.5, 0, .05); //creates the PIDControllers
+        yController = new PIDController(4.5, 0, .05); //TODO tolerances
         thetaController = RobotContainer.drivetrain.thetaController;
     }
 
@@ -116,7 +118,7 @@ public class GoToPoseCommand extends Command {
         double omegaSpeed = thetaController.calculate(currentPose.getRotation().getRadians());
 
         //sets control output to the drivetrain
-        RobotContainer.drivetrain.drive(xSpeed, ySpeed, omegaSpeed, true, false);
+        RobotContainer.drivetrain.driveWithSetpoint(xSpeed, ySpeed, omegaSpeed, true, false);
     }
 
     @Override

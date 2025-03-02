@@ -2,8 +2,13 @@ package frc.robot.vision;
 
 import java.util.function.DoubleSupplier;
 
+import com.ctre.phoenix6.Utils;
+
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -113,11 +118,11 @@ public class Limelight extends SubsystemBase {
 
         // TODO does the angle need to be wrapped between 0 and 360
 
-        System.out.println(RobotContainer.drivetrain.getWrappedHeading().getDegrees());
+        // System.out.println(RobotContainer.drivetrain.getWrappedHeading().getDegrees());
         double angle = (RobotContainer.drivetrain.getWrappedHeading().getDegrees() + 360) % 360;
         LimelightHelpers.SetRobotOrientation(cameraName, angle, 0, 0, 0, 0, 0);
         LimelightHelpers.PoseEstimate mt2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(cameraName);
-
+        // System.out.println(Utils.getCurrentTimeSeconds());
 
         boolean shouldRejectUpdate = false;
         if (mt2 != null) { 
@@ -131,9 +136,11 @@ public class Limelight extends SubsystemBase {
             //adds vision measurement if conditions are met
             if (!shouldRejectUpdate) {
                 // RobotContainer.drivetrain.swerveDrive.setVisionMeasurementStdDevs(VecBuilder.fill(.7,.7,9999999));
+                // System.out.println(Utils.getCurrentTimeSeconds() - mt2.timestampSeconds);
                 RobotContainer.drivetrain.addVisionMeasurement(
                         mt2.pose,
-                        mt2.timestampSeconds);
+                        Utils.fpgaToCurrentTime(mt2.timestampSeconds),
+                        VecBuilder.fill(0.000716, 0.0003, Double.POSITIVE_INFINITY));
             }
         }
     }
@@ -203,7 +210,7 @@ public class Limelight extends SubsystemBase {
     }
 
     public double getTY() {
-        return LimelightHelpers.getTY(cameraName) * angleMult;
+        return LimelightHelpers.getTY(cameraName) * -angleMult;
     }
 
     public DoubleSupplier tySupplier() {
