@@ -2,14 +2,6 @@ package frc.robot.subsystems;
 
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
-
-import static edu.wpi.first.units.Units.Rotations;
-
-import java.util.GregorianCalendar;
-
-import org.dyn4j.geometry.Rotation;
-
-import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.revrobotics.sim.SparkMaxSim;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
@@ -17,16 +9,12 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.Matrix;
-import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.numbers.*;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
@@ -204,7 +192,7 @@ public class Arm extends SubsystemBase {
         wristPosePub = armTable.getStructTopic("Joint2Pose", Pose3d.struct).publish();
     }
 
-    public boolean atSetpoint() {
+    public boolean atSetPoint() {
         return pidController.atSetpoint();
     }
 
@@ -267,14 +255,14 @@ public class Arm extends SubsystemBase {
 
         if (target > MAX_ANGLE.getRotations()) {
             Elastic.sendNotification(new Notification(
-                    NotificationLevel.WARNING, "Setting the elevator height outside of range",
-                    "Somebody is messing up the button setting in robot container by setting the height to higher the range",
+                    NotificationLevel.WARNING, "Setting the arm angle outside of range",
+                    "Somebody is messing up by setting the angle to higher the range",
                     5000));
         }
         if (target < MIN_ANGLE.getRotations()) {
             Elastic.sendNotification(new Notification(
-                    NotificationLevel.WARNING, "Setting the elevator height outside of range",
-                    "Somebody is messing up the button setting in robot container by setting the height to lower than 0 (who is doing this???! WTF??)",
+                    NotificationLevel.WARNING, "Setting the arm angle outside of range",
+                    "Somebody is messing up setting the angle",
                     5000));
         }
 
@@ -365,7 +353,7 @@ public class Arm extends SubsystemBase {
 
     @Override
     public void periodic() {
-        SmartDashboard.putBoolean("Arm/At Setpoint", atSetpoint());
+        SmartDashboard.putBoolean("Arm/At Setpoint", atSetPoint());
         percentRotPub.set(getPercentRotation());
 
         // These lines are for an actual physics simulator
@@ -477,7 +465,7 @@ public class Arm extends SubsystemBase {
     }
 
     public Command goToAngleCommand(Rotation2d angle) {
-        return Commands.run(() -> setEndpointAngle(angle), this).until(this::atSetpoint).finallyDo(this::stopMotor);
+        return Commands.run(() -> setEndpointAngle(angle), this).until(this::atSetPoint).finallyDo(this::stopMotor);
     }
 
     public Command joystickControlCommand() {
