@@ -1,5 +1,6 @@
 package frc.robot.subsystems;
 
+import java.io.IOException;
 import java.security.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -7,6 +8,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.json.simple.parser.ParseException;
 import org.littletonrobotics.junction.Logger;
 
 import com.pathplanner.lib.auto.NamedCommands;
@@ -19,6 +21,7 @@ import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.path.PathPoint;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectoryState;
+import com.pathplanner.lib.util.FileVersionException;
 import com.pathplanner.lib.util.FlippingUtil;
 
 import edu.wpi.first.math.MathUtil;
@@ -99,6 +102,7 @@ public class Auto extends SubsystemBase {
     Alliance prevAlliance = Alliance.Blue;
 
     public static Field2d field = new Field2d();
+    public static Field2d field2 = new Field2d();
 
     /**
      * 
@@ -232,6 +236,9 @@ public class Auto extends SubsystemBase {
      */
     public void drawPaths() { //TODO rotate for red alliance?
         //It does rotate for alliance - rafael
+
+        field.setRobotPose(new Pose2d(new Translation2d(-2, -2), new Rotation2d()));
+        addAllPaths();
 
         for (int i = 0; i < pathList.size(); i++) {
             PathPlannerPath path = pathList.get(i);
@@ -524,6 +531,65 @@ public class Auto extends SubsystemBase {
         }
     }
 
+    public void addAllPaths() {
+        String middle = " ";
+
+       for(String x: startingLocations) {
+            for(String second: scoringLocations) {
+               // second = "D";
+                middle = "-";
+                if (Character.isLowerCase(x.charAt(0)) || Character.isLowerCase(second.charAt(0))) {
+                    middle = "_";
+                }
+                try {
+                    if(x.equals("S3") && second.equals("D")) {
+
+                    } else if(x.equals("S3") && second.equals("d")) {
+                        
+                    } else if(x.equals("S4") && second.equals("D")) {
+                        
+                    } else {
+                    pathList.add(PathPlannerPath.fromPathFile("" + x + middle + second));
+                    }
+                } catch (FileVersionException | IOException | ParseException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        for(String first: pickupLocations) {
+            for(String second: scoringLocations) {
+                middle = "-";
+                if (Character.isLowerCase(first.charAt(0)) || Character.isLowerCase(second.charAt(0))) {
+                    middle = "_";
+                }
+                try {
+                    pathList.add(PathPlannerPath.fromPathFile("" + first + middle + second));
+                } catch (FileVersionException | IOException | ParseException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        for(String first: scoringLocations) {
+            for(String second: pickupLocations) {
+                middle = "-";
+                if (Character.isLowerCase(first.charAt(0)) || Character.isLowerCase(second.charAt(0))) {
+                    middle = "_";
+                }
+                try {
+                    pathList.add(PathPlannerPath.fromPathFile("" + first + middle + second));
+                } catch (FileVersionException | IOException | ParseException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+        }
+
+    }
+
     /**
      * Moves the robot pose in the auto dashboard so that it moves along the inputed
      * auto based on an input from
@@ -541,7 +607,7 @@ public class Auto extends SubsystemBase {
         // sets the robotPose on the field to that pose
         if (index >= 0 && allPosesList.size() > 0) {
             Pose2d pose = allPosesList.get(index);
-            field.setRobotPose(pose);
+            //field.setRobotPose(pose);
             // poseOnField = pose; //TODO check if I can delete this
             // PathPoint point = allPathPoints.get(index);
             // field.setRobotPose(point.position.getX(), point.position.getY(),
@@ -599,7 +665,7 @@ public class Auto extends SubsystemBase {
 
         if ((DriverStation.isAutonomous() || DriverStation.isDisabled()) && !isUsingProgressBar) {
             // System.out.println("setting the robot pose auto periodic");
-            field.setRobotPose(RobotContainer.drivetrain.getRobotPose());
+           // field.setRobotPose(RobotContainer.drivetrain.getRobotPose());
         }
     }
 }

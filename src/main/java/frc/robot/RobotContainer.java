@@ -138,8 +138,8 @@ public class RobotContainer {
       .onFalse(rollers.stopCommand());
 
     
-    //Arm coast mode
-    testingController.circle().onTrue(arm.setIdleModeCommand(IdleMode.kCoast)).onFalse(arm.setIdleModeCommand(IdleMode.kBrake));
+    // //Arm coast mode
+    // testingController.circle().onTrue(arm.setIdleModeCommand(IdleMode.kCoast)).onFalse(arm.setIdleModeCommand(IdleMode.kBrake));
     
     //Coral intake outtake
     // operatorController.L1()
@@ -191,14 +191,14 @@ public class RobotContainer {
     //   return elevator.isSysIDSafe();
     // }));
 
-    testingController.triangle().whileTrue(Commands.sequence(
-      Commands.runOnce(() -> SignalLogger.start()),
-      drivetrain.sysIdDynamic(Direction.kForward),
-      drivetrain.sysIdDynamic(Direction.kReverse),
-      drivetrain.sysIdQuasistatic(Direction.kForward),
-      drivetrain.sysIdQuasistatic(Direction.kReverse),
-      Commands.runOnce(() -> SignalLogger.stop())
-    ));
+    // testingController.triangle().whileTrue(Commands.sequence(
+    //   Commands.runOnce(() -> SignalLogger.start()),
+    //   drivetrain.sysIdDynamic(Direction.kForward),
+    //   drivetrain.sysIdDynamic(Direction.kReverse),
+    //   drivetrain.sysIdQuasistatic(Direction.kForward),
+    //   drivetrain.sysIdQuasistatic(Direction.kReverse),
+    //   Commands.runOnce(() -> SignalLogger.stop())
+    // ));
 
     //resets elevator encoders
     operatorController.touchpad().onTrue(
@@ -206,16 +206,16 @@ public class RobotContainer {
       .ignoringDisable(true)
     );
 
-    //Coast mode elevator
-    testingController.cross()
-      .onTrue(
-        Commands.runOnce(() -> elevator.setNeutralMode(NeutralModeValue.Coast))
-        .ignoringDisable(true)
-      )
-      .onFalse(
-        Commands.runOnce(() -> elevator.setNeutralMode(NeutralModeValue.Brake))
-        .ignoringDisable(true)
-      );
+    // //Coast mode elevator
+    // testingController.cross()
+    //   .onTrue(
+    //     Commands.runOnce(() -> elevator.setNeutralMode(NeutralModeValue.Coast))
+    //     .ignoringDisable(true)
+    //   )
+    //   .onFalse(
+    //     Commands.runOnce(() -> elevator.setNeutralMode(NeutralModeValue.Brake))
+    //     .ignoringDisable(true)
+    //   );
 
     /* DRIVER BINDINGS */
 
@@ -255,19 +255,19 @@ public class RobotContainer {
 
     /* Operator bindings */
 
-    //Arm coast mode
-    testingController.circle().onTrue(arm.setIdleModeCommand(IdleMode.kCoast)).onFalse(arm.setIdleModeCommand(IdleMode.kBrake));
+    // //Arm coast mode
+    // testingController.circle().onTrue(arm.setIdleModeCommand(IdleMode.kCoast)).onFalse(arm.setIdleModeCommand(IdleMode.kBrake));
 
-    //Coast mode elevator
-    testingController.cross()
-      .onTrue(
-        Commands.runOnce(() -> elevator.setNeutralMode(NeutralModeValue.Coast))
-        .ignoringDisable(true)
-      )
-      .onFalse(
-        Commands.runOnce(() -> elevator.setNeutralMode(NeutralModeValue.Brake))
-        .ignoringDisable(true)
-      );
+    // //Coast mode elevator
+    // testingController.cross()
+    //   .onTrue(
+    //     Commands.runOnce(() -> elevator.setNeutralMode(NeutralModeValue.Coast))
+    //     .ignoringDisable(true)
+    //   )
+    //   .onFalse(
+    //     Commands.runOnce(() -> elevator.setNeutralMode(NeutralModeValue.Brake))
+    //     .ignoringDisable(true)
+    //   );
 
     //resets elevator encoders
     operatorController.touchpad().onTrue(
@@ -346,14 +346,29 @@ public class RobotContainer {
     //   return elevator.isSysIDSafe();
     // }));
 
-    testingController.triangle().whileTrue(Commands.sequence(
-      Commands.runOnce(() -> SignalLogger.start()),
-      drivetrain.sysIdDynamic(Direction.kForward),
-      drivetrain.sysIdDynamic(Direction.kReverse),
-      drivetrain.sysIdQuasistatic(Direction.kForward),
-      drivetrain.sysIdQuasistatic(Direction.kReverse),
-      Commands.runOnce(() -> SignalLogger.stop())
-    ));
+    // testingController.triangle().whileTrue(Commands.sequence(
+    //   Commands.runOnce(() -> SignalLogger.start()),
+    //   drivetrain.sysIdDynamic(Direction.kForward),
+    //   drivetrain.sysIdDynamic(Direction.kReverse),
+    //   drivetrain.sysIdQuasistatic(Direction.kForward),
+    //   drivetrain.sysIdQuasistatic(Direction.kReverse),
+    //   Commands.runOnce(() -> SignalLogger.stop())
+    // ));
+
+    testingController.L1().onTrue(Commands.runOnce(() -> SignalLogger.start()));
+    testingController.R1().onTrue(Commands.runOnce(() -> SignalLogger.stop()));
+    testingController.triangle().whileTrue(
+      drivetrain.sysIdDynamic(Direction.kForward)
+    );
+    testingController.circle().whileTrue(
+      drivetrain.sysIdDynamic(Direction.kReverse)
+    );
+    testingController.cross().whileTrue(
+      drivetrain.sysIdQuasistatic(Direction.kForward)
+    );
+    testingController.square().whileTrue(
+      drivetrain.sysIdQuasistatic(Direction.kReverse)
+    );
   }
 
   public void configureDriveTryoutBindings() {

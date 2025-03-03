@@ -29,7 +29,6 @@ public class Rollers extends SubsystemBase {
     public final double ALGAE_HOLDING_SPEED = 0.5;
 
     private NetworkTableEntry entry;
-    
 
     private GamePiece heldPiece = GamePiece.None; // TODO init to Coral for auton? not needed?
 

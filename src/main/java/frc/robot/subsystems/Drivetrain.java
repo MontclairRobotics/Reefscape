@@ -68,7 +68,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
     public static final double MAX_SPEED = 5; // TODO: actually set this with units
     public static double MAX_ROT_SPEED = 6.5;
-    public static final double MIN_ROT_SPEED = Math.PI * (1.0 / 3.0);
+    public static double MIN_ROT_SPEED = Math.PI * (1.0 / 3.0);
     public static double FORWARD_ACCEL = 8; // m / s^2
     public static double SIDE_ACCEL = 8; // m / s^2
     public static double ROT_ACCEL = 12; // radians / s^2
@@ -84,11 +84,22 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
      private DynamicSlewRateLimiter strafeLimiter = new DynamicSlewRateLimiter(SIDE_ACCEL); // TODO: actually set this
      private DynamicSlewRateLimiter rotationLimiter = new DynamicSlewRateLimiter(ROT_ACCEL); // TODO: actually set this
 
-    public Tunable forwardAccelTunable = new Tunable("Forward Accel Limit", 8, (value) -> forwardLimiter.setLimit(value));
-    public Tunable sideAccelTunable = new Tunable("Side Accel Limit", 8, (value) -> strafeLimiter.setLimit(value));
-    public Tunable rotAccelTunable = new Tunable("Rotation Accel Limit", 12, (value) -> rotationLimiter.setLimit(value));
-    public Tunable rotMaxSpeedTunable = new Tunable("Rotation Max Speed", 6.5, (value) -> {
-        MAX_ROT_SPEED = value;
+    public Tunable forwardAccelTunable = new Tunable("Forward Accel Limit", 1.5, (value) -> {
+        //forwardLimiter.setLimit(value);
+        //FORWARD_ACCEL = value;
+        MIN_TRANSLATIONAL_ACCEL = value;
+        });
+    // public Tunable sideAccelTunable = new Tunable("Side Accel Limit", 1.5, (value) -> {
+    //     //strafeLimiter.setLimit(value);
+    //     SIDE_ACCEL = value;
+    // });
+    public Tunable rotAccelTunable = new Tunable("Rotation Accel Limit", 0.3, (value) -> {
+        //rotationLimiter.setLimit(value);
+        // ROT_ACCEL = value;
+        MIN_ROT_ACCEL = value;
+    });
+    public Tunable rotMaxSpeedTunable = new Tunable("Rotation MIN Speed", 1, (value) -> {
+        MIN_ROT_SPEED = value;
     });
     // public Tunable isLimitAccel = new Tunable("Is limiting accel", 1, (value) -> {
     //     if(value == 1) IS_LIMITING_ACCEL = true;
@@ -399,7 +410,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     private final SysIdRoutine m_sysIdRoutineTranslation = new SysIdRoutine(
             new SysIdRoutine.Config(
                     null, // Use default ramp rate (1 V/s)
-                    Volts.of(2), // Reduce dynamic step voltage to 4 V to prevent brownout
+                    Volts.of(4), // Reduce dynamic step voltage to 4 V to prevent brownout
                     null, // Use default timeout (10 s)
                     // Log state with SignalLogger class
                     state -> SignalLogger.writeString("SysIdTranslation_State", state.toString())),
@@ -451,7 +462,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
                     this));
 
     /* The SysId routine to test */
-    private SysIdRoutine m_sysIdRoutineToApply = m_sysIdRoutineSteer;
+    private SysIdRoutine m_sysIdRoutineToApply = m_sysIdRoutineTranslation;
 
     /**
      * Runs the SysId Quasistatic test in the given direction for the routine
@@ -765,7 +776,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         rotationLimiter.setLimit(getMaxRotAccel());
         
         if (DriverStation.isTeleopEnabled()) {
-            Auto.field.setRobotPose(getRobotPose());
+            //Auto.field.setRobotPose(getRobotPose());
         }
 
         double driveSpeedModule0 = getState().ModuleStates[0].speedMetersPerSecond;
