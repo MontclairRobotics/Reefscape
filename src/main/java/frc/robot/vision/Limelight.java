@@ -23,7 +23,8 @@ public class Limelight extends SubsystemBase {
     /* CONSTANTS */
     public static final double coralStationTagHeightMeters = 1.35255; // make sure these two are correct
     // does it need to be to the center of the tag?
-    public static final double reefTagHeightMeters = 0.174625;
+    public static final double reefTagHeightMeters = //0.174625; 
+    0.3;
     public static final double reefOffsetFromCenterOfTag = 0;
 
     public static final int[] reefIDsRed = { 6, 7, 8, 9, 10, 11 };
@@ -40,6 +41,8 @@ public class Limelight extends SubsystemBase {
     private int tagCount;
     private int[] validIDs = {}; // TODO: set these
     public String cameraName;
+    private double tx;
+    private double ty;
     private Debouncer targetDebouncer = new Debouncer(TARGET_DEBOUNCE_TIME, DebounceType.kFalling);
 
     public static final double angleVelocityTolerance = 540 * Math.PI / 180; // in radians per sec
@@ -116,7 +119,6 @@ public class Limelight extends SubsystemBase {
 
     public void poseEstimationMegatag2() {
 
-        // TODO does the angle need to be wrapped between 0 and 360
 
         // System.out.println(RobotContainer.drivetrain.getWrappedHeading().getDegrees());
         double angle = (RobotContainer.drivetrain.getWrappedHeading().getDegrees() + 360) % 360;
@@ -135,8 +137,6 @@ public class Limelight extends SubsystemBase {
             }
             //adds vision measurement if conditions are met
             if (!shouldRejectUpdate) {
-                // RobotContainer.drivetrain.swerveDrive.setVisionMeasurementStdDevs(VecBuilder.fill(.7,.7,9999999));
-                // System.out.println(Utils.getCurrentTimeSeconds() - mt2.timestampSeconds);
                 RobotContainer.drivetrain.addVisionMeasurement(
                         mt2.pose,
                         Utils.fpgaToCurrentTime(mt2.timestampSeconds),
@@ -206,11 +206,11 @@ public class Limelight extends SubsystemBase {
     }
 
     public double getTX() {
-        return LimelightHelpers.getTX(cameraName) * angleMult;
+        return tx * angleMult;
     }
 
     public double getTY() {
-        return LimelightHelpers.getTY(cameraName) * -angleMult;
+        return ty * -angleMult;
     }
 
     public DoubleSupplier tySupplier() {
@@ -242,6 +242,8 @@ public class Limelight extends SubsystemBase {
 
     public void periodic() {
         // tagID = (int) Limetable.getEntry("tid").getDouble(-1);
+        tx = LimelightHelpers.getTX(cameraName);
+        ty = LimelightHelpers.getTY(cameraName);
        poseEstimationMegatag2();
        xDistPub.set(getHorizontalDistanceToReef());
        yDistPub.set(getStraightDistanceToReef());

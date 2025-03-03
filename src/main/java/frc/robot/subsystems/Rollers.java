@@ -108,11 +108,21 @@ public class Rollers extends SubsystemBase {
                 }).withTimeout(2); // TODO find timeout
     }
 
+    public Command scoreL1() {
+        return Commands.run(() -> {
+                setSpeed(0, CORAL_OUTTAKE_SPEED);
+        }, this)
+                .finallyDo(() -> {
+                    stopMotors();
+                    this.heldPiece = GamePiece.None;
+                }).withTimeout(2); // TODO find timeout
+    }
+
     public Command intakeCoralCommand() {
         return Commands.run(() -> setSpeed(CORAL_INTAKE_SPEED), this)
                 .finallyDo(() -> {
                     stopMotors();
-                    if(isStalled())
+                    // if(isStalled())
                     this.heldPiece = GamePiece.Coral;
                 })
                 .until(this::isStalled);
@@ -120,12 +130,8 @@ public class Rollers extends SubsystemBase {
 
     public Command outtakeCoralCommand() {
         return Commands.run(() -> {
-            if(RobotState.isAt(RobotState.Intake)) {
-                setSpeed(0, CORAL_OUTTAKE_SPEED);
-            }
-            else  {
+          
                 setSpeed(CORAL_OUTTAKE_SPEED);
-            }
         }, this)
                 .finallyDo(() -> {
                     stopMotors();
@@ -140,14 +146,16 @@ public class Rollers extends SubsystemBase {
                 Commands.run(() -> setSpeed(-0.1), this)
                 .withTimeout(0.1)
                 .andThen(intakeCoralCommand())
-            ));
+            )).finallyDo(() -> {
+                this.heldPiece = GamePiece.Coral;
+            });
             
     }
 
     @Override
     public void periodic() {
-        SmartDashboard.putNumber("Right Motor Current", rightMotor.getOutputCurrent());
-        SmartDashboard.putNumber("Left Motor Current", leftMotor.getOutputCurrent());
+        // SmartDashboard.putNumber("Right Motor Current", rightMotor.getOutputCurrent());
+        // SmartDashboard.putNumber("Left Motor Current", leftMotor.getOutputCurrent());
         boolean isHeld = (heldPiece != GamePiece.None)&&!(DriverStation.isAutonomousEnabled());
         entry.setBoolean(isHeld);
 

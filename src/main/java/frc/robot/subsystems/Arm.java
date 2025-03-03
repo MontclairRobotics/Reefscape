@@ -42,6 +42,7 @@ import frc.robot.util.simulation.DoubleJointedArmModel;
 
 public class Arm extends SubsystemBase {
 
+    public double armLimitVoltage = 1.7;
     public final double MAX_VELOCITY = 60.0 / 360.0; // rotations per sec
     public final double MAX_ACCELERATION = 20.0 / 360.0; // rotations per sec per sec
     
@@ -63,8 +64,11 @@ public class Arm extends SubsystemBase {
 
     private ArmFeedforward armFeedforward = new ArmFeedforward(0, 0.2, 0); 
 
-    private PIDController pidController = new PIDController(130, 0, 5);
+    private PIDController pidController = new PIDController(70, 0, 3);
 
+    public Tunable armVoltageLimit = new Tunable("Arm Limit Voltage", 1, (val)->{
+        armLimitVoltage = val;
+    });
 
     private static final double J1Length = 0.19 - Units.inchesToMeters(2);
     private double j1PrevPos;
@@ -266,13 +270,14 @@ public class Arm extends SubsystemBase {
                     5000));
         }
 
-        SmartDashboard.putNumber("Arm/preclamped Target", target);
+        // SmartDashboard.putNumber("Arm/preclamped Target", target);
         target = MathUtil.clamp(target, MIN_ANGLE.getRotations(), MAX_ANGLE.getRotations());
         // System.out.println("Target: " + target);
-        SmartDashboard.putNumber("Arm/Clamped Target", target);
+        // SmartDashboard.putNumber("Arm/Clamped Target", target);
         double wristVoltage = pidController.calculate(getEndpointAngle().getRotations(), target);
 
         setpointPub.set(target * 360);
+    
 
         //needs feedforward only when we have algae, because algae is heavy!
         // if(RobotContainer.rollers.hasAlgae()) 
@@ -280,7 +285,7 @@ public class Arm extends SubsystemBase {
         // wristVoltage += -armFeedforward.calculate(getElbowAngle().getRadians(), 0);
         // else wristVoltage += armFeedforward.calculate(getElbowAngle().getRadians(), 0);
     
-        wristVoltage = MathUtil.clamp(wristVoltage, -1, 1);
+        wristVoltage = MathUtil.clamp(wristVoltage, -armLimitVoltage, armLimitVoltage);
         // System.out.println(-wristVoltage);
         // TODO do we need feedforward? If so we have to figure out the equation
         // negative voltage brings it up, positive brings it down AFAIK
@@ -468,6 +473,10 @@ public class Arm extends SubsystemBase {
         return Commands.run(() -> setEndpointAngle(angle), this).until(this::atSetPoint).finallyDo(this::stopMotor);
     }
 
+    public Command goToAngleContinuousCommand(Rotation2d angle) {
+        return Commands.run(() -> setEndpointAngle(angle), this).finallyDo(this::stopMotor);
+    }
+
     public Command joystickControlCommand() {
         return Commands.run(this::joystickControl, this);
     }
@@ -478,6 +487,10 @@ public class Arm extends SubsystemBase {
 
     public Command setState(RobotState state) {
         return goToAngleCommand(state.getAngle());
+    }
+
+    public Command holdState(RobotState state) {
+        return goToAngleContinuousCommand(state.getAngle());
     }
 
 }

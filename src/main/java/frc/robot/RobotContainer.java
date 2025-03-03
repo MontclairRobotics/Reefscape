@@ -80,8 +80,8 @@ public class RobotContainer {
 
   private void configureBindings() {
 
-    orchestra.addInstrument(elevator.leftTalonFX);
-    orchestra.addInstrument(elevator.rightTalonFX);
+    // orchestra.addInstrument(elevator.leftTalonFX);
+    // orchestra.addInstrument(elevator.rightTalonFX);
     // operatorController.R2().onTrue(playMusic("SevenNationArmy.chrp")).onFalse(stopMusic());
 
     /* Default commands */
@@ -96,23 +96,20 @@ public class RobotContainer {
       elevator.setExtension(pos.getHeight());
       }
     , elevator));
-    // elevator.setDefaultCommand(
-    //   RobotContainer.elevator.setExtensionCommand(0)
-    // );
 
-    // arm.setDefaultCommand(Commands.run(() -> {
-    //   //  RobotState pos = RobotState.getDefaultForPiece(rollers.getHeldPiece());
-    //     arm.setEndpointAngle(
-    //       //pos.getAngle()
-    //       RobotState.Intake.getAngle()
-    //       );
-    //   }
-    // , arm));
+    arm.setDefaultCommand(Commands.run(() -> {
+      //  RobotState pos = RobotState.getDefaultForPiece(rollers.getHeldPiece());
+        arm.setEndpointAngle(
+          //pos.getAngle()
+          RobotState.Intake.getAngle()
+          );
+      }
+    , arm));
     
     //elevator.setDefaultCommand(elevator.joystickControlCommand());
     //m.setDefaultCommand(arm.joystickControlCommand());
     // elevator.setDefaultCommand(elevator.joystickControlCommand());
-    leds.setDefaultCommand(elevator.isVelociatated() ? leds.playPatternCommand(LEDs.progress()) : rollers.getHeldPiece() == GamePiece.Algae ? leds.playPatternCommand(LEDs.holding(GamePiece.Algae.getColor())) : rollers.getHeldPiece() == GamePiece.Coral ? leds.playPatternCommand(LEDs.holding(GamePiece.Coral.getColor())) : leds.playPatternCommand(LEDs.breathingPattern()));
+    // leds.setDefaultCommand(elevator.isVelociatated() ? leds.playPatternCommand(LEDs.progress()) : rollers.getHeldPiece() == GamePiece.Algae ? leds.playPatternCommand(LEDs.holding(GamePiece.Algae.getColor())) : rollers.getHeldPiece() == GamePiece.Coral ? leds.playPatternCommand(LEDs.holding(GamePiece.Coral.getColor())) : leds.playPatternCommand(LEDs.breathingPattern()));
     // operatorController.square().whileTrue(arm.goToAngleCommand(Rotation2d.fromDegrees(30)));
 
     /* Operator bindings */
@@ -149,7 +146,7 @@ public class RobotContainer {
     //   .whileTrue(rollers.intakeCoralCommand())
     //   .onFalse(rollers.stopCommand());
     //Intaking
-    operatorController.L2().whileTrue(rollers.intakeCoralJiggleCommand().alongWith(arm.setState(RobotState.Intake)))
+    operatorController.L2().whileTrue(rollers.intakeCoralJiggleCommand().alongWith(arm.holdState(RobotState.Intake)))
     .onFalse(rollers.stopCommand().alongWith(arm.stopCommand()));
 
     //Ratchet Bindings
@@ -284,32 +281,18 @@ public class RobotContainer {
       arm.stopMotor();
     }));    
 
-    //Intake coral
-    // operatorController.L2()
-    //   .whileTrue(
-    //     elevator.setScoringHeightCommand(RobotState.Intake)
-    //     .alongWith(arm.goToLocationCommand(RobotState.Intake))
-    //     .alongWith(rollers.intakeCoralCommand()))
-    //   .onFalse(rollers.stop());
-
     //Intake algae
     operatorController.R1()
       .whileTrue(rollers.intakeAlgaeCommand())
       .onFalse(rollers.stopCommand());
     //Outtake algae
     operatorController.R2()
-      .whileTrue(rollers.outtakeAlgaeCommand())
-      .onFalse(rollers.stopCommand());
-    
-    //Coral intake
-    // operatorController.L1()
-    //   .whileTrue(rollers.intakeCoralCommand())
-    //   .onFalse(rollers.stopCommand());
-    //Coral outtake
-    operatorController.L2()
       .whileTrue(rollers.outtakeCoralCommand())
       .onFalse(rollers.stopCommand());
 
+    operatorController.R2().and(operatorController.cross())
+      .whileTrue(rollers.scoreL1())
+      .onFalse(rollers.stopCommand());
     //Ratchet Bindings
     operatorController.povLeft()
       .onTrue(ratchet.engageServos());
