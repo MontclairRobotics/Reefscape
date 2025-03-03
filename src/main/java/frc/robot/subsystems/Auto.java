@@ -237,8 +237,8 @@ public class Auto extends SubsystemBase {
     public void drawPaths() { //TODO rotate for red alliance?
         //It does rotate for alliance - rafael
 
-        field.setRobotPose(new Pose2d(new Translation2d(-2, -2), new Rotation2d()));
-        addAllPaths();
+        field.setRobotPose(PoseUtils.flipPoseAlliance(pathList.get(0).getPathPoses().get(0)));
+        // addAllPaths();
 
         for (int i = 0; i < pathList.size(); i++) {
             PathPlannerPath path = pathList.get(i);
@@ -344,13 +344,23 @@ public class Auto extends SubsystemBase {
                     path1Cmd = Commands.parallel(Commands.print("Running path 1"), AutoBuilder.followPath(path1));
 
                     //resets pose to the starting pose if we are at the first path!
-                    if (firstPath) {
+                    if (firstPath) { //TODO reset to something better? vision pose?
                         Optional<Pose2d> opPose = path1.getStartingHolonomicPose();
                         Pose2d pose = opPose.isPresent() ? PoseUtils.flipPoseAlliance(opPose.get()) : new Pose2d();
                         autoCommand.addCommands(Commands.runOnce(() -> {
                             System.out.println("resetting auto pose");
                             RobotContainer.drivetrain.resetPose(pose);
-                        }));
+                        }).alongWith(Commands.sequence(
+                            Commands.runOnce(() -> {
+                                RobotContainer.leftLimelight.setGyroMode(1);
+                                RobotContainer.rightLimelight.setGyroMode(1);
+                            }),
+                            Commands.waitSeconds(0.1), //TODO enough?
+                            Commands.runOnce(() -> {
+                                RobotContainer.leftLimelight.setGyroMode(2);
+                                RobotContainer.rightLimelight.setGyroMode(2);
+                            })
+                        )));
 
                         // TODO this can be deleted, is here for testing purposes
                         RobotContainer.drivetrain.resetPose(pose);
@@ -411,7 +421,7 @@ public class Auto extends SubsystemBase {
 
             // path 1 mechanism movement
             if (third != null && path1 != null) {
-                List<PathPoint> path1Points = path1.getAllPathPoints();
+                // List<PathPoint> path1Points = path1.getAllPathPoints();
                 Optional<PathPlannerTrajectory> opTraj;
                 try {
                     opTraj = path1.getIdealTrajectory(RobotConfig.fromGUISettings());
@@ -481,11 +491,11 @@ public class Auto extends SubsystemBase {
                                // ,Commands.print("Finishing path 2 elevator command")
                             )
                         ));
-                        TagOffset offset = TagOffset.CENTER; //default to 0?
-                        if (fourth == "1") {
-                            offset = TagOffset.LEFT_INTAKE;
-                        } // TODO finish
-                        autoCommand.addCommands(new AlignToAprilTagCommandOffset(RobotContainer.rightLimelight, raiseTime, pathTime, raiseTime, i));
+                        // TagOffset offset = TagOffset.CENTER; //default to 0?
+                        // if (fourth == "1") {
+                        //     offset = TagOffset.LEFT_INTAKE;
+                        // } // TODO finish
+                        // autoCommand.addCommands(new AlignToAprilTagCommandOffset(RobotContainer.rightLimelight, raiseTime, pathTime, raiseTime, i));
 
                     } else {
                         System.out.println("Ideal Trajectory failed to load, skipping path");

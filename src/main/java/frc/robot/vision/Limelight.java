@@ -112,6 +112,10 @@ public class Limelight extends SubsystemBase {
         // LimelightHelpers.setLimelightNTDouble(cameraName, "throttle_set", 200); // manage thermals
     }
 
+    public void setGyroMode(int mode) {
+        LimelightHelpers.SetIMUMode(cameraName, mode);
+    }
+
     public void enable() {
         LimelightHelpers.SetIMUMode(cameraName, 2); // if moving use builtin, maybe change to 4
         // LimelightHelpers.setLimelightNTDouble(cameraName, "throttle_set", 0); //TODO check needs to be 1? // manage thermals
