@@ -21,6 +21,7 @@ import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveModule;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveModule.SteerRequestType;
+import com.ctre.phoenix6.swerve.SwerveModuleConstants.ClosedLoopOutputType;
 import com.ctre.phoenix6.swerve.SwerveRequest.ForwardPerspectiveValue;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
@@ -67,13 +68,13 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
      */
 
     public static final double MAX_SPEED = 5; // TODO: actually set this with units
-    public static double MAX_ROT_SPEED = 6.5;
+    public static double MAX_ROT_SPEED = 10;
     public static double MIN_ROT_SPEED = Math.PI * (1.0 / 3.0);
-    public static double FORWARD_ACCEL = 8; // m / s^2
-    public static double SIDE_ACCEL = 8; // m / s^2
-    public static double ROT_ACCEL = 12; // radians / s^2
-    public static double MIN_TRANSLATIONAL_ACCEL = 1.5;
-    public static double MIN_ROT_ACCEL = 0.3;
+    public static double FORWARD_ACCEL = 12; // m / s^2
+    public static double SIDE_ACCEL = 12; // m / s^2
+    public static double ROT_ACCEL = 16; // radians / s^2
+    public static double MIN_TRANSLATIONAL_ACCEL = 2;
+    public static double MIN_ROT_ACCEL = 1.5;
     public static boolean IS_LIMITING_ACCEL = true;
 
     DoublePublisher driveCurrentPub;
@@ -581,14 +582,14 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
                     () -> this.getState().Speeds, // Supplier of current robot speeds
                     // Consumer of ChassisSpeeds and feedforwards to drive the robot
                     (speeds, feedforwards) -> this.setControl(
-                            new SwerveRequest.ApplyRobotSpeeds().withSpeeds(speeds)
+                            new SwerveRequest.ApplyRobotSpeeds().withSpeeds(speeds).withSteerRequestType(SteerRequestType.Position).withDriveRequestType(DriveRequestType.Velocity)
                                     .withWheelForceFeedforwardsX(feedforwards.robotRelativeForcesXNewtons())
                                     .withWheelForceFeedforwardsY(feedforwards.robotRelativeForcesYNewtons())),
                     new PPHolonomicDriveController(
                             // PID constants for translation
-                            new PIDConstants(10, 0, 0),
+                            new PIDConstants(5, 0, 0),
                             // PID constants for rotation
-                            new PIDConstants(7, 0, 0)),
+                            new PIDConstants(5, 0, 0)),
                     config,
                     // Assume the path needs to be flipped for Red vs Blue, this is normally the
                     // case

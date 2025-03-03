@@ -566,18 +566,18 @@ public class Elevator extends SubsystemBase {
             return;
         }
         extensionSetpointMeters = extension;
-        if (extension > MAX_EXTENSION) {
-            Elastic.sendNotification(new Notification(
-                    NotificationLevel.WARNING, "Setting the elevator height outside of range",
-                    "Somebody is messing up the button setting in robot container by setting the height to higher the range",
-                    5000));
-        }
-        if (extension < 0) {
-            Elastic.sendNotification(new Notification(
-                    NotificationLevel.WARNING, "Setting the elevator height outside of range",
-                    "Somebody is messing up the button setting in robot container by setting the height to lower than 0 (who is doing this???! WTF??)",
-                    5000));
-        }
+        // if (extension > MAX_EXTENSION) {
+        //     Elastic.sendNotification(new Notification(
+        //             NotificationLevel.WARNING, "Setting the elevator height outside of range",
+        //             "Somebody is messing up the button setting in robot container by setting the height to higher the range",
+        //             5000));
+        // }
+        // if (extension < 0) {
+        //     Elastic.sendNotification(new Notification(
+        //             NotificationLevel.WARNING, "Setting the elevator height outside of range",
+        //             "Somebody is messing up the button setting in robot container by setting the height to lower than 0 (who is doing this???! WTF??)",
+        //             5000));
+        // }
 
         extension = MathUtil.clamp(extension, 0, MAX_EXTENSION);
         double rotations = extension * ROTATIONS_PER_METER; // Converts meters to rotations

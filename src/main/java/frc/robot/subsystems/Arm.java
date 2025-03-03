@@ -257,18 +257,18 @@ public class Arm extends SubsystemBase {
     public void setEndpointAngle(Rotation2d targetAngle) {
         double target = targetAngle.getRotations();
 
-        if (target > MAX_ANGLE.getRotations()) {
-            Elastic.sendNotification(new Notification(
-                    NotificationLevel.WARNING, "Setting the arm angle outside of range",
-                    "Somebody is messing up by setting the angle to higher the range",
-                    5000));
-        }
-        if (target < MIN_ANGLE.getRotations()) {
-            Elastic.sendNotification(new Notification(
-                    NotificationLevel.WARNING, "Setting the arm angle outside of range",
-                    "Somebody is messing up setting the angle",
-                    5000));
-        }
+        // if (target > MAX_ANGLE.getRotations()) {
+        //     Elastic.sendNotification(new Notification(
+        //             NotificationLevel.WARNING, "Setting the arm angle outside of range",
+        //             "Somebody is messing up by setting the angle to higher the range",
+        //             5000));
+        // }
+        // if (target < MIN_ANGLE.getRotations()) {
+        //     Elastic.sendNotification(new Notification(
+        //             NotificationLevel.WARNING, "Setting the arm angle outside of range",
+        //             "Somebody is messing up setting the angle",
+        //             5000));
+        // }
 
         // SmartDashboard.putNumber("Arm/preclamped Target", target);
         target = MathUtil.clamp(target, MIN_ANGLE.getRotations(), MAX_ANGLE.getRotations());

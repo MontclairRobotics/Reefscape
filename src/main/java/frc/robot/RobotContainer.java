@@ -122,7 +122,7 @@ public class RobotContainer {
     // operatorController.triangle().whileTrue(Commands.run(() -> elevator.setHeight(1.7), elevator)); //L1 //66.93 inches
     
 
-    //Intake coral
+    // Intake coral
     // operatorController.L2()
     //   .whileTrue(
     //     elevator.setScoringHeightCommand(RobotState.Intake)
@@ -155,31 +155,7 @@ public class RobotContainer {
     operatorController.povRight()
       .onTrue(ratchet.engageServos());
     /* SETS DIFFERENT ROBOT STATES */
-
-    // operatorController.L1().whileTrue(arm.setState(RobotState.Intake).alongWith(rollers.intakeCoralCommand()))
-    // .onFalse(arm.stopCommand().alongWith(rollers.stopCommand()));
-    
-    //L3
-    operatorController.triangle()
-    .whileTrue((arm.setState(RobotState.L3))
-    .alongWith(elevator.setState(RobotState.L3)))
-    .onFalse((arm.stopCommand())
-    .alongWith(elevator.stopCommand()));
-    //L4
-    operatorController.circle()
-    .whileTrue(arm.setState(RobotState.L4).alongWith(elevator.setState(RobotState.L4)))
-    .onFalse(arm.stopCommand().alongWith(elevator.stopCommand()));
-   // L1
-    operatorController.cross()
-    .whileTrue(arm.setState(RobotState.L1).alongWith(elevator.setState(RobotState.L1)))
-    .onFalse(arm.stopCommand().alongWith(elevator.stopCommand()));
-   // L2
-
-    operatorController.square()
-    .whileTrue(arm.setState(RobotState.L2).alongWith(elevator.setState(RobotState.L2)))
-    .onFalse(arm.stopCommand().alongWith(elevator.stopCommand()));
   
-    
     // operatorController.circle().whileTrue(Commands.sequence(
     //   Commands.runOnce(() -> SignalLogger.start()),
     //   elevator.sysIdDynamic(Direction.kForward).until(elevator::isAtTop),
@@ -371,85 +347,85 @@ public class RobotContainer {
     );
   }
 
-  public void configureDriveTryoutBindings() {
+  // public void configureDriveTryoutBindings() {
 
-    /* DRIVER BINDINGS */
-    drivetrain.setDefaultCommand(drivetrain.driveJoystickInputCommand());
+  //   /* DRIVER BINDINGS */
+  //   drivetrain.setDefaultCommand(drivetrain.driveJoystickInputCommand());
 
-    //zeros gyro
-    driverController.touchpad().onTrue(drivetrain.zeroGyroCommand());
-    //robot relative
-    driverController.L2().onTrue(drivetrain.toRobotRelativeCommand()).onFalse(drivetrain.toFieldRelativeCommand());
+  //   //zeros gyro
+  //   driverController.touchpad().onTrue(drivetrain.zeroGyroCommand());
+  //   //robot relative
+  //   driverController.L2().onTrue(drivetrain.toRobotRelativeCommand()).onFalse(drivetrain.toFieldRelativeCommand());
 
-    /* 90 degree buttons */
+  //   /* 90 degree buttons */
     
-    //0 degrees
-    driverController.triangle().and(driverController.R1().negate())
-      .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(0)), false));
-    //90 degrees
-    driverController.square().and(driverController.R1().negate())
-      .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(90)), false));
-    //180 degrees
-      driverController.cross().and(driverController.R1().negate())
-      .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(180)), false));
-    //270 degrees
-      driverController.circle().and(driverController.R1().negate())
-      .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(270)), false)); 
+  //   //0 degrees
+  //   driverController.triangle().and(driverController.R1().negate())
+  //     .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(0)), false));
+  //   //90 degrees
+  //   driverController.square().and(driverController.R1().negate())
+  //     .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(90)), false));
+  //   //180 degrees
+  //     driverController.cross().and(driverController.R1().negate())
+  //     .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(180)), false));
+  //   //270 degrees
+  //     driverController.circle().and(driverController.R1().negate())
+  //     .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(270)), false)); 
 
 
-    driverController.triangle().and(driverController.R1())
-      .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(-60)), false));
-    driverController.square().and(driverController.R1())
-      .onTrue(RobotContainer.drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(60)), false));
-    driverController.cross().and(driverController.R1())
-      .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(120)), false));
-    driverController.circle().and(driverController.R1())
-      .onTrue(RobotContainer.drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(-120)), false));
-    /* OPERATOR BINDINGS */
+  //   driverController.triangle().and(driverController.R1())
+  //     .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(-60)), false));
+  //   driverController.square().and(driverController.R1())
+  //     .onTrue(RobotContainer.drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(60)), false));
+  //   driverController.cross().and(driverController.R1())
+  //     .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(120)), false));
+  //   driverController.circle().and(driverController.R1())
+  //     .onTrue(RobotContainer.drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(-120)), false));
+  //   /* OPERATOR BINDINGS */
 
-    arm.setDefaultCommand(Commands.run(() -> {
-      //RobotState pos = RobotState.getDefaultForPiece(rollers.getHeldPiece());
-      //arm.setEndpointAngle(pos.getAngle());
-      arm.setState(RobotState.Intake);
-    }, arm));
+  //   arm.setDefaultCommand(Commands.run(() -> {
+  //     //RobotState pos = RobotState.getDefaultForPiece(rollers.getHeldPiece());
+  //     //arm.setEndpointAngle(pos.getAngle());
+  //     arm.setState(RobotState.Intake);
+  //   }, arm));
 
-    elevator.setDefaultCommand(
-      Commands.run(() -> {
-        //RobotState pos = RobotState.getDefaultForPiece(rollers.getHeldPiece());
-        // elevator.setExtension(pos.getHeight());
+  //   elevator.setDefaultCommand(
+  //     Commands.run(() -> {
+  //       //RobotState pos = RobotState.getDefaultForPiece(rollers.getHeldPiece());
+  //       // elevator.setExtension(pos.getHeight());
 
-       elevator.setExtension(0);
-      }, elevator)
-    );
+  //      elevator.setExtension(0);
+  //     }, elevator)
+  //   );
 
-    //L1
-    operatorController.cross()
-      .whileTrue(arm.setState(RobotState.L1).alongWith(elevator.setState(RobotState.L1)))
-      .onFalse(arm.stopCommand().alongWith(elevator.stopCommand()));
-    //L2
-    operatorController.square()
-      .whileTrue(arm.setState(RobotState.L2).alongWith(elevator.setState(RobotState.L2)))
-      .onFalse(arm.stopCommand().alongWith(elevator.stopCommand()));
-    //L3
-    operatorController.triangle()
-      .whileTrue((arm.setState(RobotState.L3)).alongWith(elevator.setState(RobotState.L3)))
-      .onFalse((arm.stopCommand()).alongWith(elevator.stopCommand()));
-    //L4
-    operatorController.circle()
-      .whileTrue(arm.setState(RobotState.L4).alongWith(elevator.setState(RobotState.L4)))
-      .onFalse(arm.stopCommand().alongWith(elevator.stopCommand()));
+  //   //L1
+  //   operatorController.cross()
+  //     .whileTrue(arm.setState(RobotState.L1).alongWith(elevator.setState(RobotState.L1)))
+  //     .onFalse(arm.stopCommand().alongWith(elevator.stopCommand()));
+  //   //L2
+  //   operatorController.square()
+  //     .whileTrue(arm.setState(RobotState.L2).alongWith(elevator.setState(RobotState.L2)))
+  //     .onFalse(arm.stopCommand().alongWith(elevator.stopCommand()));
+  //   //L3
+  //   operatorController.triangle()
+  //     .whileTrue((arm.setState(RobotState.L3)).alongWith(elevator.setState(RobotState.L3)))
+  //     .onFalse((arm.stopCommand()).alongWith(elevator.stopCommand()));
+  //   //L4
+  //   operatorController.circle()
+  //     .whileTrue(arm.setState(RobotState.L4).alongWith(elevator.setState(RobotState.L4)))
+  //     .onFalse(arm.stopCommand().alongWith(elevator.stopCommand()));
 
   
-    //Intaking
-    operatorController.L2().whileTrue(rollers.intakeCoralJiggleCommand().alongWith(arm.setState(RobotState.Intake)))
-    .onFalse(rollers.stopCommand().alongWith(arm.stopCommand()));
-    //scoring
-    operatorController.R2().whileTrue(rollers.outtakeCoralCommand()).onFalse(rollers.stopCommand());
-    //enables joystick control
-    //operatorController.L1()/*.whileTrue(arm.joystickControlCommand())*/.whileTrue(elevator.joystickControlCommand());
+  //   //Intaking
+  //   operatorController.L2().whileTrue(rollers.intakeCoralJiggleCommand().alongWith(arm.setState(RobotState.Intake)))
+  //   .onFalse(rollers.stopCommand().alongWith(arm.stopCommand()));
+  //   //scoring
+  //   operatorController.R2().whileTrue(rollers.outtakeCoralCommand()).onFalse(rollers.stopCommand());
+  //   //enables joystick control
+  //   //operatorController.L1()/*.whileTrue(arm.joystickControlCommand())*/.whileTrue(elevator.joystickControlCommand());
 
 
-  }
+  // }
 
   /* MUSIC */
   public void loadMusic(String filepath) {

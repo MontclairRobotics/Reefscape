@@ -97,8 +97,8 @@ public class GoToPoseCommand extends Command {
     public GoToPoseCommand(TagOffset direction) {
         this.direction = direction; //sets the direction
         addRequirements(RobotContainer.drivetrain); //requires the drivetrain
-        xController = new PIDController(4.5, 0, .05); //creates the PIDControllers
-        yController = new PIDController(4.5, 0, .05); //TODO tolerances
+        xController = new PIDController(3.5, 0, .035); //creates the PIDControllers
+        yController = new PIDController(3.5, 0, .035); //TODO tolerances
         thetaController = RobotContainer.drivetrain.thetaController;
     }
 

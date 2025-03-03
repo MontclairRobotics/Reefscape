@@ -6,8 +6,8 @@ import frc.robot.subsystems.Arm;
 
 // height should be extension of elevator in meters
 public enum RobotState {
-    L4 (1.2,Rotation2d.fromDegrees(-53)),
-    L3 (0.514,Rotation2d.fromDegrees(-33)),
+    L4 (1.2,Rotation2d.fromDegrees(-58)),
+    L3 (0.45,Rotation2d.fromDegrees(-33)),
     L2 (0,Rotation2d.fromDegrees(-17)),
     L1 (0,Rotation2d.fromDegrees(-40)),
     Intake(0, Arm.MAX_ANGLE),
