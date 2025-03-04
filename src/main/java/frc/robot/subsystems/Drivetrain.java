@@ -84,6 +84,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
      private DynamicSlewRateLimiter forwardLimiter = new DynamicSlewRateLimiter(FORWARD_ACCEL); // TODO: actually set this
      private DynamicSlewRateLimiter strafeLimiter = new DynamicSlewRateLimiter(SIDE_ACCEL); // TODO: actually set this
      private DynamicSlewRateLimiter rotationLimiter = new DynamicSlewRateLimiter(ROT_ACCEL); // TODO: actually set this
+     private Rotation2d targetHeading = Rotation2d.fromDegrees(0);
 
     public Tunable forwardAccelTunable = new Tunable("Forward Accel Limit", 1.5, (value) -> {
         //forwardLimiter.setLimit(value);
@@ -365,10 +366,22 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         }
     }
 
-    //TODO Check
     public void driveWithSetpoint(double xSpeed, double ySpeed, double thetaSpeed, boolean fieldRelative,
     boolean respectOperatorPerspective) {
+        driveWithSetpoint(xSpeed, ySpeed, thetaSpeed, fieldRelative, respectOperatorPerspective, true);
+    }
 
+    //TODO Check
+    public void driveWithSetpoint(double xSpeed, double ySpeed, double thetaSpeed, boolean fieldRelative,
+    boolean respectOperatorPerspective, boolean headingCorrection) {
+
+        if (headingCorrection && Math.abs(thetaSpeed - 0.002) >= 0) { //if angular speed commanded and heading correction enabled
+            targetHeading = odometryHeading; // update target heading
+        }
+
+        if (headingCorrection && Math.abs(thetaSpeed - 0.002) <= 0) {
+            thetaSpeed = thetaController.calculate(odometryHeading.getRadians(), targetHeading.getRadians());
+        }
         if (respectOperatorPerspective) {
             if (DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get() == Alliance.Red && fieldRelative)  {
      
@@ -405,6 +418,10 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
     public void driveWithSetpoint(ChassisSpeeds speeds, boolean fieldRelative, boolean respectOperatorPerspective) {
         driveWithSetpoint(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond, fieldRelative, respectOperatorPerspective);
+    }
+
+    public void driveWithSetpoint(ChassisSpeeds speeds, boolean fieldRelative, boolean respectOperatorPerspective, boolean headingCorrection) {
+        driveWithSetpoint(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond, fieldRelative, respectOperatorPerspective, headingCorrection);
     }
 
     /*
