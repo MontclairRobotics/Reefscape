@@ -36,6 +36,7 @@ public class ASCIInimation
     
     public void periodic()
     {
+        
         Timer timer = new Timer();
         final int offset = (int)(timer.get() / 0.1);
 

@@ -22,6 +22,7 @@ import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Timer;
@@ -276,7 +277,8 @@ public class Arm extends SubsystemBase {
         // SmartDashboard.putNumber("Arm/Clamped Target", target);
         double wristVoltage = pidController.calculate(getEndpointAngle().getRotations(), target);
 
-        setpointPub.set(target * 360);
+            setpointPub.set(target * 360);
+        
     
 
         //needs feedforward only when we have algae, because algae is heavy!
@@ -358,6 +360,7 @@ public class Arm extends SubsystemBase {
 
     @Override
     public void periodic() {
+        if(RobotContainer.debugMode && !DriverStation.isFMSAttached()) {
         SmartDashboard.putBoolean("Arm/At Setpoint", atSetPoint());
         percentRotPub.set(getPercentRotation());
 
@@ -373,6 +376,7 @@ public class Arm extends SubsystemBase {
         largeRotPub.set(getElbowAngle().getDegrees());
         smallRotPub.set(getWristAngle().getDegrees());
         endPointAnglePub.set(getEndpointAngle().getDegrees());
+        }
     }
 
     @Override

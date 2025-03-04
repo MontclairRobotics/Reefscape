@@ -35,6 +35,8 @@ import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.units.Units.*;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
@@ -629,11 +631,12 @@ public class Elevator extends SubsystemBase {
 
     @Override
     public void periodic() {
-        heightPub.set(getExtension());
-        percentHeightPub.set(getExtension() / MAX_EXTENSION);
-        if (RobotContainer.debugMode) {
+        
+        if (RobotContainer.debugMode && !DriverStation.isFMSAttached()) {
             rightHeightPub.set(rightTalonFX.getPosition().getValueAsDouble());
             leftHeightPub.set(leftTalonFX.getPosition().getValueAsDouble());
+            heightPub.set(getExtension());
+            percentHeightPub.set(getExtension() / MAX_EXTENSION);
             // topLimitPub.set(false);
             // bottomLimitPub.set(bottomLimit.get());
         }
@@ -646,11 +649,13 @@ public class Elevator extends SubsystemBase {
         // leftTalonFX.setPosition(0);
         // rightTalonFX.setPosition(0);
         // } //TODO: check
+        if(RobotBase.isSimulation()) {
         double height = getHeight();
         stage2PosePub.set(new Pose3d(-0.103, 0, 0.14 + Math.max(0, height - STAGE2_MAX_HEIGHT), Rotation3d.kZero));
         // stage2PosePub.set(new Pose3d(0, 0, 0 + Math.max(0, height-STAGE2_MAX_HEIGHT),
         // Rotation3d.kZero));
         stage3PosePub.set(new Pose3d(-0.103, 0, 0.165 + height - STARTING_HEIGHT, Rotation3d.kZero));
+        }
     }
 
     // ---------------------------------------------------------

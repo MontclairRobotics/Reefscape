@@ -15,6 +15,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.RobotContainer;
 import frc.robot.util.GamePiece;
 
 public class Rollers extends SubsystemBase {
@@ -156,7 +157,10 @@ public class Rollers extends SubsystemBase {
         // SmartDashboard.putNumber("Right Motor Current", rightMotor.getOutputCurrent());
         // SmartDashboard.putNumber("Left Motor Current", leftMotor.getOutputCurrent());
         boolean isHeld = (heldPiece != GamePiece.None)&&!(DriverStation.isAutonomousEnabled());
-        entry.setBoolean(isHeld);
+        
+        if(RobotContainer.debugMode && !DriverStation.isFMSAttached()) {
+            entry.setBoolean(isHeld);
+        }
 
     }
 

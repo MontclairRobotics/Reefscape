@@ -98,6 +98,7 @@ public class LEDs extends SubsystemBase {
         return Commands.run(() -> pattern.applyTo(ledBuffer), this).ignoringDisable(true);
     }
     public void periodic(){
+        
         led.setData(ledBuffer); 
     }
 }

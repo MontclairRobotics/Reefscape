@@ -108,10 +108,10 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     // });
 
     public static final Pose2d[] BLUE_SCORING_POSES = {
-            // new Pose2d(new Translation2d(1.091, 1.060), new
-            // Rotation2d(Math.toRadians(-127.000))), //top coral station
-            // new Pose2d(new Translation2d(1.091, 7.000), new
-            // Rotation2d(Math.toRadians(127.000))), //bottom coral station
+            new Pose2d(new Translation2d(1.091, 1.060), new
+            Rotation2d(Math.toRadians(-127.000))), //top coral station
+            new Pose2d(new Translation2d(1.091, 7.000), new
+            Rotation2d(Math.toRadians(127.000))), //bottom coral station
             new Pose2d(new Translation2d(3.680, 2.600), new Rotation2d(Math.toRadians(60.000))),
             new Pose2d(new Translation2d(2.870, 4.030), new Rotation2d(Math.toRadians(0.000))),
             new Pose2d(new Translation2d(3.670, 5.450), new Rotation2d(Math.toRadians(-60.000))),
@@ -285,7 +285,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
             rotVelocity = rotationLimiter.calculate(
                 rotVelocity);
         }
-        driveWithSetpoint(getVelocityYFromController(), getVelocityXFromController(), rotVelocity, fieldRelative, true); // drives
+        driveWithSetpoint(getVelocityYFromController(), getVelocityXFromController(), rotVelocity, isFieldRelative(), true); // drives
                                                                                                              // using
                                                                                                              // supposed
                                                                                                              // velocities,
@@ -298,6 +298,9 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         // drive(0, 1, 0, true);
     }
 
+    public boolean isFieldRelative() {
+        return fieldRelative;
+    }
     public void drive(ChassisSpeeds speeds, boolean fieldRelative, boolean respectOperatorPerspective) {
         drive(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond, fieldRelative,
                 respectOperatorPerspective);
@@ -771,7 +774,8 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         // Not sure if this is correct at all
         odometryHeading = getRobotPose().getRotation();
         isRobotAtAngleSetPoint = thetaController.atSetpoint();
-        fieldRelative = !RobotContainer.driverController.L2().getAsBoolean();
+
+
         strafeLimiter.setLimit(getMaxHorizontalAccel());
         forwardLimiter.setLimit(getMaxForwardAccel());
         rotationLimiter.setLimit(getMaxRotAccel());
@@ -779,12 +783,6 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         if (DriverStation.isTeleopEnabled()) {
             //Auto.field.setRobotPose(getRobotPose());
         }
-
-        double driveSpeedModule0 = getState().ModuleStates[0].speedMetersPerSecond;
-        double driveCurrentModule0 = getModule(0).getDriveMotor().getStatorCurrent().getValueAsDouble();
-        driveCurrentPub.set(driveCurrentModule0);
-        driveVelocityPub.set(driveSpeedModule0);
-        
 
         /*
          * Periodically try to apply the operator perspective.

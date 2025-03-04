@@ -8,6 +8,7 @@ import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.RobotContainer;
 
 public class Tunable extends SubsystemBase{
 
@@ -63,12 +64,10 @@ public class Tunable extends SubsystemBase{
 
     @Override
     public void periodic() {
-        // if (DriverStation.getMatchType() == DriverStation.MatchType.None
-        //     || DriverStation.getMatchType() == DriverStation.MatchType.Practice
-        //     || DriverStation.isTest()
-        //    ) {
-        updateValue();
-        // }
+   
+        if(RobotContainer.debugMode && !DriverStation.isFMSAttached()) {
+            updateValue();
+        }
     }
 
 }
