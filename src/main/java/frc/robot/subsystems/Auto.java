@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.json.simple.parser.ParseException;
+import org.littletonrobotics.junction.AutoLog;
 import org.littletonrobotics.junction.Logger;
 
 import com.pathplanner.lib.auto.NamedCommands;
@@ -657,12 +658,14 @@ public class Auto extends SubsystemBase {
                 validateAndCreatePaths(autoString);
                 addRobotPoseProgressBar();
                 displayTimestampSeconds();
+                Logger.recordOutput("Auto/AutoString", autoString);
             } else if (alliance.isPresent() && alliance.get() != prevAlliance) {
-                System.out.println(" 2 -> Running auto sequencer & Command Builder");
+                System.out.println("Alliance Changed -> Running auto sequencer & Command Builder");
                 prevAlliance = alliance.get();
                 validateAndCreatePaths(autoString);
                 addRobotPoseProgressBar();
                 displayTimestampSeconds();
+                Logger.recordOutput("Auto/AutoString", autoString);
             }
 
             if (progressBarEnt.getAsDouble() != prevProgressBar) {

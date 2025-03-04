@@ -1,5 +1,7 @@
 package frc.robot.vision;
 
+import org.littletonrobotics.junction.Logger;
+
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose3d;
@@ -41,6 +43,7 @@ public class ElevatorLimelight extends Limelight {
             }
             // adds vision measurement if conditions are met
             if (!shouldRejectUpdate) {
+                Logger.recordOutput(cameraName + "/mt2Pose", mt2.pose);
                 // RobotContainer.drivetrain.swerveDrive.setVisionMeasurementStdDevs(VecBuilder.fill(.7,.7,9999999));
                 Matrix<N3, N1> stdDevs = VecBuilder.fill(.7,.7,9999999);
                 RobotContainer.drivetrain.addVisionMeasurement(

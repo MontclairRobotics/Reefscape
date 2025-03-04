@@ -2,6 +2,9 @@ package frc.robot.subsystems;
 
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
+
+import org.littletonrobotics.junction.Logger;
+
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
@@ -161,6 +164,12 @@ public class Rollers extends SubsystemBase {
         if(RobotContainer.debugMode && !DriverStation.isFMSAttached()) {
             entry.setBoolean(isHeld);
         }
+
+        Logger.recordOutput("Rollers/Held Piece", heldPiece);
+        Logger.recordOutput("Rollers/LeftSpeed", leftMotor.getAppliedOutput());
+        Logger.recordOutput("Rollers/RightSpeed", rightMotor.getAppliedOutput());
+        Logger.recordOutput("Rollers/RightCurrent", rightMotor.getOutputCurrent());
+        Logger.recordOutput("Rollers/LeftCurrent", leftMotor.getOutputCurrent());
 
     }
 

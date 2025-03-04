@@ -45,6 +45,7 @@ public class RobotContainer {
   public static CommandPS5Controller testingController = new CommandPS5Controller(2);
 
   public static final boolean debugMode = true;
+  public static final boolean logMode = true;
 
   //Subsystems
   public static Limelight leftLimelight = new Limelight("limelight-left", 0.38, 0, 0, 0, true);

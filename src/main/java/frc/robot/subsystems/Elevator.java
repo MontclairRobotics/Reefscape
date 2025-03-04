@@ -2,6 +2,9 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.Volts;
 
+import org.littletonrobotics.junction.AutoLogOutput;
+import org.littletonrobotics.junction.Logger;
+
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
@@ -365,6 +368,7 @@ public class Elevator extends SubsystemBase {
      *         if the difference is two much it will send a warning using elastic
      *         uwu
      */
+    @AutoLogOutput
     public double getExtension() {
         if (Robot.isReal()) {
             return getExtensionRotations() * METERS_PER_ROTATION;
@@ -585,6 +589,7 @@ public class Elevator extends SubsystemBase {
         double rotations = extension * ROTATIONS_PER_METER; // Converts meters to rotations
 
         setPointPub.set(rotations * METERS_PER_ROTATION);
+        Logger.recordOutput("Elevator/Extension Setpoint", rotations * METERS_PER_ROTATION);
 
         leftTalonFX.setControl(mm_req.withPosition(rotations).withSlot(0).withEnableFOC(true));
     }
@@ -625,6 +630,7 @@ public class Elevator extends SubsystemBase {
         return Commands.run(() -> setExtension(state.getHeight()), this);
     }
 
+    @AutoLogOutput
     public double getPercentHeight() {
         return getExtension() / MAX_EXTENSION;
     }
@@ -650,11 +656,11 @@ public class Elevator extends SubsystemBase {
         // rightTalonFX.setPosition(0);
         // } //TODO: check
         if(RobotBase.isSimulation()) {
-        double height = getHeight();
-        stage2PosePub.set(new Pose3d(-0.103, 0, 0.14 + Math.max(0, height - STAGE2_MAX_HEIGHT), Rotation3d.kZero));
-        // stage2PosePub.set(new Pose3d(0, 0, 0 + Math.max(0, height-STAGE2_MAX_HEIGHT),
-        // Rotation3d.kZero));
-        stage3PosePub.set(new Pose3d(-0.103, 0, 0.165 + height - STARTING_HEIGHT, Rotation3d.kZero));
+            double height = getHeight();
+            stage2PosePub.set(new Pose3d(-0.103, 0, 0.14 + Math.max(0, height - STAGE2_MAX_HEIGHT), Rotation3d.kZero));
+            // stage2PosePub.set(new Pose3d(0, 0, 0 + Math.max(0, height-STAGE2_MAX_HEIGHT),
+            // Rotation3d.kZero));
+            stage3PosePub.set(new Pose3d(-0.103, 0, 0.165 + height - STARTING_HEIGHT, Rotation3d.kZero));
         }
     }
 

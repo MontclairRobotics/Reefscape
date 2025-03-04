@@ -13,6 +13,11 @@ import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Volts;
 
 import java.util.function.Supplier;
+
+import org.littletonrobotics.junction.AutoLog;
+import org.littletonrobotics.junction.AutoLogOutput;
+import org.littletonrobotics.junction.Logger;
+
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.DoubleTopic;
 
@@ -75,7 +80,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     public static double ROT_ACCEL = 16; // radians / s^2
     public static double MIN_TRANSLATIONAL_ACCEL = 2;
     public static double MIN_ROT_ACCEL = 1.5;
-    public static boolean IS_LIMITING_ACCEL = true;
+    public static boolean IS_LIMITING_ACCEL = false; //TODO remove this, not needed w/ driveWithSetpoint
 
     DoublePublisher driveCurrentPub;
     DoublePublisher driveVelocityPub;
@@ -139,8 +144,6 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
             new Pose2d(new Translation2d(3.98, 2.8), new Rotation2d(Math.toRadians(60))),
     };
 
-    // for go to pose command
-    private boolean isAtPoseGoal;
     private ProfiledPIDController xController;
     private ProfiledPIDController yController;
     private ProfiledPIDController PoseThetaController;
@@ -306,21 +309,6 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         drive(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond, fieldRelative,
                 respectOperatorPerspective);
     }
-
-    /*
-     * DRIVES GIVEN ROBOT RELATIVE CHASSIS SPEEDS, FOR PATHPLANNER
-     * 
-     * 
-     */
-    // public void drive(ChassisSpeeds chassisSpeeds){
-    // //robot relative chassis speeds
-    // SwerveRequest.ApplyRobotSpeeds request = new SwerveRequest.ApplyRobotSpeeds()
-    // .withDriveRequestType(DriveRequestType.Velocity)
-    // .withSteerRequestType(SteerRequestType.Position)
-    // .withSpeeds(chassisSpeeds);
-
-    // this.setControl(request);
-    // }
 
     /*
      * DRIVES USING CLOSED LOOP VELOCITY CONTROL
@@ -775,10 +763,12 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         return wrapAngle(odometryHeading);
     }
 
+    @AutoLogOutput
     public Pose2d getRobotPose() {
         return this.getState().Pose;
     }
 
+    @AutoLogOutput
     public ChassisSpeeds getCurrentSpeeds() {
         return this.getState().Speeds;
     }
@@ -796,8 +786,10 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         rotationLimiter.setLimit(getMaxRotAccel());
         
         if (DriverStation.isTeleopEnabled()) {
-            //Auto.field.setRobotPose(getRobotPose());
+            Auto.field.setRobotPose(getRobotPose());
         }
+
+        Logger.recordOutput("Drivetrain/isFieldRelative", fieldRelative);
 
         /*
          * Periodically try to apply the operator perspective.

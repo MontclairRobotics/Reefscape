@@ -2,6 +2,10 @@ package frc.robot.subsystems;
 
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
+
+import org.littletonrobotics.junction.AutoLogOutput;
+import org.littletonrobotics.junction.Logger;
+
 import com.revrobotics.sim.SparkMaxSim;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
@@ -205,10 +209,9 @@ public class Arm extends SubsystemBase {
         armMotor.stopMotor();
     }
 
+    @AutoLogOutput
     public double getPercentRotation() {
 
-        double max = 32;
-        double min = -56;
         double distance = PoseUtils.getAngleDistance(getEndpointAngle(), MIN_ANGLE).getDegrees();
         double interval = PoseUtils.getAngleDistance(MAX_ANGLE, MIN_ANGLE).getDegrees();
         // interval = MAX_ANGLE.getDegrees() - MIN_ANGLE.getDegrees();
@@ -227,6 +230,7 @@ public class Arm extends SubsystemBase {
     /**
      * Returns the angle of the elbow to the horizontal
      */
+    @AutoLogOutput
     public Rotation2d getElbowAngle() {
         return Drivetrain.wrapAngle(Rotation2d.fromRotations(elbowEncoder.get()));
     }
@@ -234,6 +238,7 @@ public class Arm extends SubsystemBase {
     /**
      * Returns the angle from the elbow to the wrist
      */
+    @AutoLogOutput
     public Rotation2d getWristAngle() {
         // return Rotation2d.fromRotations(wristEncoder.get());
         if (Robot.isReal()) {
@@ -245,6 +250,7 @@ public class Arm extends SubsystemBase {
     /*
      * Returns the angle to the horizontal of the endpoint of the arm in rotations
      */
+    @AutoLogOutput
     public Rotation2d getEndpointAngle() {
         // return Rotation2d.fromRotations(j1Encoder.get() - ((j1Encoder.get() *
         // LARGE_ANGLE_TO_SMALL) +
@@ -277,7 +283,7 @@ public class Arm extends SubsystemBase {
         // SmartDashboard.putNumber("Arm/Clamped Target", target);
         double wristVoltage = pidController.calculate(getEndpointAngle().getRotations(), target);
 
-            setpointPub.set(target * 360);
+        setpointPub.set(target * 360);
         
     
 
@@ -292,6 +298,7 @@ public class Arm extends SubsystemBase {
         // TODO do we need feedforward? If so we have to figure out the equation
         // negative voltage brings it up, positive brings it down AFAIK
         voltagePub.set(-wristVoltage);
+        Logger.recordOutput("Arm/AppliedVoltage", -wristVoltage);
         armMotor.setVoltage(-wristVoltage);
 
     }
@@ -361,21 +368,21 @@ public class Arm extends SubsystemBase {
     @Override
     public void periodic() {
         if(RobotContainer.debugMode && !DriverStation.isFMSAttached()) {
-        SmartDashboard.putBoolean("Arm/At Setpoint", atSetPoint());
-        percentRotPub.set(getPercentRotation());
+            SmartDashboard.putBoolean("Arm/At Setpoint", atSetPoint());
+            percentRotPub.set(getPercentRotation());
 
-        // These lines are for an actual physics simulator
-        // j1Velocity = (getElbowAngle().getRotations() - j1PrevPos) / 0.02;
-        // j1Velocity = 0;
-        // j2Velocity = (getWristAngle().getRotations() - j2PrevPos) / 0.02;
-        // j2Velocity = 0;
-        // prevLoopTime = Timer.getFPGATimestamp();
-        j1PrevPos = getElbowAngle().getRotations();
-        j2PrevPos = getWristAngle().getRotations();
+            // These lines are for an actual physics simulator
+            // j1Velocity = (getElbowAngle().getRotations() - j1PrevPos) / 0.02;
+            // j1Velocity = 0;
+            // j2Velocity = (getWristAngle().getRotations() - j2PrevPos) / 0.02;
+            // j2Velocity = 0;
+            // prevLoopTime = Timer.getFPGATimestamp();
+            j1PrevPos = getElbowAngle().getRotations();
+            j2PrevPos = getWristAngle().getRotations();
 
-        largeRotPub.set(getElbowAngle().getDegrees());
-        smallRotPub.set(getWristAngle().getDegrees());
-        endPointAnglePub.set(getEndpointAngle().getDegrees());
+            largeRotPub.set(getElbowAngle().getDegrees());
+            smallRotPub.set(getWristAngle().getDegrees());
+            endPointAnglePub.set(getEndpointAngle().getDegrees());
         }
     }
 

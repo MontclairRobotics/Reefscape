@@ -2,6 +2,9 @@ package frc.robot.vision;
 
 import java.util.function.DoubleSupplier;
 
+import org.littletonrobotics.junction.AutoLogOutput;
+import org.littletonrobotics.junction.Logger;
+
 import com.ctre.phoenix6.Utils;
 
 import edu.wpi.first.math.VecBuilder;
@@ -141,6 +144,7 @@ public class Limelight extends SubsystemBase {
             }
             //adds vision measurement if conditions are met
             if (!shouldRejectUpdate) {
+                Logger.recordOutput(cameraName + "/mt2Pose", mt2.pose);
                 RobotContainer.drivetrain.addVisionMeasurement(
                         mt2.pose,
                         Utils.fpgaToCurrentTime(mt2.timestampSeconds),
@@ -209,10 +213,12 @@ public class Limelight extends SubsystemBase {
         return getHorizontalDistanceToTag(reefTagHeightMeters);
     }
 
+    @AutoLogOutput
     public double getTX() {
         return tx * angleMult;
     }
 
+    @AutoLogOutput
     public double getTY() {
         return ty * -angleMult;
     }
@@ -248,10 +254,10 @@ public class Limelight extends SubsystemBase {
         // tagID = (int) Limetable.getEntry("tid").getDouble(-1);
         tx = LimelightHelpers.getTX(cameraName);
         ty = LimelightHelpers.getTY(cameraName);
-       poseEstimationMegatag2();
-       xDistPub.set(getHorizontalDistanceToReef());
-       yDistPub.set(getStraightDistanceToReef());
-       horizontalDistPub.set(getDistanceToReef());
+        poseEstimationMegatag2();
+        xDistPub.set(getHorizontalDistanceToReef());
+        yDistPub.set(getStraightDistanceToReef());
+        horizontalDistPub.set(getDistanceToReef());
     }
 
     public Command ifHasTarget(Command cmd) {

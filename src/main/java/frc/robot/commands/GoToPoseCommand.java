@@ -1,5 +1,7 @@
 package frc.robot.commands;
 
+import org.littletonrobotics.junction.Logger;
+
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
@@ -43,15 +45,15 @@ public class GoToPoseCommand extends Command {
     @Override
     public void initialize() {
 
-        //defaults to center
-        // if(direction == ScoreDirection.CENTER) {
-            targetPose = RobotContainer.drivetrain.getClosestScoringPose(Drivetrain.BLUE_SCORING_POSES);
-        //}
+        
         if(direction.isLeft()) {
             targetPose = RobotContainer.drivetrain.getClosestScoringPose(Drivetrain.LEFT_BLUE_SCORING_POSES);
         } else if(direction.isRight()) {
             targetPose = RobotContainer.drivetrain.getClosestScoringPose(Drivetrain.RIGHT_BLUE_SCORING_POSES);
-        } 
+        } else {
+            //defaults to center
+            targetPose = RobotContainer.drivetrain.getClosestScoringPose(Drivetrain.BLUE_SCORING_POSES);
+        }
         
 
         //Cancels the command if for some reason the target pose is null 
@@ -59,6 +61,9 @@ public class GoToPoseCommand extends Command {
         if(targetPose == null) {
             cancel();
         }
+
+        Logger.recordOutput("PoseCommand/TargetPose", targetPose);
+        Logger.recordOutput("PoseCommand/TargetPose", RobotContainer.drivetrain.getRobotPose());
 
         // NetworkTableInstance inst = NetworkTableInstance.getDefault();
         // NetworkTable poseCommandTable = inst.getTable("Pose Command");
@@ -100,6 +105,10 @@ public class GoToPoseCommand extends Command {
         xController = new PIDController(3.5, 0, .035); //creates the PIDControllers
         yController = new PIDController(3.5, 0, .035); //TODO tolerances
         thetaController = RobotContainer.drivetrain.thetaController;
+
+        // TODO I think I need to log the 1st pose2d in disabled to prevent overruns
+        Logger.recordOutput("PoseCommand/TargetPose", targetPose);
+        Logger.recordOutput("PoseCommand/TargetPose", RobotContainer.drivetrain.getRobotPose());
     }
 
     @Override
