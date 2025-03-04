@@ -587,6 +587,21 @@ public class Elevator extends SubsystemBase {
         leftTalonFX.setControl(mm_req.withPosition(rotations).withSlot(0).withEnableFOC(true));
     }
 
+
+    public Command climbUpCommand() {
+        return Commands.run(() -> {
+            setExtension(RobotState.Climb.getHeight());
+            RobotContainer.arm.setEndpointAngle(RobotState.Climb.getAngle());
+        }, this);
+    }
+
+    public Command climbDownCommand() {
+        return Commands.run(() -> {
+            RobotContainer.ratchet.engageServos();
+            setExtension(0);
+        }, this);
+    }
+
     // Commands
     public Command joystickControlCommand() {
         return Commands.run(() -> joystickControl(), this);

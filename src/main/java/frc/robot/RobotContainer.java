@@ -66,7 +66,8 @@ public class RobotContainer {
   public RobotContainer() {
     DriverStation.silenceJoystickConnectionWarning(true);
     //  configureDriveTryoutBindings();
-    configureBindings();
+    configureCompetitionBindings();
+    // configureBindings();
     // Enables limelights when tethered over USB
 
     // https://docs.limelightvision.io/docs/docs-limelight/getting-started/FRC/best-practices
@@ -76,6 +77,163 @@ public class RobotContainer {
       PortForwarder.add(i, "limelight-left.local", i);
       PortForwarder.add(i+10, "limelight-right.local", i+10);
     }
+  }
+
+  private void configureCompetitionBindings() {
+
+    /* --------------------------------------------OPERATOR BINDINGS --------------------------------------------*/
+
+    rollers.setDefaultCommand(rollers.getDefaultCommand());
+
+    //Intake
+    operatorController.L1()
+    .whileTrue(
+      rollers.intakeCoralJiggleCommand()
+      .alongWith(arm.holdState(RobotState.Intake))
+      .alongWith(elevator.setState(RobotState.Intake)))
+    .onFalse(
+      rollers.stopCommand()
+      .alongWith(arm.stopCommand())
+      .alongWith(elevator.stopCommand())
+    );
+
+    //Scoring
+    operatorController.R1()
+      .onTrue(rollers.outtakeCoralCommand())
+      .onFalse(rollers.stopCommand());
+
+    //L1 scoring
+    operatorController.R2().and(operatorController.cross())
+      .whileTrue(rollers.scoreL1())
+      .onFalse(rollers.stopCommand());
+
+    // L1 
+    operatorController.cross()
+      .whileTrue(arm.setState(RobotState.L1))
+      .onFalse(
+        elevator.setState(RobotState.L1)
+        .alongWith(arm.setState(RobotState.L1))
+        .andThen(arm.stopCommand())
+        .andThen(elevator.stopCommand())
+      );
+      
+    // L2 
+    operatorController.square()
+      .whileTrue(arm.setState(RobotState.L2))
+      .onFalse(
+        elevator.setState(RobotState.L2)
+        .alongWith(arm.setState(RobotState.L2))
+        .andThen(arm.stopCommand())
+        .andThen(elevator.stopCommand())
+      );
+
+    // L3
+    operatorController.triangle()
+      .whileTrue((arm.setState(RobotState.L3)))
+      .onFalse(
+        elevator.setState(RobotState.L3)
+        .alongWith(arm.setState(RobotState.L3))
+        .andThen(arm.stopCommand())
+        .andThen(elevator.stopCommand())
+      );
+
+    // L4 
+    operatorController.circle()
+      .whileTrue(arm.setState(RobotState.L4))
+      .onFalse(
+        elevator.setState(RobotState.L4)
+        .alongWith(arm.setState(RobotState.L4))
+        .andThen(arm.stopCommand())
+        .andThen(elevator.stopCommand())
+      );
+
+    // Elevator down
+    operatorController.R2()
+      .onTrue(elevator.setState(RobotState.DrivingNone));
+
+    //Lower algae
+    operatorController.cross().and(operatorController.L2())
+      .whileTrue(
+        arm.setState(RobotState.L1Algae)
+        .alongWith(elevator.setState(RobotState.L1Algae))
+        .alongWith(rollers.intakeAlgaeCommand())
+      );
+
+    //Higher algae
+    operatorController.triangle().and(operatorController.L2())
+      .whileTrue(
+        arm.setState(RobotState.L2Algae)
+        .alongWith(elevator.setState(RobotState.L2Algae))
+        .alongWith(rollers.intakeAlgaeCommand())
+      );
+
+    //Climb
+    operatorController.circle().and(operatorController.L2())
+      .whileTrue(elevator.climbUpCommand())
+      .onFalse(elevator.climbDownCommand());
+
+    //Processor
+    operatorController.square().and(operatorController.L2())
+      .onTrue(arm.setState(RobotState.Processor));
+
+    /*--------------------------------- DRIVER BINDINGS -------------------------------------------- */ 
+
+    drivetrain.setDefaultCommand(drivetrain.driveJoystickInputCommand());
+
+    //alignment buttons
+    driverController.R2().whileTrue(new GoToPoseCommand(TagOffset.CENTER)
+     // .andThen(new AlignToAprilTagCommand(ScoreDirection.CENTER))
+     );
+    driverController.L1().whileTrue(new GoToPoseCommand(TagOffset.LEFT)
+    //  .andThen(new AlignToAprilTagCommand(ScoreDirection.LEFT))
+    );
+    driverController.R1().whileTrue(new GoToPoseCommand(TagOffset.RIGHT)
+    //  .andThen(new AlignToAprilTagCommand(ScoreDirection.RIGHT))
+    );
+
+    //Robot relative
+    driverController.L2()
+      .onTrue(drivetrain.toRobotRelativeCommand())
+      .onFalse(drivetrain.toFieldRelativeCommand());
+
+    //90 degree buttons
+    driverController.triangle()
+       .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(0)), false));
+    driverController.square()
+      .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(90)), false));
+    driverController.cross()
+      .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(180)), false));
+    driverController.circle()
+      .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(270)), false)); 
+    
+    //zeros gyro
+    driverController.touchpad().onTrue(drivetrain.zeroGyroCommand());
+    
+    //telemetry
+    drivetrain.registerTelemetry(telemetryLogger::telemeterize);    
+
+    //Robot relative
+    driverController.L2()
+      .onTrue(drivetrain.toRobotRelativeCommand())
+      .onFalse(drivetrain.toFieldRelativeCommand());
+
+    /* ---------------------------------------- TESTING BINDINGS --------------------------------------- */
+
+    testingController.L1().onTrue(Commands.runOnce(() -> SignalLogger.start()));
+    testingController.R1().onTrue(Commands.runOnce(() -> SignalLogger.stop()));
+    testingController.triangle().whileTrue(
+      drivetrain.sysIdDynamic(Direction.kForward)
+    );
+    testingController.circle().whileTrue(
+      drivetrain.sysIdDynamic(Direction.kReverse)
+    );
+    testingController.cross().whileTrue(
+      drivetrain.sysIdQuasistatic(Direction.kForward)
+    );
+    testingController.square().whileTrue(
+      drivetrain.sysIdQuasistatic(Direction.kReverse)
+    );
+
   }
 
   private void configureBindings() {

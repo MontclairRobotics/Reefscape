@@ -93,7 +93,7 @@ public class Rollers extends SubsystemBase {
         return Commands.run(() -> setSpeed(ALGAE_INTAKE_SPEED), this)
                 .finallyDo(() -> {
                     setSpeed(0);
-                    if(isStalled())
+                    // if(isStalled())
                     this.heldPiece = GamePiece.Algae;
                 })
                 .until(this::isStalled);

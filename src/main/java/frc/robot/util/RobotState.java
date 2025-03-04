@@ -11,13 +11,15 @@ public enum RobotState {
     L2 (0,Rotation2d.fromDegrees(-17)),
     L1 (0,Rotation2d.fromDegrees(-40)),
     Intake(0, Arm.MAX_ANGLE),
-    Processor(0, Rotation2d.fromDegrees(0)),
+    Processor(0, Rotation2d.fromDegrees(-33)),
     Net(0, Rotation2d.fromDegrees(0)),
     DrivingAlgae(0, Rotation2d.fromDegrees(0)),
     DrivingCoral(0, Arm.MAX_ANGLE),
     DrivingNone(0, Intake.getAngle()),
     L1Algae(0, Rotation2d.fromDegrees(0)),
-    L2Algae(0, Rotation2d.fromDegrees(0));
+    L2Algae(0, Rotation2d.fromDegrees(0)),
+    Climb(0.2, Rotation2d.fromDegrees(-58));
+    
 
     private double height;
     private Rotation2d angle;
