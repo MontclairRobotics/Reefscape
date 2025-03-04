@@ -9,6 +9,8 @@ import com.ctre.phoenix6.Orchestra;
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+
+import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.net.PortForwarder;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -44,7 +46,7 @@ public class RobotContainer {
   public static CommandPS5Controller operatorController = new CommandPS5Controller(1);
   public static CommandPS5Controller testingController = new CommandPS5Controller(2);
 
-  public static final boolean debugMode = true;
+  public static final boolean debugMode = false;
   public static final boolean logMode = true;
 
   //Subsystems
@@ -68,7 +70,7 @@ public class RobotContainer {
     DriverStation.silenceJoystickConnectionWarning(true);
     //  configureDriveTryoutBindings();
     configureCompetitionBindings();
-    // configureBindings();
+    //configureBindings();
     // Enables limelights when tethered over USB
 
     // https://docs.limelightvision.io/docs/docs-limelight/getting-started/FRC/best-practices
@@ -109,41 +111,41 @@ public class RobotContainer {
       .onFalse(rollers.stopCommand());
 
     // L1 
-    operatorController.cross()
-      .whileTrue(arm.setState(RobotState.L1))
+    operatorController.cross().and(operatorController.L2().negate())
+      .whileTrue(arm.setState(RobotState.L1).until(() -> arm.atSetPoint()))
       .onFalse(
         elevator.setState(RobotState.L1)
-        .alongWith(arm.setState(RobotState.L1))
+        .alongWith(arm.setState(RobotState.L1).until(() -> arm.atSetPoint()))
         .andThen(arm.stopCommand())
         .andThen(elevator.stopCommand())
       );
       
     // L2 
-    operatorController.square()
-      .whileTrue(arm.setState(RobotState.L2))
+    operatorController.square().and(operatorController.L2().negate())
+      .whileTrue(arm.setState(RobotState.L2).until(() -> arm.atSetPoint()))
       .onFalse(
         elevator.setState(RobotState.L2)
-        .alongWith(arm.setState(RobotState.L2))
+        .alongWith(arm.setState(RobotState.L2).until(() -> arm.atSetPoint()))
         .andThen(arm.stopCommand())
         .andThen(elevator.stopCommand())
       );
 
     // L3
-    operatorController.triangle()
-      .whileTrue((arm.setState(RobotState.L3)))
+    operatorController.triangle().and(operatorController.L2().negate())
+      .whileTrue((arm.setState(RobotState.L3)).until(() -> arm.atSetPoint()))
       .onFalse(
         elevator.setState(RobotState.L3)
-        .alongWith(arm.setState(RobotState.L3))
+        .alongWith(arm.setState(RobotState.L3).until(() -> arm.atSetPoint()))
         .andThen(arm.stopCommand())
         .andThen(elevator.stopCommand())
       );
 
     // L4 
-    operatorController.circle()
-      .whileTrue(arm.setState(RobotState.L4))
+    operatorController.circle().and(operatorController.L2().negate())
+      .whileTrue(arm.setState(RobotState.L4).until(() -> arm.atSetPoint()))
       .onFalse(
         elevator.setState(RobotState.L4)
-        .alongWith(arm.setState(RobotState.L4))
+        .alongWith(arm.setState(RobotState.L4).until(() -> arm.atSetPoint()))
         .andThen(arm.stopCommand())
         .andThen(elevator.stopCommand())
       );
@@ -170,8 +172,13 @@ public class RobotContainer {
 
     //Climb
     operatorController.circle().and(operatorController.L2())
-      .whileTrue(elevator.climbUpCommand())
-      .onFalse(elevator.climbDownCommand());
+      .whileTrue(ratchet.engageServos())
+      .onFalse(ratchet.disengageServos());
+    
+    // //Climb
+    // operatorController.circle().and(operatorController.L2())
+    //   .whileTrue(elevator.climbUpCommand())
+    //   .onFalse(elevator.climbDownCommand());
 
     //Processor
     operatorController.square().and(operatorController.L2())
@@ -182,22 +189,24 @@ public class RobotContainer {
     drivetrain.setDefaultCommand(drivetrain.driveJoystickInputCommand());
 
     //alignment buttons
-    driverController.R2().whileTrue(new GoToPoseCommand(TagOffset.CENTER)
-     // .andThen(new AlignToAprilTagCommand(ScoreDirection.CENTER))
-     );
-    driverController.L1().whileTrue(new GoToPoseCommand(TagOffset.LEFT)
-    //  .andThen(new AlignToAprilTagCommand(ScoreDirection.LEFT))
-    );
-    driverController.R1().whileTrue(new GoToPoseCommand(TagOffset.RIGHT)
-    //  .andThen(new AlignToAprilTagCommand(ScoreDirection.RIGHT))
-    );
+    driverController.R2()
+      .whileTrue(new GoToPoseCommand(TagOffset.CENTER, true))
+      .onFalse(new GoToPoseCommand(TagOffset.CENTER, false).until(() -> drivetrain.joystickInputDetected()));
+    
+    driverController.L1()
+      .whileTrue(new GoToPoseCommand(TagOffset.LEFT, true))
+      .onFalse(new GoToPoseCommand(TagOffset.LEFT, false).until(() -> drivetrain.joystickInputDetected()));
+    
+    driverController.R1()
+      .whileTrue(new GoToPoseCommand(TagOffset.RIGHT, true))
+      .onFalse(new GoToPoseCommand(TagOffset.RIGHT, false).until(() -> drivetrain.joystickInputDetected()));
 
     //Robot relative
     driverController.L2()
       .onTrue(drivetrain.toRobotRelativeCommand())
       .onFalse(drivetrain.toFieldRelativeCommand());
 
-    //90 degree buttons
+    // 90 degree buttons
     driverController.triangle()
        .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(0)), false));
     driverController.square()
@@ -213,29 +222,24 @@ public class RobotContainer {
     //telemetry
     drivetrain.registerTelemetry(telemetryLogger::telemeterize);    
 
-    //Robot relative
-    driverController.L2()
-      .onTrue(drivetrain.toRobotRelativeCommand())
-      .onFalse(drivetrain.toFieldRelativeCommand());
-
     /* ---------------------------------------- TESTING BINDINGS --------------------------------------- */
 
-    testingController.L1().onTrue(Commands.runOnce(() -> SignalLogger.start()));
-    testingController.R1().onTrue(Commands.runOnce(() -> SignalLogger.stop()));
-    testingController.triangle().whileTrue(
-      drivetrain.sysIdDynamic(Direction.kForward)
-    );
-    testingController.circle().whileTrue(
-      drivetrain.sysIdDynamic(Direction.kReverse)
-    );
-    testingController.cross().whileTrue(
-      drivetrain.sysIdQuasistatic(Direction.kForward)
-    );
-    testingController.square().whileTrue(
-      drivetrain.sysIdQuasistatic(Direction.kReverse)
-    );
+  //   testingController.L1().onTrue(Commands.runOnce(() -> SignalLogger.start()));
+  //   testingController.R1().onTrue(Commands.runOnce(() -> SignalLogger.stop()));
+  //   testingController.triangle().whileTrue(
+  //     drivetrain.sysIdDynamic(Direction.kForward)
+  //   );
+  //   testingController.circle().whileTrue(
+  //     drivetrain.sysIdDynamic(Direction.kReverse)
+  //   );
+  //   testingController.cross().whileTrue(
+  //     drivetrain.sysIdQuasistatic(Direction.kForward)
+  //   );
+  //   testingController.square().whileTrue(
+  //     drivetrain.sysIdQuasistatic(Direction.kReverse)
+  //   );
 
-  }
+   }
 
   private void configureBindings() {
 
@@ -355,13 +359,13 @@ public class RobotContainer {
     /* DRIVER BINDINGS */
 
     //alignment buttons
-    driverController.R2().whileTrue(new GoToPoseCommand(TagOffset.CENTER)
+    driverController.R2().whileTrue(new GoToPoseCommand(TagOffset.CENTER, true)
      // .andThen(new AlignToAprilTagCommand(ScoreDirection.CENTER))
      );
-    driverController.L1().whileTrue(new GoToPoseCommand(TagOffset.LEFT)
+    driverController.L1().whileTrue(new GoToPoseCommand(TagOffset.LEFT, true)
     //  .andThen(new AlignToAprilTagCommand(ScoreDirection.LEFT))
     );
-    driverController.R1().whileTrue(new GoToPoseCommand(TagOffset.RIGHT)
+    driverController.R1().whileTrue(new GoToPoseCommand(TagOffset.RIGHT, true)
     //  .andThen(new AlignToAprilTagCommand(ScoreDirection.RIGHT))
     );
 

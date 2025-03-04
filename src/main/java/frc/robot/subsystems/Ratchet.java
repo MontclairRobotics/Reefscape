@@ -14,8 +14,8 @@ public class Ratchet extends SubsystemBase {
     public final double ENGAGED_POSITION = 0.25;
     public boolean ratchetEngaged = false;
     public Ratchet() {
-        leftServo = new Servo(3);
-        rightServo = new Servo(10);
+        leftServo = new Servo(8);
+        rightServo = new Servo(6);
     }
 
     private void setServoPosition(Servo servo, double position) {
@@ -37,7 +37,7 @@ public class Ratchet extends SubsystemBase {
         return Commands.run(() -> {
             try {
                 setServoPosition(leftServo, ENGAGED_POSITION);
-                setServoPosition(rightServo, -ENGAGED_POSITION);
+                setServoPosition(rightServo, ENGAGED_POSITION);
                 this.ratchetEngaged = true;
             } catch (Exception e) {
                 DriverStation.reportError("Failed to engage servos: " + e.getMessage(), true);
@@ -49,7 +49,7 @@ public class Ratchet extends SubsystemBase {
         return Commands.run(() -> {
             try {
                 setServoPosition(leftServo, DISENGAGED_POSITION);
-                setServoPosition(rightServo, -DISENGAGED_POSITION);
+                setServoPosition(rightServo, DISENGAGED_POSITION);
                 this.ratchetEngaged = false;
             } catch (Exception e) {
                 DriverStation.reportError("Failed to disengage servos: " + e.getMessage(), true);

@@ -276,6 +276,14 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
     }
 
+    public boolean joystickInputDetected() {
+        if(Math.abs(getVelocityXFromController()) > 0
+        && Math.abs(getVelocityYFromController()) > 0
+        ) {
+            return true;
+        } else return false;
+    }
+
     /*
      * DEFAULT DRIVE METHOD
      * 
@@ -289,7 +297,8 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
             rotVelocity = rotationLimiter.calculate(
                 rotVelocity);
         }
-        driveWithSetpoint(getVelocityYFromController(), getVelocityXFromController(), rotVelocity, isFieldRelative(), true); // drives
+
+        driveWithSetpoint(getVelocityYFromController(), getVelocityXFromController(), rotVelocity, fieldRelative, true); // drives
                                                                                                              // using
                                                                                                              // supposed
                                                                                                              // velocities,
@@ -302,9 +311,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         // drive(0, 1, 0, true);
     }
 
-    public boolean isFieldRelative() {
-        return fieldRelative;
-    }
+
     public void drive(ChassisSpeeds speeds, boolean fieldRelative, boolean respectOperatorPerspective) {
         drive(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond, fieldRelative,
                 respectOperatorPerspective);
@@ -363,6 +370,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     public void driveWithSetpoint(double xSpeed, double ySpeed, double thetaSpeed, boolean fieldRelative,
     boolean respectOperatorPerspective, boolean headingCorrection) {
 
+      
         if (headingCorrection && Math.abs(thetaSpeed - 0.002) > 0) { //if angular speed commanded and heading correction enabled
             targetHeading = odometryHeading; // update target heading
         }
@@ -370,6 +378,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         if (headingCorrection && Math.abs(thetaSpeed - 0.002) <= 0) {
             thetaSpeed = thetaController.calculate(odometryHeading.getRadians(), targetHeading.getRadians());
         }
+
         if (respectOperatorPerspective) {
             if (DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get() == Alliance.Red && fieldRelative)  {
      
@@ -395,7 +404,8 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
         SwerveRequest req = new SwerveRequest.ApplyRobotSpeeds()
                                     .withSpeeds(speeds)
-                                    .withDriveRequestType(DriveRequestType.OpenLoopVoltage)
+                                    .withDriveRequestType(DriveRequestType.Velocity)
+                                    .withSteerRequestType(SteerRequestType.Position)
                                     .withWheelForceFeedforwardsX(prevSetpoint.feedforwards().robotRelativeForcesXNewtons())
                                     .withWheelForceFeedforwardsY(prevSetpoint.feedforwards().robotRelativeForcesYNewtons());
 
@@ -588,7 +598,8 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
                     () -> this.getState().Speeds, // Supplier of current robot speeds
                     // Consumer of ChassisSpeeds and feedforwards to drive the robot
                     (speeds, feedforwards) -> this.setControl(
-                            new SwerveRequest.ApplyRobotSpeeds().withSpeeds(speeds).withSteerRequestType(SteerRequestType.Position).withDriveRequestType(DriveRequestType.Velocity)
+                            new SwerveRequest.ApplyRobotSpeeds().withSpeeds(speeds)
+                            .withSteerRequestType(SteerRequestType.Position).withDriveRequestType(DriveRequestType.Velocity)
                                     .withWheelForceFeedforwardsX(feedforwards.robotRelativeForcesXNewtons())
                                     .withWheelForceFeedforwardsY(feedforwards.robotRelativeForcesYNewtons())),
                     new PPHolonomicDriveController(
@@ -779,6 +790,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         // Not sure if this is correct at all
         odometryHeading = getRobotPose().getRotation();
         isRobotAtAngleSetPoint = thetaController.atSetpoint();
+        fieldRelative = !RobotContainer.driverController.L2().getAsBoolean();
 
 
         strafeLimiter.setLimit(getMaxHorizontalAccel());

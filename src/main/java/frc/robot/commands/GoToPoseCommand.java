@@ -1,6 +1,7 @@
 package frc.robot.commands;
 
 import org.littletonrobotics.junction.Logger;
+import static edu.wpi.first.units.Units.Inches;
 
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
@@ -10,6 +11,7 @@ import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.networktables.DoublePublisher;
@@ -21,6 +23,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.Auto;
 import frc.robot.subsystems.Drivetrain;
+import frc.robot.util.PoseUtils;
 import frc.robot.util.TagOffset;
 import frc.robot.util.Tunable;
 import frc.robot.util.TunerConstants;
@@ -33,6 +36,10 @@ public class GoToPoseCommand extends Command {
 
     private Pose2d targetPose;
     private TagOffset direction;
+ 
+    double targetHeading;
+    double offset = .3;
+    boolean isOffset;
 
     DoublePublisher xOutputPub;
     DoublePublisher yOutputPub;
@@ -45,7 +52,13 @@ public class GoToPoseCommand extends Command {
     @Override
     public void initialize() {
 
-        
+
+        //defaults to center
+        // if(direction == ScoreDirection.CENTER) {
+
+        targetPose = new Pose2d();
+
+        //}
         if(direction.isLeft()) {
             targetPose = RobotContainer.drivetrain.getClosestScoringPose(Drivetrain.LEFT_BLUE_SCORING_POSES);
         } else if(direction.isRight()) {
@@ -55,6 +68,22 @@ public class GoToPoseCommand extends Command {
             targetPose = RobotContainer.drivetrain.getClosestScoringPose(Drivetrain.BLUE_SCORING_POSES);
         }
         
+        
+
+        if(isOffset) {
+            //flips the angle if we are on red, so that the trig functions will work properly
+            //On red, the pose for POINT A on RED ALLIANCE has a heading of 180 (I think), 
+            //but the pose for POINT A on BLUE ALLIANCE has a heading of 0 (I think), so we 
+            //just have to make them the same again
+            targetHeading = PoseUtils.flipRotAlliance(targetPose.getRotation()).getRadians();
+            //when target heading is zero, we want the offset to be backwards but cos(0) 
+            //is positive, so we multiply by negative 1
+            //same thing for sin(x)
+            double updatedX = targetPose.getX() + (-1 * offset * Math.cos(targetHeading));
+            double updatedY = targetPose.getY() + (-1 * offset * Math.sin(targetHeading));
+            //creates new updated pose
+            targetPose = new Pose2d(new Translation2d(updatedX, updatedY), Rotation2d.fromRadians(targetHeading));
+        }
 
         //Cancels the command if for some reason the target pose is null 
         //(i.e. if the direction is not CENTER, LEFT, or REVERSE)
@@ -99,7 +128,8 @@ public class GoToPoseCommand extends Command {
         thetaController.setSetpoint(targetPose.getRotation().getRadians());
     }
 
-    public GoToPoseCommand(TagOffset direction) {
+    public GoToPoseCommand(TagOffset direction, boolean isOffset) {
+        this.isOffset = isOffset;
         this.direction = direction; //sets the direction
         addRequirements(RobotContainer.drivetrain); //requires the drivetrain
         xController = new PIDController(3.5, 0, .035); //creates the PIDControllers
