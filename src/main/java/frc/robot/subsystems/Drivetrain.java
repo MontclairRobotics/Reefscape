@@ -375,7 +375,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     public void driveWithSetpoint(double xSpeed, double ySpeed, double thetaSpeed, boolean fieldRelative,
     boolean respectOperatorPerspective, boolean headingCorrection) {
 
-        if (headingCorrection && Math.abs(thetaSpeed - 0.002) >= 0) { //if angular speed commanded and heading correction enabled
+        if (headingCorrection && Math.abs(thetaSpeed - 0.002) > 0) { //if angular speed commanded and heading correction enabled
             targetHeading = odometryHeading; // update target heading
         }
 
@@ -530,8 +530,6 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     public Pose2d getClosestScoringPose(Pose2d[] posArr) {
         Pose2d closestPose;
         Pose2d currentPose;
-        // if(!Robot.isReal())
-        // currentPose = this.mapleSimSwerveDrivetrain.getSimulatedPose();
         currentPose = this.getRobotPose();
         // System.out.println(currentPose);
         closestPose = PoseUtils.flipPoseAlliance(posArr[0]);
@@ -547,7 +545,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
                     .getDistance(closestPose.getTranslation());
             if (distanceFromCurrentToPose < distanceFromCurrentToClosest) {
                 closestPose = pos;
-                System.out.println("YAYA YAYAY AYAYAYClosest pose: " + closestPose);
+                // System.out.println("YAYA YAYAY AYAYAYClosest pose: " + closestPose);
             }
         }
         System.out.println("Closest pose: " + closestPose);
