@@ -72,7 +72,7 @@ public class Auto extends SubsystemBase {
 
     //TODO: probably won't want a INTAKE timeout, we can just wait until piece is intaked
     private final double SCORING_TIMEOUT = 0.3;
-    private final double INTAKE_TIMEOUT = 0.3;
+    private final double INTAKE_PREDICTED_TIME = 0.3;
 
     public int estimatedScore = 3; //Starts at 3 because of the leave bonus!
     private String prevAutoString = "";
@@ -446,7 +446,7 @@ public class Auto extends SubsystemBase {
                        // System.out.println("Path 1 Raise Time: " + raiseTime);
                         //runs the path command along with a command that waits to raise the elevator
                         autoCommand.addCommands(Commands.parallel(
-                            path1Cmd,
+                            Commands.deadline(path1Cmd, RobotContainer.rollers.holdCoralCommand()),
                                 Commands.sequence(
                                     Commands.waitSeconds(waitTime),
                                     Commands.parallel(
@@ -483,17 +483,10 @@ public class Auto extends SubsystemBase {
                         double raiseTime = RobotContainer.elevator.getRaiseTime(mechState); //time needed to raise the elevator, for timeout
                         //System.out.println("Path 2 Raise Time: " + raiseTime);
                         autoCommand.addCommands(Commands.parallel(
-                            path2Cmd,
-                            Commands.sequence(
-                                //Commands.waitSeconds(waitTime),
-                                Commands.parallel(
-                                    //Commands.print("Running elevator Command path 2"),
-                                    RobotContainer.elevator.setState(mechState).withTimeout(raiseTime),
-                                    RobotContainer.arm.setState(mechState)
-                                )
-                               // ,Commands.print("Finishing path 2 elevator command")
+                            Commands.deadline(path2Cmd, RobotContainer.arm.holdState(mechState)),
+                            RobotContainer.elevator.setState(mechState).withTimeout(raiseTime)
                             )
-                        ));
+                        );
                         // TagOffset offset = TagOffset.CENTER; //default to 0?
                         // if (fourth == "1") {
                         //     offset = TagOffset.LEFT_INTAKE;
@@ -509,8 +502,8 @@ public class Auto extends SubsystemBase {
             }
 
             /* ADDS AN INTAKING COMMAND */
-            autoCommand.addCommands(RobotContainer.rollers.intakeCoralCommand().withTimeout(INTAKE_TIMEOUT));
-            timeSeconds += INTAKE_TIMEOUT;
+            autoCommand.addCommands(RobotContainer.rollers.intakeCoralJiggleCommand());
+            timeSeconds += INTAKE_PREDICTED_TIME;
             // Bring elevator and arm to default position after scoring last coral
 
         //    if(isLastIteration) { //TODO shouldn't need? in theory default command should kick in
@@ -544,64 +537,64 @@ public class Auto extends SubsystemBase {
         }
     }
 
-    public void addAllPaths() {
-        String middle = " ";
+    // public void addAllPaths() {
+    //     String middle = " ";
 
-       for(String x: startingLocations) {
-            for(String second: scoringLocations) {
-               // second = "D";
-                middle = "-";
-                if (Character.isLowerCase(x.charAt(0)) || Character.isLowerCase(second.charAt(0))) {
-                    middle = "_";
-                }
-                try {
-                    if(x.equals("S3") && second.equals("D")) {
+    //    for(String x: startingLocations) {
+    //         for(String second: scoringLocations) {
+    //            // second = "D";
+    //             middle = "-";
+    //             if (Character.isLowerCase(x.charAt(0)) || Character.isLowerCase(second.charAt(0))) {
+    //                 middle = "_";
+    //             }
+    //             try {
+    //                 if(x.equals("S3") && second.equals("D")) {
 
-                    } else if(x.equals("S3") && second.equals("d")) {
+    //                 } else if(x.equals("S3") && second.equals("d")) {
                         
-                    } else if(x.equals("S4") && second.equals("D")) {
+    //                 } else if(x.equals("S4") && second.equals("D")) {
                         
-                    } else {
-                    pathList.add(PathPlannerPath.fromPathFile("" + x + middle + second));
-                    }
-                } catch (FileVersionException | IOException | ParseException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-            }
-        }
+    //                 } else {
+    //                 pathList.add(PathPlannerPath.fromPathFile("" + x + middle + second));
+    //                 }
+    //             } catch (FileVersionException | IOException | ParseException e) {
+    //                 // TODO Auto-generated catch block
+    //                 e.printStackTrace();
+    //             }
+    //         }
+    //     }
 
-        for(String first: pickupLocations) {
-            for(String second: scoringLocations) {
-                middle = "-";
-                if (Character.isLowerCase(first.charAt(0)) || Character.isLowerCase(second.charAt(0))) {
-                    middle = "_";
-                }
-                try {
-                    pathList.add(PathPlannerPath.fromPathFile("" + first + middle + second));
-                } catch (FileVersionException | IOException | ParseException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-            }
-        }
+    //     for(String first: pickupLocations) {
+    //         for(String second: scoringLocations) {
+    //             middle = "-";
+    //             if (Character.isLowerCase(first.charAt(0)) || Character.isLowerCase(second.charAt(0))) {
+    //                 middle = "_";
+    //             }
+    //             try {
+    //                 pathList.add(PathPlannerPath.fromPathFile("" + first + middle + second));
+    //             } catch (FileVersionException | IOException | ParseException e) {
+    //                 // TODO Auto-generated catch block
+    //                 e.printStackTrace();
+    //             }
+    //         }
+    //     }
 
-        for(String first: scoringLocations) {
-            for(String second: pickupLocations) {
-                middle = "-";
-                if (Character.isLowerCase(first.charAt(0)) || Character.isLowerCase(second.charAt(0))) {
-                    middle = "_";
-                }
-                try {
-                    pathList.add(PathPlannerPath.fromPathFile("" + first + middle + second));
-                } catch (FileVersionException | IOException | ParseException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-            }
-        }
+    //     for(String first: scoringLocations) {
+    //         for(String second: pickupLocations) {
+    //             middle = "-";
+    //             if (Character.isLowerCase(first.charAt(0)) || Character.isLowerCase(second.charAt(0))) {
+    //                 middle = "_";
+    //             }
+    //             try {
+    //                 pathList.add(PathPlannerPath.fromPathFile("" + first + middle + second));
+    //             } catch (FileVersionException | IOException | ParseException e) {
+    //                 // TODO Auto-generated catch block
+    //                 e.printStackTrace();
+    //             }
+    //         }
+    //     }
 
-    }
+    // }
 
     /**
      * Moves the robot pose in the auto dashboard so that it moves along the inputed

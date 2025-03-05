@@ -153,12 +153,12 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     private Pose2d targetPose;
 
     /* Heading PID Controller for things like automatic alignment buttons */
-    public PIDController thetaController = new PIDController(4.5, 0, .2);
+    public PIDController thetaController = new PIDController(5, 0, .1);
 
     /* variable to store our heading */
     private Rotation2d odometryHeading = new Rotation2d();
 
-    // private Pigeon2 gyro = this.getPigeon2(); //they say not to use this like
+    // private Pigeon2 gyro = thifs.getPigeon2(); //they say not to use this like
     // this, allegedly
     // putting this here so we know how to get it
     private boolean isRobotAtAngleSetPoint; // for angle turning

@@ -627,7 +627,7 @@ public class Elevator extends SubsystemBase {
     }
 
     public Command setState(RobotState state) {
-        return Commands.run(() -> setExtension(state.getHeight()), this);
+        return Commands.run(() -> setExtension(state.getHeight()), this).until(() -> atSetpoint());
     }
 
     @AutoLogOutput

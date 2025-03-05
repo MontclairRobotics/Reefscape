@@ -149,10 +149,20 @@ public class Rollers extends SubsystemBase {
                 Commands.run(() -> setSpeed(-0.1), this)
                 .withTimeout(0.1)
                 .andThen(intakeCoralCommand())
+            )).andThen(Commands.sequence(
+                Commands.run(() -> setSpeed(-0.1), this)
+                .withTimeout(0.1)
+                .andThen(intakeCoralCommand())
             )).finallyDo(() -> {
                 this.heldPiece = GamePiece.Coral;
             });
             
+    }
+
+    public Command holdCoralCommand() {
+        return Commands.run(() -> {
+            setSpeed(CORAL_HOLDING_SPEED);
+        }, this);
     }
 
     @Override
