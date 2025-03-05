@@ -75,7 +75,7 @@ public class GoToPoseCommand extends Command {
             //On red, the pose for POINT A on RED ALLIANCE has a heading of 180 (I think), 
             //but the pose for POINT A on BLUE ALLIANCE has a heading of 0 (I think), so we 
             //just have to make them the same again
-            targetHeading = PoseUtils.flipRotAlliance(targetPose.getRotation()).getRadians();
+            targetHeading = targetPose.getRotation().getRadians();
             //when target heading is zero, we want the offset to be backwards but cos(0) 
             //is positive, so we multiply by negative 1
             //same thing for sin(x)
@@ -122,7 +122,8 @@ public class GoToPoseCommand extends Command {
         // yPosePub = yPoseTopic.publish();
         // DoubleTopic rotPoseTopic = poseCommandTable.getDoubleTopic("Rot Pose");
         // rotPosePub = rotPoseTopic.publish();
-        
+        xController.setTolerance(0.02);
+        yController.setTolerance(0.02);
         xController.setSetpoint(targetPose.getX());
         yController.setSetpoint(targetPose.getY());
         thetaController.setSetpoint(targetPose.getRotation().getRadians());

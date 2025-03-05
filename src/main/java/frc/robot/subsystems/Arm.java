@@ -147,7 +147,7 @@ public class Arm extends SubsystemBase {
                                                                                          // offset (whatever number you
                                                                                          // have to add so it reads zero
                                                                                          // degrees when horizontal)
-      //  wristEncoder = new DutyCycleEncoder(1, 1, 0); // 1st # is port, 2nd is ratio to rotations of
+     wristEncoder = new DutyCycleEncoder(0, 1, 0); // 1st # is port, 2nd is ratio to rotations of
                                                                   // mechanism
                                                                   // (1 here), 3rd is initial offset (TODO to be
                                                                   // measured)

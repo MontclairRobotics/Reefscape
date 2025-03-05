@@ -58,6 +58,8 @@ import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.RobotContainer;
 import frc.robot.commands.AlignToAprilTagCommandOffset;
+import frc.robot.commands.GoToPoseCommand;
+import frc.robot.commands.GoToPoseInputCommand;
 import frc.robot.util.RobotState;
 import frc.robot.util.TagOffset;
 import frc.robot.util.Elastic;
@@ -89,6 +91,7 @@ public class Auto extends SubsystemBase {
 
     NetworkTableInstance inst = NetworkTableInstance.getDefault();
     NetworkTable auto = inst.getTable("Auto");
+    TagOffset autoOffset = TagOffset.CENTER;
 
     StringTopic autoTopic = auto.getStringTopic("Auto String");
     StringEntry stringEnt = autoTopic.getEntry("");
@@ -230,6 +233,14 @@ public class Auto extends SubsystemBase {
         setFeedback("Auto String Valid!", NotificationLevel.INFO);
         return true;
 
+    }
+
+    public Command alignToScoringPoseAuto(Pose2d targetPose) {
+        return (new GoToPoseInputCommand(targetPose, true).andThen(new GoToPoseInputCommand(targetPose, false)))
+        // .onlyIf(() ->
+        //     RobotContainer.drivetrain.getState().Pose.getTranslation().getDistance(targetPose.getTranslation()) >.02
+        // )
+        ;
     }
 
     /**
@@ -390,7 +401,8 @@ public class Auto extends SubsystemBase {
                 middleChar = "-";
                 if (Character.isLowerCase(third.charAt(0)) || Character.isLowerCase(fourth.charAt(0))) {
                     middleChar = "_";
-                }
+                    autoOffset = TagOffset.RIGHT;
+                } else autoOffset = TagOffset.LEFT;
                 pathName = second + middleChar + fourth;
                 try {
                     // Load the 2nd path you want to follow using its name in the GUI
@@ -463,7 +475,8 @@ public class Auto extends SubsystemBase {
             }
 
             //Command to shoot!!!
-            
+            autoCommand.addCommands(new GoToPoseCommand(autoOffset, true));
+            autoCommand.addCommands(new GoToPoseCommand(autoOffset, false));
             autoCommand.addCommands(RobotContainer.rollers.outtakeCoralCommand().withTimeout(SCORING_TIMEOUT));
             timeSeconds += SCORING_TIMEOUT; //adds how long it will take to shoot the the estimated time
             
