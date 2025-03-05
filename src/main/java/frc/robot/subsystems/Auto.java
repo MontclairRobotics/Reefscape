@@ -317,7 +317,7 @@ public class Auto extends SubsystemBase {
 
 
             boolean path1Exists = first != null && second != null; //Whether or not we have a valid path
-
+            System.out.println("----------------------------------------------------" + path1Exists);
             if (path1Exists) {
                 //If either character is lowercase, the character connecting them will be a "_"
                 if (Character.isLowerCase(first.charAt(0)) || Character.isLowerCase(second.charAt(0))) {
@@ -328,6 +328,7 @@ public class Auto extends SubsystemBase {
                 //Adds an S to denote a starting location, if we are at the first path
                 if (i == 1) {
                     pathName = "S" + pathName;
+                    System.out.println("Firsting Path!");
                     firstPath = true;
                 }
 
@@ -347,6 +348,7 @@ public class Auto extends SubsystemBase {
                     //resets pose to the starting pose if we are at the first path!
                     if (firstPath) { //TODO reset to something better? vision pose?
                         Optional<Pose2d> opPose = path1.getStartingHolonomicPose();
+                        System.out.println(opPose.get() + "-------------POOOOOOSSEEEE----------");
                         Pose2d pose = opPose.isPresent() ? PoseUtils.flipPoseAlliance(opPose.get()) : new Pose2d();
                         autoCommand.addCommands(Commands.runOnce(() -> {
                             System.out.println("resetting auto pose");

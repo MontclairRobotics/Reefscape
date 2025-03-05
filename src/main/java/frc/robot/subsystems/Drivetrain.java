@@ -75,7 +75,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     public static final double MAX_SPEED = 5; // TODO: actually set this with units
     public static double MAX_ROT_SPEED = 10;
     public static double MIN_ROT_SPEED = Math.PI * (1.0 / 3.0);
-    public static double FORWARD_ACCEL = 12; // m / s^2
+    public static double FORWARD_ACCEL = 9; // m / s^2
     public static double SIDE_ACCEL = 12; // m / s^2
     public static double ROT_ACCEL = 16; // radians / s^2
     public static double MIN_TRANSLATIONAL_ACCEL = 2;
@@ -221,8 +221,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         }
 
         setpointGen = new SwerveSetpointGenerator(
-                config, // The robot configuration. This is the same config used for generating
-                        // trajectories and running path following commands.
+                config, // The robot configuration. This is the same config used for generating trajectories and running path following commands.
                 10.0 * 2 * Math.PI // The max rotation velocity of a swerve module in radians per second.
                                                // This should probably be stored in your Constants file
         );
@@ -403,7 +402,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
 
         SwerveRequest req = new SwerveRequest.ApplyRobotSpeeds()
-                                    .withSpeeds(speeds)
+                                    .withSpeeds(prevSetpoint.robotRelativeSpeeds())
                                     .withDriveRequestType(DriveRequestType.Velocity)
                                     .withSteerRequestType(SteerRequestType.Position)
                                     .withWheelForceFeedforwardsX(prevSetpoint.feedforwards().robotRelativeForcesXNewtons())
@@ -604,7 +603,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
                                     .withWheelForceFeedforwardsY(feedforwards.robotRelativeForcesYNewtons())),
                     new PPHolonomicDriveController(
                             // PID constants for translation
-                            new PIDConstants(5, 0, 0),
+                            new PIDConstants(7, 0, 0),
                             // PID constants for rotation
                             new PIDConstants(5, 0, 0)),
                     config,

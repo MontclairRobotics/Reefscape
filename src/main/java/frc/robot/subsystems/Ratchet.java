@@ -11,7 +11,7 @@ public class Ratchet extends SubsystemBase {
     private final Servo leftServo;
     private final Servo rightServo;
     public final double DISENGAGED_POSITION = 0;
-    public final double ENGAGED_POSITION = 0.25;
+    public final double ENGAGED_POSITION = 0.5;
     public boolean ratchetEngaged = false;
     public Ratchet() {
         leftServo = new Servo(8);

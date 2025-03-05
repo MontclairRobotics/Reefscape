@@ -47,7 +47,7 @@ public class RobotContainer {
   public static CommandPS5Controller testingController = new CommandPS5Controller(2);
 
   public static final boolean debugMode = false;
-  public static final boolean logMode = true;
+  public static final boolean logMode = false;
 
   //Subsystems
   public static Limelight leftLimelight = new Limelight("limelight-left", 0.38, 0, 0, 0, true);
@@ -88,6 +88,7 @@ public class RobotContainer {
 
     rollers.setDefaultCommand(rollers.getDefaultCommand());
 
+    
     //Intake
     operatorController.L1()
     .whileTrue(
@@ -112,47 +113,40 @@ public class RobotContainer {
 
     // L1 
     operatorController.cross().and(operatorController.L2().negate())
-      .whileTrue(arm.setState(RobotState.L1).until(() -> arm.atSetPoint()))
+      .whileTrue(arm.holdState(RobotState.L1))
       .onFalse(
         elevator.setState(RobotState.L1)
-        .alongWith(arm.setState(RobotState.L1).until(() -> arm.atSetPoint()))
-        .andThen(arm.stopCommand())
-        .andThen(elevator.stopCommand())
+        .alongWith(arm.holdState(RobotState.L1))
       );
       
     // L2 
     operatorController.square().and(operatorController.L2().negate())
-      .whileTrue(arm.setState(RobotState.L2).until(() -> arm.atSetPoint()))
+      .whileTrue(arm.holdState(RobotState.L2))
       .onFalse(
         elevator.setState(RobotState.L2)
-        .alongWith(arm.setState(RobotState.L2).until(() -> arm.atSetPoint()))
-        .andThen(arm.stopCommand())
-        .andThen(elevator.stopCommand())
+        .alongWith(arm.holdState(RobotState.L2))
       );
 
     // L3
     operatorController.triangle().and(operatorController.L2().negate())
-      .whileTrue((arm.setState(RobotState.L3)).until(() -> arm.atSetPoint()))
+      .whileTrue((arm.holdState(RobotState.L3)))
       .onFalse(
         elevator.setState(RobotState.L3)
-        .alongWith(arm.setState(RobotState.L3).until(() -> arm.atSetPoint()))
-        .andThen(arm.stopCommand())
-        .andThen(elevator.stopCommand())
+        .alongWith(arm.holdState(RobotState.L3))
       );
 
     // L4 
     operatorController.circle().and(operatorController.L2().negate())
-      .whileTrue(arm.setState(RobotState.L4).until(() -> arm.atSetPoint()))
+      .whileTrue(arm.holdState(RobotState.L4))
       .onFalse(
         elevator.setState(RobotState.L4)
-        .alongWith(arm.setState(RobotState.L4).until(() -> arm.atSetPoint()))
-        .andThen(arm.stopCommand())
-        .andThen(elevator.stopCommand())
+        .alongWith(arm.holdState(RobotState.L4))
       );
 
     // Elevator down
     operatorController.R2()
-      .onTrue(elevator.setState(RobotState.DrivingNone));
+      .onTrue(elevator.setState(RobotState.DrivingNone))
+      .onTrue(arm.holdState(RobotState.Intake));
 
     //Lower algae
     operatorController.cross().and(operatorController.L2())
@@ -224,20 +218,20 @@ public class RobotContainer {
 
     /* ---------------------------------------- TESTING BINDINGS --------------------------------------- */
 
-  //   testingController.L1().onTrue(Commands.runOnce(() -> SignalLogger.start()));
-  //   testingController.R1().onTrue(Commands.runOnce(() -> SignalLogger.stop()));
-  //   testingController.triangle().whileTrue(
-  //     drivetrain.sysIdDynamic(Direction.kForward)
-  //   );
-  //   testingController.circle().whileTrue(
-  //     drivetrain.sysIdDynamic(Direction.kReverse)
-  //   );
-  //   testingController.cross().whileTrue(
-  //     drivetrain.sysIdQuasistatic(Direction.kForward)
-  //   );
-  //   testingController.square().whileTrue(
-  //     drivetrain.sysIdQuasistatic(Direction.kReverse)
-  //   );
+    testingController.L1().onTrue(Commands.runOnce(() -> SignalLogger.start()));
+    testingController.R1().onTrue(Commands.runOnce(() -> SignalLogger.stop()));
+    testingController.triangle().whileTrue(
+      drivetrain.sysIdDynamic(Direction.kForward)
+    );
+    testingController.circle().whileTrue(
+      drivetrain.sysIdDynamic(Direction.kReverse)
+    );
+    testingController.cross().whileTrue(
+      drivetrain.sysIdQuasistatic(Direction.kForward)
+    );
+    testingController.square().whileTrue(
+      drivetrain.sysIdQuasistatic(Direction.kReverse)
+    );
 
    }
 

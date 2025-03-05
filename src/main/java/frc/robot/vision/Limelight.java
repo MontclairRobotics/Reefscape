@@ -142,6 +142,9 @@ public class Limelight extends SubsystemBase {
             if (Math.abs(RobotContainer.drivetrain.getCurrentSpeeds().omegaRadiansPerSecond) > angleVelocityTolerance) {
                 shouldRejectUpdate = true;
             }
+            if (mt2.avgTagDist > 5) {
+                shouldRejectUpdate = true;
+            }
             //adds vision measurement if conditions are met
             if (!shouldRejectUpdate) {
                 Logger.recordOutput(cameraName + "/mt2Pose", mt2.pose);
