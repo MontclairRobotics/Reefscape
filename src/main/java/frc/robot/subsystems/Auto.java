@@ -475,8 +475,8 @@ public class Auto extends SubsystemBase {
             }
 
             //Command to shoot!!!
-            autoCommand.addCommands(new GoToPoseCommand(autoOffset, true));
-            autoCommand.addCommands(new GoToPoseCommand(autoOffset, false));
+            // autoCommand.addCommands(new GoToPoseCommand(autoOffset, true));
+            // autoCommand.addCommands(new GoToPoseCommand(autoOffset, false));
             autoCommand.addCommands(RobotContainer.rollers.outtakeCoralCommand().withTimeout(SCORING_TIMEOUT));
             timeSeconds += SCORING_TIMEOUT; //adds how long it will take to shoot the the estimated time
             
@@ -515,7 +515,7 @@ public class Auto extends SubsystemBase {
             }
 
             /* ADDS AN INTAKING COMMAND */
-            autoCommand.addCommands(RobotContainer.rollers.intakeCoralJiggleCommand());
+            autoCommand.addCommands(RobotContainer.rollers.intakeCoralJiggleCommand().withTimeout(1));
             timeSeconds += INTAKE_PREDICTED_TIME;
             // Bring elevator and arm to default position after scoring last coral
 

@@ -152,7 +152,7 @@ public class Arm extends SubsystemBase {
                                                                   // (1 here), 3rd is initial offset (TODO to be
                                                                   // measured)
         // pidController = new PIDController(35, 0, 0);
-        pidController.setTolerance(0.5 / 360.0, 1.0 / 360.0);
+        pidController.setTolerance(2 / 360.0, 1.0 / 360.0);
         pidController.enableContinuousInput(-0.5, 0.5);
 
         if (!elbowEncoder.isConnected()) {

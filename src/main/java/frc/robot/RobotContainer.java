@@ -20,6 +20,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.commands.GoToPoseCommand;
+import frc.robot.commands.WheelRadiusCharacterization;
 import frc.robot.leds.LEDs;
 import frc.robot.subsystems.Ratchet;
 import frc.robot.subsystems.Arm;
@@ -47,7 +48,7 @@ public class RobotContainer {
   public static CommandPS5Controller testingController = new CommandPS5Controller(2);
 
   public static final boolean debugMode = false;
-  public static final boolean logMode = false;
+  public static final boolean logMode = true;
 
   //Subsystems
   public static Limelight leftLimelight = new Limelight("limelight-left", 0.38, 0, 0, 0, true);
@@ -68,9 +69,7 @@ public class RobotContainer {
 
   public RobotContainer() {
     DriverStation.silenceJoystickConnectionWarning(true);
-    //  configureDriveTryoutBindings();
-    configureCompetitionBindings();
-    //configureBindings();
+    configureBindings();
     // Enables limelights when tethered over USB
 
     // https://docs.limelightvision.io/docs/docs-limelight/getting-started/FRC/best-practices
@@ -82,7 +81,7 @@ public class RobotContainer {
     }
   }
 
-  private void configureCompetitionBindings() {
+  private void configureBindings() {
 
     /* --------------------------------------------OPERATOR BINDINGS --------------------------------------------*/
 
@@ -165,7 +164,7 @@ public class RobotContainer {
       );
 
     //Climb
-    operatorController.circle().and(operatorController.L2())
+    operatorController.povUp()
       .whileTrue(ratchet.engageServos())
       .onFalse(ratchet.disengageServos());
     
@@ -220,19 +219,22 @@ public class RobotContainer {
 
     testingController.L1().onTrue(Commands.runOnce(() -> SignalLogger.start()));
     testingController.R1().onTrue(Commands.runOnce(() -> SignalLogger.stop()));
-    testingController.triangle().whileTrue(
-      drivetrain.sysIdDynamic(Direction.kForward)
-    );
-    testingController.circle().whileTrue(
-      drivetrain.sysIdDynamic(Direction.kReverse)
-    );
-    testingController.cross().whileTrue(
-      drivetrain.sysIdQuasistatic(Direction.kForward)
-    );
-    testingController.square().whileTrue(
-      drivetrain.sysIdQuasistatic(Direction.kReverse)
-    );
-
+    // testingController.triangle().whileTrue(
+    //   drivetrain.sysIdDynamic(Direction.kForward)
+    // );
+    // testingController.circle().whileTrue(
+    //   drivetrain.sysIdDynamic(Direction.kReverse)
+    // );
+    // testingController.cross().whileTrue(
+    //   drivetrain.sysIdQuasistatic(Direction.kForward)
+    // );
+    // testingController.square().whileTrue(
+    //   drivetrain.sysIdQuasistatic(Direction.kReverse)
+    // );
+    testingController.touchpad().onTrue(Commands.runOnce(() -> elevator.resetEncoders(0)));
+    testingController.triangle().whileTrue(new WheelRadiusCharacterization(WheelRadiusCharacterization.Direction.CLOCKWISE, drivetrain));
+    testingController.circle().whileTrue(new WheelRadiusCharacterization(WheelRadiusCharacterization.Direction.COUNTER_CLOCKWISE, drivetrain));
+    testingController.cross().onTrue(Commands.runOnce(() -> elevator.setNeutralMode(NeutralModeValue.Coast)).ignoringDisable(true)).onFalse(Commands.runOnce(() -> elevator.setNeutralMode(NeutralModeValue.Brake)).ignoringDisable(true));
    }
 
 
