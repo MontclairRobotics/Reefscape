@@ -94,7 +94,7 @@ public class Rollers extends SubsystemBase {
     }
 
     public Command intakeAlgaeCommand() {
-        return Commands.run(() -> setSpeed(ALGAE_INTAKE_SPEED), this)
+        return Commands.run(() -> setSpeed(ALGAE_INTAKE_SPEED, 0), this)
                 .finallyDo(() -> {
                     setSpeed(0);
                     // if(isStalled())
@@ -190,7 +190,7 @@ public class Rollers extends SubsystemBase {
             }
     
             if(hasAlgae()) {
-                this.setSpeed(ALGAE_HOLDING_SPEED);
+                this.setSpeed(ALGAE_HOLDING_SPEED, 0);
             }
         }, this);
     }

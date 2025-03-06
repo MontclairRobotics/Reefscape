@@ -152,7 +152,7 @@ public class Arm extends SubsystemBase {
                                                                   // (1 here), 3rd is initial offset (TODO to be
                                                                   // measured)
         // pidController = new PIDController(35, 0, 0);
-        pidController.setTolerance(2 / 360.0, 1.0 / 360.0);
+        pidController.setTolerance(3 / 360.0, 1.0 / 360.0);
         pidController.enableContinuousInput(-0.5, 0.5);
 
         if (!elbowEncoder.isConnected()) {
@@ -282,6 +282,7 @@ public class Arm extends SubsystemBase {
         System.out.println("Target: " + target);
         // SmartDashboard.putNumber("Arm/Clamped Target", target);
         double wristVoltage = pidController.calculate(getEndpointAngle().getRotations(), target);
+        Logger.recordOutput("Arm/PID Setpoint", target * 360);
 
         setpointPub.set(target * 360);
         

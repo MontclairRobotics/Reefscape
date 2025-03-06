@@ -22,6 +22,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.RobotContainer;
+import frc.robot.util.PoseUtils;
 
 public class Limelight extends SubsystemBase {
 
@@ -122,7 +123,7 @@ public class Limelight extends SubsystemBase {
     }
 
     public void enable() {
-        LimelightHelpers.SetIMUMode(cameraName, 2); // if moving use builtin, maybe change to 4
+        LimelightHelpers.SetIMUMode(cameraName, 4); // if moving use builtin, maybe change to 4
         // LimelightHelpers.setLimelightNTDouble(cameraName, "throttle_set", 0); //TODO check needs to be 1? // manage thermals
     }
 
@@ -144,7 +145,13 @@ public class Limelight extends SubsystemBase {
             if (Math.abs(RobotContainer.drivetrain.getCurrentSpeeds().omegaRadiansPerSecond) > angleVelocityTolerance) {
                 shouldRejectUpdate = true;
             }
-            if (mt2.pose.getTranslation().getDistance(RobotContainer.drivetrain.getRobotPose().getTranslation()) > 0.1 && !DriverStation.isDisabled()) {
+            if (mt2.pose.getTranslation().getDistance(RobotContainer.drivetrain.getRobotPose().getTranslation()) > 0.3 && !DriverStation.isDisabled()) {
+                shouldRejectUpdate = true;
+            }
+            if (Math.abs(PoseUtils.wrapRotation(mt2.pose.getRotation()).minus(PoseUtils.wrapRotation(RobotContainer.drivetrain.getRobotPose().getRotation())).getDegrees()) > 3) {
+                shouldRejectUpdate = true;
+            }
+            if (mt2.avgTagDist > 4) {
                 shouldRejectUpdate = true;
             }
             //adds vision measurement if conditions are met
@@ -158,6 +165,8 @@ public class Limelight extends SubsystemBase {
                     // VecBuilder.fill(0.000716, 0.0003, Double.POSITIVE_INFINITY));
                     VecBuilder.fill(Math.pow(0.5, mt2.tagCount) * 2 * mt2.avgTagDist, Math.pow(0.5, mt2.tagCount) * 2 * mt2.avgTagDist, Double.POSITIVE_INFINITY)
                 );
+            } else {
+                Logger.recordOutput(cameraName + "/mt2PoseRejected", mt2.pose);
             }
         }
     }

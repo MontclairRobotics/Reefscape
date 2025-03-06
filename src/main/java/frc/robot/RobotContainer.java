@@ -163,14 +163,12 @@ public class RobotContainer {
       );
 
     //Climb
-    operatorController.povUp()
-      .whileTrue(ratchet.engageServos())
-      .onFalse(ratchet.disengageServos());
-    
-    // //Climb
-    // operatorController.circle().and(operatorController.L2())
-    //   .whileTrue(elevator.climbUpCommand())
-    //   .onFalse(elevator.climbDownCommand());
+    operatorController.circle().and(operatorController.L2())
+      .whileTrue(elevator.climbUpCommand())
+      .onFalse(elevator.climbDownCommand());
+
+    operatorController.povUp().onTrue(ratchet.engageServos());
+    operatorController.povDown().onTrue(ratchet.engageServos());
 
     //Processor
     operatorController.square().and(operatorController.L2())
@@ -230,6 +228,8 @@ public class RobotContainer {
     // testingController.square().whileTrue(
     //   drivetrain.sysIdQuasistatic(Direction.kReverse)
     // );
+    testingController.circle().onTrue(ratchet.engageServos()).onFalse(ratchet.disengageServos());
+
     testingController.touchpad().onTrue(Commands.runOnce(() -> elevator.resetEncoders(0)).ignoringDisable(true));
    // testingController.triangle().whileTrue(new WheelRadiusCharacterization(WheelRadiusCharacterization.Direction.CLOCKWISE, drivetrain));
    // testingController.circle().whileTrue(new WheelRadiusCharacterization(WheelRadiusCharacterization.Direction.COUNTER_CLOCKWISE, drivetrain));

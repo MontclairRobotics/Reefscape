@@ -596,17 +596,17 @@ public class Elevator extends SubsystemBase {
 
 
     public Command climbUpCommand() {
-        return Commands.run(() -> {
-            setExtension(RobotState.Climb.getHeight());
-            RobotContainer.arm.setEndpointAngle(RobotState.Climb.getAngle());
-        }, this);
+        return Commands.runOnce(() -> {
+            RobotContainer.ratchet.disengageServos();
+        }, this)
+        .andThen(setState(RobotState.ClimbUp)).alongWith(RobotContainer.arm.setState(RobotState.ClimbUp));
     }
 
     public Command climbDownCommand() {
-        return Commands.run(() -> {
+        return Commands.runOnce(() -> {
             RobotContainer.ratchet.engageServos();
-            setExtension(0);
-        }, this);
+        })
+        .andThen(setState(RobotState.ClimbDown));
     }
 
     // Commands
@@ -619,15 +619,19 @@ public class Elevator extends SubsystemBase {
     }
 
     public Command setExtensionCommand(double extension) {
-        return Commands.run(() -> setExtension(extension), this);
+        return Commands.sequence(
+            RobotContainer.ratchet.disengageServos().onlyIf(() -> RobotContainer.ratchet.ratchetEngaged).withTimeout(0.1),
+            Commands.run(() -> setExtension(extension), this).until(() -> atSetpoint()));
     }
 
-    public Command setHeightCommand(double height) {
-        return Commands.run(() -> setHeight(height), this);
-    }
+    // public Command setHeightCommand(double height) {
+    //     return Commands.run(() -> setHeight(height), this);
+    // }
 
     public Command setState(RobotState state) {
-        return Commands.run(() -> setExtension(state.getHeight()), this).until(() -> atSetpoint());
+        return Commands.sequence(
+            RobotContainer.ratchet.disengageServos().onlyIf(() -> RobotContainer.ratchet.ratchetEngaged && state != RobotState.ClimbDown).withTimeout(0.1),
+            Commands.run(() -> setExtension(state.getHeight()), this).until(() -> atSetpoint()));
     }
 
     @AutoLogOutput

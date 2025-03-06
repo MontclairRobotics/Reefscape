@@ -372,8 +372,8 @@ public class Auto extends SubsystemBase {
                             }),
                             Commands.waitSeconds(0.1), //TODO enough?
                             Commands.runOnce(() -> {
-                                RobotContainer.leftLimelight.setGyroMode(2);
-                                RobotContainer.rightLimelight.setGyroMode(2);
+                                RobotContainer.leftLimelight.setGyroMode(4);
+                                RobotContainer.rightLimelight.setGyroMode(4);
                             })
                         )));
 
@@ -452,28 +452,32 @@ public class Auto extends SubsystemBase {
                     }
 
                         double pathTime = traj.getTotalTimeSeconds(); //time path will take
-                        double raiseTime = RobotContainer.elevator.getRaiseTime(mechState); //time elevator will take to rise
+                        double raiseTime = RobotContainer.elevator.getRaiseTime(mechState);
+                        raiseTime = 1.6; //time elevator will take to rise
                         double waitTime = pathTime - raiseTime; //how much time we should wait before raising elevator
                         timeSeconds += pathTime; //adds how long the path will take to the estimated time
                        // System.out.println("Path 1 Arm height: " + mechState.getHeight());
                        // System.out.println("Path 1 Raise Time: " + raiseTime);
                         //runs the path command along with a command that waits to raise the elevator
                         autoCommand.addCommands(Commands.parallel(
-                            Commands.deadline(path1Cmd, RobotContainer.rollers.holdCoralCommand()),
+                            Commands.deadline(path1Cmd, RobotContainer.rollers.holdCoralCommand()).andThen(Commands.print("Path Over")),
                                 Commands.sequence(
+                                    Commands.print("Before parallel"),
                                     Commands.waitSeconds(waitTime),
+                                    Commands.print("After waiting"),
                                     Commands.parallel(
                                         //Commands.print("Starting elevator command path 1"),
                                         RobotContainer.elevator.setState(mechState), // TODO I removed this timeout. You'd rather wait then score at wrong height
                                         RobotContainer.arm.goToAngleCommand(mechState.getAngle())
                                     )
-                                    //,Commands.print("Finished elevator command path 1")
+                                    ,Commands.print("Finished elevator command path 1")
                                 )    
                         ));
                         // List<Pose2d> pts = path1.getPathPoses();
                         // Pose2d lastPathPose = pts.get(pts.size() - 1);
                         // Pose2d targetPose = new Pose2d(lastPathPose.getX(), lastPathPose.getY(), path1.getGoalEndState().rotation());
                         // System.out.println(pts.get(pts.size() - 1));
+                        autoCommand.addCommands(Commands.print("Going to reef!"));
                         if (Character.toUpperCase(second.charAt(0)) == second.charAt(0)) {
                             autoCommand.addCommands(new GoToReefCommand(TagOffset.LEFT, false));
                         } else {

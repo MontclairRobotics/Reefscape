@@ -8,10 +8,12 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj.Servo;
 
 public class Ratchet extends SubsystemBase {
-    private  Servo leftServo;
-    private  Servo rightServo;
-    public final double DISENGAGED_POSITION = 0;
-    public final double ENGAGED_POSITION = 0.5;
+    public  Servo leftServo;
+    public  Servo rightServo;
+    public final double LEFT_DISENGAGED_POSITION = 0;
+    public final double LEFT_ENGAGED_POSITION = 0.5;
+    public final double RIGHT_DISENGAGED_POSITION = 0.5;
+    public final double RIGHT_ENGAGED_POSITION = 0; //this is correct
     public boolean ratchetEngaged = false;
     public Ratchet() {
         leftServo = new Servo(8);
@@ -38,8 +40,8 @@ public class Ratchet extends SubsystemBase {
         return Commands.run(() -> {
             try {
                 System.out.println("running servoss");
-                setServoPosition(leftServo, ENGAGED_POSITION);
-                setServoPosition(rightServo, 1 - ENGAGED_POSITION);
+                setServoPosition(leftServo, LEFT_ENGAGED_POSITION);
+                setServoPosition(rightServo,  RIGHT_ENGAGED_POSITION);
                 this.ratchetEngaged = true;
             } catch (Exception e) {
                 DriverStation.reportError("Failed to engage servos: " + e.getMessage(), true);
@@ -50,8 +52,8 @@ public class Ratchet extends SubsystemBase {
     public Command disengageServos() {
         return Commands.run(() -> {
             try {
-                setServoPosition(leftServo, DISENGAGED_POSITION);
-                setServoPosition(rightServo, 1 - DISENGAGED_POSITION);
+                setServoPosition(leftServo, LEFT_DISENGAGED_POSITION);
+                setServoPosition(rightServo, RIGHT_DISENGAGED_POSITION);
                 this.ratchetEngaged = false;
             } catch (Exception e) {
                 DriverStation.reportError("Failed to disengage servos: " + e.getMessage(), true);

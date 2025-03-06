@@ -92,7 +92,7 @@ public class GoToReefCommand extends Command {
         }
 
         Logger.recordOutput("PoseCommand/TargetPose", targetPose);
-        Logger.recordOutput("PoseCommand/TargetPose", RobotContainer.drivetrain.getRobotPose());
+        //Logger.recordOutput("PoseCommand/TargetPose", RobotContainer.drivetrain.getRobotPose());
 
         // NetworkTableInstance inst = NetworkTableInstance.getDefault();
         // NetworkTable poseCommandTable = inst.getTable("Pose Command");
