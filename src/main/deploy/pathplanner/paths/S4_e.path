@@ -4,28 +4,28 @@
     {
       "anchor": {
         "x": 7.12,
-        "y": 3.26
+        "y": 2.3598542390046293
       },
       "prevControl": null,
       "nextControl": {
-        "x": 5.600862240307158,
-        "y": 3.342506103946328
+        "x": 6.82,
+        "y": 2.3598542390046293
       },
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "S4"
     },
     {
       "anchor": {
-        "x": 5.3,
-        "y": 2.97
+        "x": 5.413437861689814,
+        "y": 2.706509693287037
       },
       "prevControl": {
-        "x": 5.522835039224262,
-        "y": 2.8566662217433754
+        "x": 5.563437861689813,
+        "y": 2.4467020721517057
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "e Offset"
     }
   ],
   "rotationTargets": [],
@@ -41,7 +41,7 @@
     "unlimited": false
   },
   "goalEndState": {
-    "velocity": 0,
+    "velocity": 0.0,
     "rotation": 119.99999999999999
   },
   "reversed": false,

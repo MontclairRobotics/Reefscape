@@ -8,11 +8,11 @@
       },
       "prevControl": null,
       "nextControl": {
-        "x": 3.9765134068015437,
-        "y": 2.065360672544294
+        "x": 3.73,
+        "y": 2.3669872981077806
       },
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "f"
     },
     {
       "anchor": {
@@ -20,15 +20,20 @@
         "y": 0.67
       },
       "prevControl": {
-        "x": 1.8526326761238816,
-        "y": 1.117948430354625
+        "x": 1.91,
+        "y": 1.1030127018922193
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "6"
     }
   ],
-  "rotationTargets": [],
+  "rotationTargets": [
+    {
+      "waypointRelativePos": 0.75,
+      "rotationDegrees": -119.99999999999999
+    }
+  ],
   "constraintZones": [],
   "pointTowardsZones": [],
   "eventMarkers": [],
