@@ -8,24 +8,24 @@
       },
       "prevControl": null,
       "nextControl": {
-        "x": 0.9112619789041494,
-        "y": 1.4555183755541434
+        "x": 1.3361931818181818,
+        "y": 0.89890625
       },
       "isLocked": false,
       "linkedName": "4"
     },
     {
       "anchor": {
-        "x": 1.9943181818181819,
+        "x": 2.074090909090909,
         "y": 1.39
       },
       "prevControl": {
-        "x": 1.934257422057436,
-        "y": 1.1255499070328348
+        "x": 1.9869755717041633,
+        "y": 1.1331886596636087
       },
       "nextControl": {
-        "x": 2.9387404626243208,
-        "y": 5.548331678692436
+        "x": 2.3134090909090905,
+        "y": 2.095497159090909
       },
       "isLocked": false,
       "linkedName": null
@@ -36,40 +36,24 @@
         "y": 4.857627840909092
       },
       "prevControl": {
-        "x": 3.077477152641261,
-        "y": 4.619665044517065
+        "x": 2.582642045454545,
+        "y": 4.548508522727272
       },
       "nextControl": {
-        "x": 2.5749048127547485,
-        "y": 5.0112935878417915
+        "x": 2.9027427872095948,
+        "y": 5.070778154011827
       },
       "isLocked": false,
       "linkedName": null
     },
     {
       "anchor": {
-        "x": 4.616846590909091,
-        "y": 5.705213068181817
+        "x": 5.434517045454545,
+        "y": 5.346235795454545
       },
       "prevControl": {
-        "x": 4.372598486150582,
-        "y": 5.758531576430607
-      },
-      "nextControl": {
-        "x": 4.8610946956676,
-        "y": 5.651894559933027
-      },
-      "isLocked": false,
-      "linkedName": null
-    },
-    {
-      "anchor": {
-        "x": 5.296621621621621,
-        "y": 5.092229729729729
-      },
-      "prevControl": {
-        "x": 5.110702806662889,
-        "y": 5.377712635586206
+        "x": 3.958721590909091,
+        "y": 5.964474431818181
       },
       "nextControl": null,
       "isLocked": false,
@@ -81,10 +65,10 @@
   "pointTowardsZones": [],
   "eventMarkers": [],
   "globalConstraints": {
-    "maxVelocity": 1.0,
-    "maxAcceleration": 3.0,
-    "maxAngularVelocity": 360.0,
-    "maxAngularAcceleration": 300.0,
+    "maxVelocity": 4.0,
+    "maxAcceleration": 4.6,
+    "maxAngularVelocity": 500.0,
+    "maxAngularAcceleration": 720.0,
     "nominalVoltage": 12.0,
     "unlimited": false
   },

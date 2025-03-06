@@ -20,7 +20,6 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.commands.GoToReefCommand;
-import frc.robot.commands.WheelRadiusCharacterization;
 import frc.robot.leds.LEDs;
 import frc.robot.subsystems.Ratchet;
 import frc.robot.subsystems.Arm;
@@ -47,7 +46,7 @@ public class RobotContainer {
   public static CommandPS5Controller operatorController = new CommandPS5Controller(1);
   public static CommandPS5Controller testingController = new CommandPS5Controller(2);
 
-  public static final boolean debugMode = false;
+  public static final boolean debugMode = true;
   public static final boolean logMode = true;
 
   //Subsystems
@@ -232,8 +231,8 @@ public class RobotContainer {
     //   drivetrain.sysIdQuasistatic(Direction.kReverse)
     // );
     testingController.touchpad().onTrue(Commands.runOnce(() -> elevator.resetEncoders(0)).ignoringDisable(true));
-    testingController.triangle().whileTrue(new WheelRadiusCharacterization(WheelRadiusCharacterization.Direction.CLOCKWISE, drivetrain));
-    testingController.circle().whileTrue(new WheelRadiusCharacterization(WheelRadiusCharacterization.Direction.COUNTER_CLOCKWISE, drivetrain));
+   // testingController.triangle().whileTrue(new WheelRadiusCharacterization(WheelRadiusCharacterization.Direction.CLOCKWISE, drivetrain));
+   // testingController.circle().whileTrue(new WheelRadiusCharacterization(WheelRadiusCharacterization.Direction.COUNTER_CLOCKWISE, drivetrain));
     testingController.cross().onTrue(Commands.runOnce(() -> elevator.setNeutralMode(NeutralModeValue.Coast)).ignoringDisable(true)).onFalse(Commands.runOnce(() -> elevator.setNeutralMode(NeutralModeValue.Brake)).ignoringDisable(true));
    }
 

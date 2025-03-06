@@ -3,45 +3,45 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 5.0,
-        "y": 5.25
+        "x": 5.135369318181818,
+        "y": 5.5257244318181815
       },
       "prevControl": null,
       "nextControl": {
-        "x": 4.768215330699023,
-        "y": 5.451379724476243
+        "x": 4.903584648880841,
+        "y": 5.727104156294424
+      },
+      "isLocked": false,
+      "linkedName": "c"
+    },
+    {
+      "anchor": {
+        "x": 3.9188352272727274,
+        "y": 5.745099431818181
+      },
+      "prevControl": {
+        "x": 4.168815404502174,
+        "y": 5.741951258961609
+      },
+      "nextControl": {
+        "x": 3.521451176184345,
+        "y": 5.750103963365988
       },
       "isLocked": false,
       "linkedName": null
     },
     {
       "anchor": {
-        "x": 4.356960556844547,
-        "y": 5.65377030162413
+        "x": 2.8319318181818183,
+        "y": 5.146803977272728
       },
       "prevControl": {
-        "x": 4.606940734073993,
-        "y": 5.650622128767558
+        "x": 3.027854138219266,
+        "y": 5.302092239904338
       },
       "nextControl": {
-        "x": 3.959576505756165,
-        "y": 5.658774833171937
-      },
-      "isLocked": false,
-      "linkedName": null
-    },
-    {
-      "anchor": {
-        "x": 3.13538283062645,
-        "y": 4.941183294663573
-      },
-      "prevControl": {
-        "x": 3.3313051506638978,
-        "y": 5.0964715572951835
-      },
-      "nextControl": {
-        "x": 2.9164384563646917,
-        "y": 4.76764772461941
+        "x": 2.6129874439200598,
+        "y": 4.973268407228565
       },
       "isLocked": false,
       "linkedName": null
@@ -81,10 +81,10 @@
   "pointTowardsZones": [],
   "eventMarkers": [],
   "globalConstraints": {
-    "maxVelocity": 1.0,
-    "maxAcceleration": 3.0,
-    "maxAngularVelocity": 360.0,
-    "maxAngularAcceleration": 300.0,
+    "maxVelocity": 4.0,
+    "maxAcceleration": 4.6,
+    "maxAngularVelocity": 500.0,
+    "maxAngularAcceleration": 720.0,
     "nominalVoltage": 12.0,
     "unlimited": false
   },

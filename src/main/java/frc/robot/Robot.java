@@ -15,6 +15,7 @@ import com.ctre.phoenix6.SignalLogger;
 import com.pathplanner.lib.commands.FollowPathCommand;
 import com.pathplanner.lib.commands.PathfindingCommand;
 
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -35,14 +36,15 @@ public class Robot extends LoggedRobot {
       Logger.addDataReceiver(new NT4Publisher()); // Publish data to NetworkTables
       new PowerDistribution(1, ModuleType.kRev); // Enables power distribution
       // logging
-      } else {
-      setUseTiming(false); // Run as fast as possible
-      String logPath = LogFileUtil.findReplayLog(); // Pull the replay log from
-      // AdvantageScope (or prompt the user)
-      Logger.setReplaySource(new WPILOGReader(logPath)); // Read replay log
-      Logger.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath,
-      "_sim"))); // Save outputs to a new log
       }
+      // } else {
+      // setUseTiming(false); // Run as fast as possible
+      // String logPath = LogFileUtil.findReplayLog(); // Pull the replay log from
+      // // AdvantageScope (or prompt the user)
+      // Logger.setReplaySource(new WPILOGReader(logPath)); // Read replay log
+      // Logger.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath,
+      // "_sim"))); // Save outputs to a new log
+      // }
 
       Logger.recordMetadata("GitSHA", BuildConstants.GIT_SHA);
       Logger.start(); // Start logging! No more data receivers, replay sources, or
@@ -58,6 +60,7 @@ public class Robot extends LoggedRobot {
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
+
   }
 
   @Override
@@ -71,6 +74,7 @@ public class Robot extends LoggedRobot {
   public void robotInit() {
     FollowPathCommand.warmupCommand().schedule();
     PathfindingCommand.warmupCommand().schedule();
+
   }
 
   @Override
