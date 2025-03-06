@@ -59,6 +59,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.RobotContainer;
 import frc.robot.commands.AlignToAprilTagCommandOffset;
 import frc.robot.commands.GoToPoseCommand;
+import frc.robot.commands.GoToReefCommand;
 import frc.robot.commands.GoToPoseInputCommand;
 import frc.robot.util.RobotState;
 import frc.robot.util.TagOffset;
@@ -364,7 +365,7 @@ public class Auto extends SubsystemBase {
                         autoCommand.addCommands(Commands.runOnce(() -> {
                             System.out.println("resetting auto pose");
                             RobotContainer.drivetrain.resetPose(pose);
-                        }).alongWith(Commands.sequence(
+                        }).andThen(Commands.sequence(
                             Commands.runOnce(() -> {
                                 RobotContainer.leftLimelight.setGyroMode(1);
                                 RobotContainer.rightLimelight.setGyroMode(1);
@@ -469,6 +470,16 @@ public class Auto extends SubsystemBase {
                                     //,Commands.print("Finished elevator command path 1")
                                 )    
                         ));
+                        // List<Pose2d> pts = path1.getPathPoses();
+                        // Pose2d lastPathPose = pts.get(pts.size() - 1);
+                        // Pose2d targetPose = new Pose2d(lastPathPose.getX(), lastPathPose.getY(), path1.getGoalEndState().rotation());
+                        // System.out.println(pts.get(pts.size() - 1));
+                        if (Character.toUpperCase(second.charAt(0)) == second.charAt(0)) {
+                            autoCommand.addCommands(new GoToReefCommand(TagOffset.LEFT, false));
+                        } else {
+                            autoCommand.addCommands(new GoToReefCommand(TagOffset.RIGHT, false));
+                        }
+                        
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -476,7 +487,6 @@ public class Auto extends SubsystemBase {
 
             //Command to shoot!!!
             // autoCommand.addCommands(new GoToPoseCommand(autoOffset, true));
-            // autoCommand.addCommands(new GoToPoseCommand(autoOffset, false));
             autoCommand.addCommands(RobotContainer.rollers.outtakeCoralCommand().withTimeout(SCORING_TIMEOUT));
             timeSeconds += SCORING_TIMEOUT; //adds how long it will take to shoot the the estimated time
             

@@ -14,7 +14,7 @@ public enum RobotState {
     Processor(0, Rotation2d.fromDegrees(-33)),
     Net(0, Rotation2d.fromDegrees(0)),
     DrivingAlgae(0, Rotation2d.fromDegrees(0)),
-    DrivingCoral(0, Arm.MAX_ANGLE),
+    DrivingCoral(0, Arm.MIN_ANGLE),
     DrivingNone(0, Intake.getAngle()),
     L1Algae(0, Rotation2d.fromDegrees(0)),
     L2Algae(0, Rotation2d.fromDegrees(0)),

@@ -552,9 +552,9 @@ public class Elevator extends SubsystemBase {
      * @param extension meters, the distance from top bar to floor
      */
     public void setHeight(double height) {
-        if (RobotContainer.ratchet.ratchetEngaged) {
-            return;
-        }
+        // if (RobotContainer.ratchet.ratchetEngaged) {
+        //     return;
+        // }
         double extension = height - STARTING_HEIGHT;
         setExtension(extension);
     }
@@ -568,9 +568,9 @@ public class Elevator extends SubsystemBase {
      *                  top bar
      */
     public void setExtension(double extension) {
-        if (RobotContainer.ratchet.ratchetEngaged) {
-            return;
-        }
+        // if (RobotContainer.ratchet.ratchetEngaged) {
+        //     return;
+        // }
         extensionSetpointMeters = extension;
         // if (extension > MAX_EXTENSION) {
         //     Elastic.sendNotification(new Notification(

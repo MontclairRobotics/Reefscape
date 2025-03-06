@@ -8,10 +8,12 @@ import org.littletonrobotics.junction.Logger;
 import com.ctre.phoenix6.Utils;
 
 import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -48,7 +50,7 @@ public class Limelight extends SubsystemBase {
     private double ty;
     private Debouncer targetDebouncer = new Debouncer(TARGET_DEBOUNCE_TIME, DebounceType.kFalling);
 
-    public static final double angleVelocityTolerance = 540 * Math.PI / 180; // in radians per sec
+    public static final double angleVelocityTolerance = 360 * Math.PI / 180; // in radians per sec
 
     private double cameraHeightMeters;
     public double cameraAngle;
@@ -142,16 +144,20 @@ public class Limelight extends SubsystemBase {
             if (Math.abs(RobotContainer.drivetrain.getCurrentSpeeds().omegaRadiansPerSecond) > angleVelocityTolerance) {
                 shouldRejectUpdate = true;
             }
-            if (mt2.avgTagDist > 5) {
+            if (mt2.pose.getTranslation().getDistance(RobotContainer.drivetrain.getRobotPose().getTranslation()) > 0.1 && !DriverStation.isDisabled()) {
                 shouldRejectUpdate = true;
             }
             //adds vision measurement if conditions are met
             if (!shouldRejectUpdate) {
                 Logger.recordOutput(cameraName + "/mt2Pose", mt2.pose);
+                Logger.recordOutput(cameraName + "/Calculated stdevs", Math.pow(0.5, mt2.tagCount) * 2 * mt2.avgTagDist);
+                // Vector<N3> = VecBuilder.fill
                 RobotContainer.drivetrain.addVisionMeasurement(
-                        mt2.pose,
-                        Utils.fpgaToCurrentTime(mt2.timestampSeconds),
-                        VecBuilder.fill(0.000716, 0.0003, Double.POSITIVE_INFINITY));
+                    mt2.pose,
+                    Utils.fpgaToCurrentTime(mt2.timestampSeconds),
+                    // VecBuilder.fill(0.000716, 0.0003, Double.POSITIVE_INFINITY));
+                    VecBuilder.fill(Math.pow(0.5, mt2.tagCount) * 2 * mt2.avgTagDist, Math.pow(0.5, mt2.tagCount) * 2 * mt2.avgTagDist, Double.POSITIVE_INFINITY)
+                );
             }
         }
     }

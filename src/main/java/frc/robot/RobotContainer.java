@@ -19,7 +19,7 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
-import frc.robot.commands.GoToPoseCommand;
+import frc.robot.commands.GoToReefCommand;
 import frc.robot.commands.WheelRadiusCharacterization;
 import frc.robot.leds.LEDs;
 import frc.robot.subsystems.Ratchet;
@@ -144,8 +144,8 @@ public class RobotContainer {
 
     // Elevator down
     operatorController.R2()
-      .onTrue(elevator.setState(RobotState.DrivingNone))
-      .onTrue(arm.holdState(RobotState.Intake));
+      .onTrue(elevator.setState(RobotState.getDefaultForPiece(rollers.getHeldPiece())))
+      .onTrue(arm.holdState(RobotState.getDefaultForPiece(rollers.getHeldPiece())));
 
     //Lower algae
     operatorController.cross().and(operatorController.L2())
@@ -183,16 +183,16 @@ public class RobotContainer {
 
     //alignment buttons
     driverController.R2()
-      .whileTrue(new GoToPoseCommand(TagOffset.CENTER, true))
-      .onFalse(new GoToPoseCommand(TagOffset.CENTER, false).until(() -> drivetrain.joystickInputDetected()));
+      .whileTrue(new GoToReefCommand(TagOffset.CENTER, true))
+      .onFalse(new GoToReefCommand(TagOffset.CENTER, false).until(() -> drivetrain.joystickInputDetected()));
     
     driverController.L1()
-      .whileTrue(new GoToPoseCommand(TagOffset.LEFT, true))
-      .onFalse(new GoToPoseCommand(TagOffset.LEFT, false).until(() -> drivetrain.joystickInputDetected()));
+      .whileTrue(new GoToReefCommand(TagOffset.LEFT, true))
+      .onFalse(new GoToReefCommand(TagOffset.LEFT, false).until(() -> drivetrain.joystickInputDetected()));
     
     driverController.R1()
-      .whileTrue(new GoToPoseCommand(TagOffset.RIGHT, true))
-      .onFalse(new GoToPoseCommand(TagOffset.RIGHT, false).until(() -> drivetrain.joystickInputDetected()));
+      .whileTrue(new GoToReefCommand(TagOffset.RIGHT, true))
+      .onFalse(new GoToReefCommand(TagOffset.RIGHT, false).until(() -> drivetrain.joystickInputDetected()));
 
     //Robot relative
     driverController.L2()
@@ -231,7 +231,7 @@ public class RobotContainer {
     // testingController.square().whileTrue(
     //   drivetrain.sysIdQuasistatic(Direction.kReverse)
     // );
-    testingController.touchpad().onTrue(Commands.runOnce(() -> elevator.resetEncoders(0)));
+    testingController.touchpad().onTrue(Commands.runOnce(() -> elevator.resetEncoders(0)).ignoringDisable(true));
     testingController.triangle().whileTrue(new WheelRadiusCharacterization(WheelRadiusCharacterization.Direction.CLOCKWISE, drivetrain));
     testingController.circle().whileTrue(new WheelRadiusCharacterization(WheelRadiusCharacterization.Direction.COUNTER_CLOCKWISE, drivetrain));
     testingController.cross().onTrue(Commands.runOnce(() -> elevator.setNeutralMode(NeutralModeValue.Coast)).ignoringDisable(true)).onFalse(Commands.runOnce(() -> elevator.setNeutralMode(NeutralModeValue.Brake)).ignoringDisable(true));

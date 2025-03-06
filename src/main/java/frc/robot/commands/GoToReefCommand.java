@@ -28,7 +28,7 @@ import frc.robot.util.TagOffset;
 import frc.robot.util.Tunable;
 import frc.robot.util.TunerConstants;
 
-public class GoToPoseCommand extends Command {
+public class GoToReefCommand extends Command {
 
     private PIDController xController;
     private PIDController yController;
@@ -38,8 +38,8 @@ public class GoToPoseCommand extends Command {
     private TagOffset direction;
  
     double targetHeading;
-    // double offset = .3;
-    // boolean isOffset;
+    double offset = .3;
+    boolean isOffset;
 
     DoublePublisher xOutputPub;
     DoublePublisher yOutputPub;
@@ -53,6 +53,43 @@ public class GoToPoseCommand extends Command {
     public void initialize() {
 
 
+        //defaults to center
+        // if(direction == ScoreDirection.CENTER) {
+
+        targetPose = new Pose2d();
+
+        //}
+        if(direction.isLeft()) {
+            targetPose = RobotContainer.drivetrain.getClosestScoringPose(Drivetrain.LEFT_BLUE_SCORING_POSES);
+        } else if(direction.isRight()) {
+            targetPose = RobotContainer.drivetrain.getClosestScoringPose(Drivetrain.RIGHT_BLUE_SCORING_POSES);
+        } else {
+            //defaults to center
+            targetPose = RobotContainer.drivetrain.getClosestScoringPose(Drivetrain.BLUE_SCORING_POSES);
+        }
+        
+        
+
+        if(isOffset) {
+            //flips the angle if we are on red, so that the trig functions will work properly
+            //On red, the pose for POINT A on RED ALLIANCE has a heading of 180 (I think), 
+            //but the pose for POINT A on BLUE ALLIANCE has a heading of 0 (I think), so we 
+            //just have to make them the same again
+            targetHeading = targetPose.getRotation().getRadians();
+            //when target heading is zero, we want the offset to be backwards but cos(0) 
+            //is positive, so we multiply by negative 1
+            //same thing for sin(x)
+            double updatedX = targetPose.getX() + (-1 * offset * Math.cos(targetHeading));
+            double updatedY = targetPose.getY() + (-1 * offset * Math.sin(targetHeading));
+            //creates new updated pose
+            targetPose = new Pose2d(new Translation2d(updatedX, updatedY), Rotation2d.fromRadians(targetHeading));
+        }
+
+        //Cancels the command if for some reason the target pose is null 
+        //(i.e. if the direction is not CENTER, LEFT, or REVERSE)
+        if(targetPose == null) {
+            cancel();
+        }
 
         Logger.recordOutput("PoseCommand/TargetPose", targetPose);
         Logger.recordOutput("PoseCommand/TargetPose", RobotContainer.drivetrain.getRobotPose());
@@ -92,11 +129,12 @@ public class GoToPoseCommand extends Command {
         thetaController.setSetpoint(targetPose.getRotation().getRadians());
     }
 
-    public GoToPoseCommand(Pose2d targetPose) {
+    public GoToReefCommand(TagOffset direction, boolean isOffset) {
+        this.isOffset = isOffset;
+        this.direction = direction; //sets the direction
         addRequirements(RobotContainer.drivetrain); //requires the drivetrain
         xController = new PIDController(3.5, 0, .035); //creates the PIDControllers
         yController = new PIDController(3.5, 0, .035); //TODO tolerances
-        this.targetPose = targetPose;
         thetaController = RobotContainer.drivetrain.thetaController;
 
         // TODO I think I need to log the 1st pose2d in disabled to prevent overruns

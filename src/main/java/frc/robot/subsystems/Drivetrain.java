@@ -2,7 +2,7 @@ package frc.robot.subsystems;
 
 import frc.robot.Robot;
 import frc.robot.RobotContainer;
-import frc.robot.commands.GoToPoseCommand;
+import frc.robot.commands.GoToReefCommand;
 import frc.robot.util.TunerConstants;
 import frc.robot.util.TunerConstants.TunerSwerveDrivetrain;
 import frc.robot.util.simulation.MapleSimSwerveDrivetrain;
