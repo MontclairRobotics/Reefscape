@@ -719,7 +719,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
     public void zeroGyro() {
         // this.getPigeon2().setYaw(0);
-        resetRotation(Rotation2d.fromDegrees(0));
+        resetRotation(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(0)));
     }
 
     /*

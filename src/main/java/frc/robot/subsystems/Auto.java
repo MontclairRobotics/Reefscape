@@ -363,7 +363,7 @@ public class Auto extends SubsystemBase {
                         System.out.println(opPose.get() + "-------------POOOOOOSSEEEE----------");
                         Pose2d pose = opPose.isPresent() ? PoseUtils.flipPoseAlliance(opPose.get()) : new Pose2d();
                         autoCommand.addCommands(Commands.runOnce(() -> {
-                            System.out.println("resetting auto pose");
+                            System.out.println("resetting auto pose" + pose);
                             RobotContainer.drivetrain.resetPose(pose);
                         }).andThen(Commands.sequence(
                             Commands.runOnce(() -> {
@@ -400,7 +400,7 @@ public class Auto extends SubsystemBase {
             PathPlannerPath path2 = null;
             if (path2Exists) {
                 middleChar = "-";
-                if (Character.isLowerCase(third.charAt(0)) || Character.isLowerCase(fourth.charAt(0))) {
+                if (Character.isLowerCase(second.charAt(0)) || Character.isLowerCase(fourth.charAt(0))) {
                     middleChar = "_";
                     autoOffset = TagOffset.RIGHT;
                 } else autoOffset = TagOffset.LEFT;
@@ -426,7 +426,7 @@ public class Auto extends SubsystemBase {
             }
 
             //Default armPos is none (which is 0)
-            RobotState mechState = RobotState.DrivingNone;
+            RobotState mechState = RobotState.Intake;
 
             //if we have a scoring location, set the arm/elevator state to that scoring location!
             if (third != null) {
@@ -510,7 +510,7 @@ public class Auto extends SubsystemBase {
                         double raiseTime = RobotContainer.elevator.getRaiseTime(mechState); //time needed to raise the elevator, for timeout
                         //System.out.println("Path 2 Raise Time: " + raiseTime);
                         autoCommand.addCommands(Commands.parallel(
-                            Commands.deadline(path2Cmd, RobotContainer.arm.holdState(mechState)),
+                            Commands.deadline(path2Cmd, RobotContainer.arm.setState(RobotState.Intake)),
                             RobotContainer.elevator.setState(mechState).withTimeout(raiseTime)
                             )
                         );

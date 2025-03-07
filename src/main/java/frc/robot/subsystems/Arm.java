@@ -69,7 +69,7 @@ public class Arm extends SubsystemBase {
 
     private ArmFeedforward armFeedforward = new ArmFeedforward(0, 0.2, 0); 
 
-    private PIDController pidController = new PIDController(70, 0, 3);
+    private PIDController pidController = new PIDController(80, 10, 3);
 
     public Tunable armVoltageLimit = new Tunable("Arm Limit Voltage", 1, (val)->{
         armLimitVoltage = val;

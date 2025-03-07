@@ -168,7 +168,7 @@ public class RobotContainer {
       .onFalse(elevator.climbDownCommand());
 
     operatorController.povUp().onTrue(ratchet.engageServos());
-    operatorController.povDown().onTrue(ratchet.engageServos());
+    operatorController.povDown().onTrue(ratchet.disengageServos());
 
     //Processor
     operatorController.square().and(operatorController.L2())
