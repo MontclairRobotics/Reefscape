@@ -36,12 +36,12 @@
         "y": 5.5257244318181815
       },
       "prevControl": {
-        "x": 2.921676136363636,
-        "y": 4.9972301136363635
+        "x": 3.0512827493686854,
+        "y": 5.570590968276514
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "B"
+      "linkedName": "B Offset"
     }
   ],
   "rotationTargets": [],

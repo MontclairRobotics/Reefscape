@@ -8,27 +8,11 @@
       },
       "prevControl": null,
       "nextControl": {
-        "x": 0.9342847139212087,
-        "y": 1.1714689458541312
+        "x": 2.140401683134191,
+        "y": 1.1078552246093738
       },
       "isLocked": false,
       "linkedName": "4"
-    },
-    {
-      "anchor": {
-        "x": 1.8867747440273035,
-        "y": 1.5142918088737212
-      },
-      "prevControl": {
-        "x": 0.8883755573240357,
-        "y": 1.171225412687902
-      },
-      "nextControl": {
-        "x": 2.1232060983209045,
-        "y": 1.5955335143389173
-      },
-      "isLocked": false,
-      "linkedName": null
     },
     {
       "anchor": {
@@ -36,15 +20,20 @@
         "y": 2.703764204545455
       },
       "prevControl": {
-        "x": 3.4846634613784877,
-        "y": 2.355521084563049
+        "x": 2.971039177389705,
+        "y": 1.644530890969668
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "F"
+      "linkedName": "F Offset"
     }
   ],
-  "rotationTargets": [],
+  "rotationTargets": [
+    {
+      "waypointRelativePos": 0.7466281207250337,
+      "rotationDegrees": 59.99999999999999
+    }
+  ],
   "constraintZones": [],
   "pointTowardsZones": [],
   "eventMarkers": [],

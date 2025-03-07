@@ -12,7 +12,7 @@
         "y": 1.2776791269165009
       },
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "5"
     },
     {
       "anchor": {
@@ -73,7 +73,7 @@
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "c"
+      "linkedName": "c Offset"
     }
   ],
   "rotationTargets": [],

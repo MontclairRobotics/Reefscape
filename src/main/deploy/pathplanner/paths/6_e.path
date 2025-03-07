@@ -8,8 +8,8 @@
       },
       "prevControl": null,
       "nextControl": {
-        "x": 2.3859215017064845,
-        "y": 1.2647184300341292
+        "x": 2.702910156249999,
+        "y": 1.0676265914351848
       },
       "isLocked": false,
       "linkedName": "6"
@@ -20,12 +20,12 @@
         "y": 2.6937926136363637
       },
       "prevControl": {
-        "x": 4.806553385820664,
-        "y": 2.2164120675612784
+        "x": 4.747670717592592,
+        "y": 2.0379474103009247
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "e"
+      "linkedName": "e Offset"
     }
   ],
   "rotationTargets": [],

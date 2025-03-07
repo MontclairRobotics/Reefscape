@@ -3,13 +3,13 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 7.103571428571429,
-        "y": 2.456282051282052
+        "x": 7.12,
+        "y": 2.456
       },
       "prevControl": null,
       "nextControl": {
         "x": 6.091186589088238,
-        "y": 2.497775540881668
+        "y": 2.497493489599617
       },
       "isLocked": false,
       "linkedName": "S4"
@@ -57,7 +57,7 @@
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "A"
+      "linkedName": "A Offset"
     }
   ],
   "rotationTargets": [],

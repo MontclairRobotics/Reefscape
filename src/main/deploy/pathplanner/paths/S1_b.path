@@ -12,7 +12,7 @@
         "y": 7.205822496201146
       },
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "S1"
     },
     {
       "anchor": {
@@ -20,15 +20,20 @@
         "y": 5.346235795454545
       },
       "prevControl": {
-        "x": 3.8300139738451797,
-        "y": 5.5638924079835475
+        "x": 3.8064659288194433,
+        "y": 6.5663053385416665
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "b"
+      "linkedName": "b Offset"
     }
   ],
-  "rotationTargets": [],
+  "rotationTargets": [
+    {
+      "waypointRelativePos": 0.5,
+      "rotationDegrees": -90.0
+    }
+  ],
   "constraintZones": [],
   "pointTowardsZones": [],
   "eventMarkers": [],

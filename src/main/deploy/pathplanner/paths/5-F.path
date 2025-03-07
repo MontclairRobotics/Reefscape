@@ -12,7 +12,7 @@
         "y": 1.1894755595102622
       },
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "5"
     },
     {
       "anchor": {
@@ -25,13 +25,13 @@
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "F"
+      "linkedName": "F Offset"
     }
   ],
   "rotationTargets": [
     {
-      "waypointRelativePos": 0.6292246520874751,
-      "rotationDegrees": 49.66213344159787
+      "waypointRelativePos": 0.72,
+      "rotationDegrees": 59.99999999999999
     }
   ],
   "constraintZones": [],

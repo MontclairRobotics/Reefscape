@@ -12,7 +12,7 @@
         "y": 1.2790106699777533
       },
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "4"
     },
     {
       "anchor": {
@@ -36,12 +36,12 @@
         "y": 3.86046875
       },
       "prevControl": {
-        "x": 2.734691376157865,
-        "y": 3.6583250839436294
+        "x": 2.7175846354166655,
+        "y": 3.4824518952546293
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "a"
+      "linkedName": "a Offset"
     }
   ],
   "rotationTargets": [],

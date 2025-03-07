@@ -8,27 +8,11 @@
       },
       "prevControl": null,
       "nextControl": {
-        "x": 6.2810629525222845,
-        "y": 1.0300298672206942
+        "x": 6.227386833639706,
+        "y": 0.9001748477711387
       },
       "isLocked": false,
-      "linkedName": null
-    },
-    {
-      "anchor": {
-        "x": 4.4816666666666665,
-        "y": 2.34275641025641
-      },
-      "prevControl": {
-        "x": 5.118690274903899,
-        "y": 1.8250875687779218
-      },
-      "nextControl": {
-        "x": 4.174559649588486,
-        "y": 2.5923228810826693
-      },
-      "isLocked": false,
-      "linkedName": null
+      "linkedName": "S5"
     },
     {
       "anchor": {
@@ -36,12 +20,12 @@
         "y": 2.703764204545455
       },
       "prevControl": {
-        "x": 3.647842034604531,
-        "y": 2.478260975868618
+        "x": 3.9689887551700367,
+        "y": 2.2508114085477926
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "F"
+      "linkedName": "F Offset"
     }
   ],
   "rotationTargets": [],

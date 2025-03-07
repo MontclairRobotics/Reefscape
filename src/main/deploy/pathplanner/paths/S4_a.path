@@ -4,7 +4,7 @@
     {
       "anchor": {
         "x": 7.12,
-        "y": 3.26
+        "y": 2.456
       },
       "prevControl": null,
       "nextControl": {
@@ -12,7 +12,7 @@
         "y": 3.333154530686011
       },
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "S4"
     },
     {
       "anchor": {
@@ -57,7 +57,7 @@
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "a"
+      "linkedName": "a Offset"
     }
   ],
   "rotationTargets": [],

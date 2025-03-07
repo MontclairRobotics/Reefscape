@@ -8,11 +8,11 @@
       },
       "prevControl": null,
       "nextControl": {
-        "x": 6.049572062372605,
-        "y": 0.4159934843605188
+        "x": 6.284938874421296,
+        "y": 1.3487709780092587
       },
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "S5"
     },
     {
       "anchor": {
@@ -20,12 +20,12 @@
         "y": 2.6937926136363637
       },
       "prevControl": {
-        "x": 5.569739055233095,
-        "y": 2.497772810257343
+        "x": 5.707774095117845,
+        "y": 2.3023082386363636
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "e"
+      "linkedName": "e Offset"
     }
   ],
   "rotationTargets": [],

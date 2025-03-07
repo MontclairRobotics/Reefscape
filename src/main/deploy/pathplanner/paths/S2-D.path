@@ -4,15 +4,15 @@
     {
       "anchor": {
         "x": 7.12,
-        "y": 4.76
+        "y": 5.644
       },
       "prevControl": null,
       "nextControl": {
-        "x": 6.6371882428345605,
-        "y": 4.427043533859261
+        "x": 6.972251880787037,
+        "y": 5.117549913194444
       },
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "S2"
     },
     {
       "anchor": {
@@ -25,7 +25,7 @@
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "D"
+      "linkedName": "D Offset"
     }
   ],
   "rotationTargets": [],

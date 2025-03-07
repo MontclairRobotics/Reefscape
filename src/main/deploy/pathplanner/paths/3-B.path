@@ -8,11 +8,11 @@
       },
       "prevControl": null,
       "nextControl": {
-        "x": 1.9075040015877365,
-        "y": 7.395238745693593
+        "x": 2.545392433449073,
+        "y": 7.008636067708334
       },
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "3"
     },
     {
       "anchor": {
@@ -20,15 +20,20 @@
         "y": 5.5257244318181815
       },
       "prevControl": {
-        "x": 2.8086516455088546,
-        "y": 5.564548377400469
+        "x": 3.316879175873315,
+        "y": 6.397719151146885
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "B"
+      "linkedName": "B Offset"
     }
   ],
-  "rotationTargets": [],
+  "rotationTargets": [
+    {
+      "waypointRelativePos": 0.65,
+      "rotationDegrees": -59.99999999999999
+    }
+  ],
   "constraintZones": [],
   "pointTowardsZones": [],
   "eventMarkers": [],

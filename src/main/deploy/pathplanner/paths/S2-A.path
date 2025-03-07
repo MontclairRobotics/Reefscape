@@ -4,44 +4,28 @@
     {
       "anchor": {
         "x": 7.12,
-        "y": 4.76
+        "y": 5.644
       },
       "prevControl": null,
       "nextControl": {
-        "x": 5.9910716327796525,
-        "y": 4.953577130049031
+        "x": 5.273855613425925,
+        "y": 5.6588751446759264
       },
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "S2"
     },
     {
       "anchor": {
-        "x": 4.4816666666666665,
-        "y": 5.727884615384616
+        "x": 3.7662275752314804,
+        "y": 5.644
       },
       "prevControl": {
-        "x": 5.524705144066969,
-        "y": 5.753061598288964
+        "x": 4.809266052631781,
+        "y": 5.669176982904348
       },
       "nextControl": {
-        "x": 3.595823538082155,
-        "y": 5.706502031915696
-      },
-      "isLocked": false,
-      "linkedName": null
-    },
-    {
-      "anchor": {
-        "x": 3.0539443155452437,
-        "y": 5.002262180974478
-      },
-      "prevControl": {
-        "x": 3.0856335433810576,
-        "y": 5.250245633727217
-      },
-      "nextControl": {
-        "x": 3.0025743740376942,
-        "y": 4.600267675814858
+        "x": 2.880384446646969,
+        "y": 5.622617416531081
       },
       "isLocked": false,
       "linkedName": null
@@ -52,17 +36,28 @@
         "y": 4.179559659090909
       },
       "prevControl": {
-        "x": 2.9112467574481435,
-        "y": 4.427818165594019
+        "x": 2.5319990596064805,
+        "y": 4.63369972511574
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "A"
+      "linkedName": "A Offset"
     }
   ],
   "rotationTargets": [],
   "constraintZones": [],
-  "pointTowardsZones": [],
+  "pointTowardsZones": [
+    {
+      "fieldPosition": {
+        "x": 4.5,
+        "y": 4.05
+      },
+      "rotationOffset": 0.0,
+      "minWaypointRelativePos": 0.40625000000000006,
+      "maxWaypointRelativePos": 1.8439872955607473,
+      "name": "Point Towards Zone"
+    }
+  ],
   "eventMarkers": [],
   "globalConstraints": {
     "maxVelocity": 2.5,

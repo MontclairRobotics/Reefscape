@@ -8,24 +8,24 @@
       },
       "prevControl": null,
       "nextControl": {
-        "x": 6.211411771315748,
-        "y": 7.494590755027899
+        "x": 6.181751663773148,
+        "y": 7.3435286458333335
       },
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "S1"
     },
     {
       "anchor": {
-        "x": 3.061278409090909,
-        "y": 5.166747159090908
+        "x": 3.601663773148147,
+        "y": 6.3338429542824075
       },
       "prevControl": {
-        "x": 3.225859321426621,
-        "y": 5.695845244880534
+        "x": 4.217365419606984,
+        "y": 6.709880919223192
       },
       "nextControl": {
-        "x": 2.987023034544928,
-        "y": 4.928029461064482
+        "x": 2.8907667824074066,
+        "y": 5.899664713541666
       },
       "isLocked": false,
       "linkedName": null
@@ -36,15 +36,20 @@
         "y": 4.179559659090909
       },
       "prevControl": {
-        "x": 2.6612277588669517,
-        "y": 4.297255869913007
+        "x": 2.6024016203703697,
+        "y": 4.660719401041666
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "A"
+      "linkedName": "A Offset"
     }
   ],
-  "rotationTargets": [],
+  "rotationTargets": [
+    {
+      "waypointRelativePos": 0.91,
+      "rotationDegrees": -90.0
+    }
+  ],
   "constraintZones": [],
   "pointTowardsZones": [],
   "eventMarkers": [],

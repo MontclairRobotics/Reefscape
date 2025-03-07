@@ -3,12 +3,12 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 1.014795918367347,
-        "y": 1.0738839285714277
+        "x": 1.18,
+        "y": 1.02
       },
       "prevControl": null,
       "nextControl": {
-        "x": 3.1736114332096474,
+        "x": 3.173611433209648,
         "y": 1.3850721822820038
       },
       "isLocked": false,
@@ -41,7 +41,7 @@
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "b"
+      "linkedName": "b Offset"
     }
   ],
   "rotationTargets": [],

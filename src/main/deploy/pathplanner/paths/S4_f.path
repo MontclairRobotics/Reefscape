@@ -3,32 +3,16 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 7.103571428571429,
-        "y": 2.456282051282052
+        "x": 7.12,
+        "y": 2.456
       },
       "prevControl": null,
       "nextControl": {
-        "x": 5.23580749268129,
-        "y": 2.463773555024647
+        "x": 5.802777416087962,
+        "y": 2.2741366464120376
       },
       "isLocked": false,
       "linkedName": "S4"
-    },
-    {
-      "anchor": {
-        "x": 4.450705128205128,
-        "y": 2.3221153846153846
-      },
-      "prevControl": {
-        "x": 5.070064617482598,
-        "y": 2.259448878253638
-      },
-      "nextControl": {
-        "x": 4.201975048405109,
-        "y": 2.3472817789275617
-      },
-      "isLocked": false,
-      "linkedName": null
     },
     {
       "anchor": {
@@ -36,12 +20,12 @@
         "y": 2.564161931818181
       },
       "prevControl": {
-        "x": 4.005363163066042,
-        "y": 2.3973889416706715
+        "x": 4.320480324074073,
+        "y": 2.192611762152777
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "f"
+      "linkedName": "f Offset"
     }
   ],
   "rotationTargets": [],

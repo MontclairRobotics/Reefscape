@@ -4,15 +4,15 @@
     {
       "anchor": {
         "x": 7.12,
-        "y": 3.26
+        "y": 2.456
       },
       "prevControl": null,
       "nextControl": {
-        "x": 6.243920174832654,
-        "y": 3.6770458706239357
+        "x": 6.948318504050925,
+        "y": 3.329243344907407
       },
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "S4"
     },
     {
       "anchor": {
@@ -20,12 +20,12 @@
         "y": 3.870440340909091
       },
       "prevControl": {
-        "x": 7.06136833663998,
-        "y": 3.4407018973712584
+        "x": 6.638931568287037,
+        "y": 3.651557798032407
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "D"
+      "linkedName": "D Offset"
     }
   ],
   "rotationTargets": [],
