@@ -158,7 +158,7 @@ public class GoToReefCommand extends Command {
         double omegaSpeed = thetaController.calculate(currentPose.getRotation().getRadians());
 
         //sets control output to the drivetrain
-        RobotContainer.drivetrain.driveWithSetpoint(xSpeed, ySpeed, omegaSpeed, true, false);
+        RobotContainer.drivetrain.drive(xSpeed, ySpeed, omegaSpeed, true, false);
     }
 
     @Override
