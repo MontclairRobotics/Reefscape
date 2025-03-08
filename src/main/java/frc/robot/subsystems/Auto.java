@@ -524,7 +524,7 @@ public class Auto extends SubsystemBase {
             }
 
             /* ADDS AN INTAKING COMMAND */
-            autoCommand.addCommands(RobotContainer.rollers.intakeCoralJiggleCommand().withTimeout(1));
+            autoCommand.addCommands(RobotContainer.rollers.intakeCoralJiggleCommand().withTimeout(2));
             timeSeconds += INTAKE_PREDICTED_TIME;
             // Bring elevator and arm to default position after scoring last coral
 

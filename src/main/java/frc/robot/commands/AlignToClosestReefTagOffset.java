@@ -1,5 +1,7 @@
 package frc.robot.commands;
 
+import org.littletonrobotics.junction.Logger;
+
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.ctre.phoenix6.swerve.utility.PhoenixPIDController;
 import com.pathplanner.lib.config.RobotConfig;
@@ -53,9 +55,16 @@ public class AlignToClosestReefTagOffset extends Command {
         //sets the tx and ty setpoints
         // TODO we want our setpoints to be zero, right?
 
+        RawFiducial closest = camera.getClosestTag();
+        if (closest == null) {
+            cancel();
+            return;
+        } 
+        thetaOffset = Limelight.tagRotationsMap.get(closest.id).getRadians();
+
         xController.setSetpoint(xOffset);
         yController.setSetpoint(yOffset);
-        thetaController.setSetpoint(thetaOffset * (Math.PI / 180.0));
+        thetaController.setSetpoint(thetaOffset);
     }
 
     @Override
@@ -67,6 +76,10 @@ public class AlignToClosestReefTagOffset extends Command {
         double ySpeed = 0;
 
         RawFiducial closest = camera.getClosestTag();
+        if (closest == null) {
+            cancel();
+            return;
+        } 
         //TODO will this just get stuck against a wall?
         double thetaSpeed = thetaController.calculate(RobotContainer.drivetrain.getRobotPose().getRotation().getRadians());
 
@@ -74,6 +87,9 @@ public class AlignToClosestReefTagOffset extends Command {
 
             double xDist = closest.distToCamera * -Math.sin(closest.txnc * (Math.PI / 180.0)) + camera.cameraOffsetX; // TODO invert?
             double yDist = closest.distToCamera * -Math.cos(closest.txnc * (Math.PI / 180.0)) + camera.cameraOffsetY;
+
+            Logger.recordOutput("ClosestAlign/xDist", yDist);
+            Logger.recordOutput("ClosestAlign/yDist", xDist);
             // TODO these may need inverts
             xSpeed = xController.calculate(xDist);
             ySpeed = yController.calculate(yDist);
@@ -83,7 +99,7 @@ public class AlignToClosestReefTagOffset extends Command {
         //no rotation input, we assume this is being used when robot is aligned heading-wise, but not translationally
         //can add one to also move rotationally then translate later
         //doesn't respect operator persective (this doesn't matter because its robot relative anyways)
-        RobotContainer.drivetrain.driveWithSetpoint(xSpeed, ySpeed, thetaSpeed, false, false, false);
+        RobotContainer.drivetrain.driveWithSetpoint(0, -xSpeed, thetaSpeed, false, false, false);
     }
 
     @Override

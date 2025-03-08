@@ -10,8 +10,10 @@ import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
+import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.net.PortForwarder;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -19,6 +21,7 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
+import frc.robot.commands.AlignToClosestReefTagOffset;
 import frc.robot.commands.GoToReefCommand;
 import frc.robot.leds.LEDs;
 import frc.robot.subsystems.Ratchet;
@@ -75,9 +78,11 @@ public class RobotContainer {
     // http://roborio-555-FRC.local:5801 will now forward to limelight-left.local:5801
     // http://roborio-555-FRC.local:5811 will now forward to limelight-right.local:5801
     for (int i = 5800; i <= 5807; i++) {
-      PortForwarder.add(i, "limelight-left.local", i);
-      PortForwarder.add(i+10, "limelight-right.local", i);
+      PortForwarder.add(i, "10.5.55.11", i);
+      PortForwarder.add(i+10, "10.5.55.12", i);
     }
+
+    // CameraServer.startAutomaticCapture();
   }
 
   private void configureBindings() {
@@ -151,7 +156,7 @@ public class RobotContainer {
       .whileTrue(
         arm.setState(RobotState.L1Algae)
         .alongWith(elevator.setState(RobotState.L1Algae))
-        .alongWith(rollers.intakeAlgaeCommand())
+        .alongWith(rollers.outtakeAlgaeCommand())
       );
 
     //Higher algae
@@ -159,7 +164,7 @@ public class RobotContainer {
       .whileTrue(
         arm.setState(RobotState.L2Algae)
         .alongWith(elevator.setState(RobotState.L2Algae))
-        .alongWith(rollers.intakeAlgaeCommand())
+        .alongWith(rollers.outtakeAlgaeCommand())
       );
 
     //Climb
@@ -173,6 +178,7 @@ public class RobotContainer {
     //Processor
     operatorController.square().and(operatorController.L2())
       .onTrue(arm.setState(RobotState.Processor));
+
 
     /*--------------------------------- DRIVER BINDINGS -------------------------------------------- */ 
 
@@ -191,7 +197,16 @@ public class RobotContainer {
       .whileTrue(new GoToReefCommand(TagOffset.RIGHT, true))
       .onFalse(new GoToReefCommand(TagOffset.RIGHT, false).until(() -> drivetrain.joystickInputDetected()));
 
-    //Robot relative
+    driverController.povRight()
+      .whileTrue(Commands.run(() -> RobotContainer.drivetrain.drive(new ChassisSpeeds(0, -0.15, 0), false, false), RobotContainer.drivetrain)).onFalse(Commands.runOnce(() -> RobotContainer.drivetrain.drive(new ChassisSpeeds(), false, false), RobotContainer.drivetrain));
+    driverController.povLeft()
+      .whileTrue(Commands.run(() -> RobotContainer.drivetrain.drive(new ChassisSpeeds(0, 0.15, 0), false, false), RobotContainer.drivetrain)).onFalse(Commands.runOnce(() -> RobotContainer.drivetrain.drive(new ChassisSpeeds(), false, false), RobotContainer.drivetrain));
+      driverController.povUp()
+      .whileTrue(Commands.run(() -> RobotContainer.drivetrain.drive(new ChassisSpeeds(.15, 0, 0), false, false), RobotContainer.drivetrain)).onFalse(Commands.runOnce(() -> RobotContainer.drivetrain.drive(new ChassisSpeeds(), false, false), RobotContainer.drivetrain));
+    driverController.povDown()
+      .whileTrue(Commands.run(() -> RobotContainer.drivetrain.drive(new ChassisSpeeds(-0.15, 0, 0), false, false), RobotContainer.drivetrain)).onFalse(Commands.runOnce(() -> RobotContainer.drivetrain.drive(new ChassisSpeeds(), false, false), RobotContainer.drivetrain));
+   
+      //Robot relative
     driverController.L2()
       .onTrue(drivetrain.toRobotRelativeCommand())
       .onFalse(drivetrain.toFieldRelativeCommand());
@@ -200,11 +215,11 @@ public class RobotContainer {
     driverController.triangle()
        .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(0)), false));
     driverController.square()
-      .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(90)), false));
+      .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(127)), false));
     driverController.cross()
       .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(180)), false));
     driverController.circle()
-      .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(270)), false)); 
+      .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(-127)), false)); 
     
     //zeros gyro
     driverController.touchpad().onTrue(drivetrain.zeroGyroCommand());

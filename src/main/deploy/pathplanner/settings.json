@@ -5,7 +5,7 @@
   "pathFolders": [],
   "autoFolders": [],
   "defaultMaxVel": 4.0,
-  "defaultMaxAccel": 3.3,
+  "defaultMaxAccel": 3.0,
   "defaultMaxAngVel": 500.0,
   "defaultMaxAngAccel": 700.0,
   "defaultNominalVoltage": 12.0,

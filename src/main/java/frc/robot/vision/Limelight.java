@@ -146,6 +146,9 @@ public class Limelight extends SubsystemBase {
 
     public RawFiducial getClosestTag() {
         RawFiducial[] tags = LimelightHelpers.getRawFiducials(cameraName);
+        if (tags.length == 0) {
+            return null;
+        }
         RawFiducial largest = tags[0];
         for (RawFiducial tag : tags) {
             if (tag.distToRobot > largest.distToRobot) {
@@ -309,6 +312,8 @@ public class Limelight extends SubsystemBase {
         xDistPub.set(getHorizontalDistanceToReef());
         yDistPub.set(getStraightDistanceToReef());
         horizontalDistPub.set(getDistanceToReef());
+
+        Logger.recordOutput(cameraName + "/IMUYaw", LimelightHelpers.getIMUData(cameraName).robotYaw * (Math.PI / 180.0)); //TODO should be yaw?
     }
 
     public Command ifHasTarget(Command cmd) {

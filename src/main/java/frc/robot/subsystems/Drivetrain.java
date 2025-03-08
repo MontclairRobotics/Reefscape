@@ -80,7 +80,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     public static double ROT_ACCEL = 16; // radians / s^2
     public static double MIN_TRANSLATIONAL_ACCEL = 2;
     public static double MIN_ROT_ACCEL = 1.5;
-    public static boolean IS_LIMITING_ACCEL = false; //TODO remove this, not needed w/ driveWithSetpoint
+    public static boolean IS_LIMITING_ACCEL = true; //TODO remove this, not needed w/ driveWithSetpoint
 
     DoublePublisher driveCurrentPub;
     DoublePublisher driveVelocityPub;

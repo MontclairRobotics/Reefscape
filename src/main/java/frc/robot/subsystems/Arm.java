@@ -230,7 +230,6 @@ public class Arm extends SubsystemBase {
     /**
      * Returns the angle of the elbow to the horizontal
      */
-    @AutoLogOutput
     public Rotation2d getElbowAngle() {
         return Drivetrain.wrapAngle(Rotation2d.fromRotations(elbowEncoder.get()));
     }
@@ -250,7 +249,6 @@ public class Arm extends SubsystemBase {
     /*
      * Returns the angle to the horizontal of the endpoint of the arm in rotations
      */
-    @AutoLogOutput
     public Rotation2d getEndpointAngle() {
         // return Rotation2d.fromRotations(j1Encoder.get() - ((j1Encoder.get() *
         // LARGE_ANGLE_TO_SMALL) +
@@ -385,6 +383,9 @@ public class Arm extends SubsystemBase {
             smallRotPub.set(getWristAngle().getDegrees());
             endPointAnglePub.set(getEndpointAngle().getDegrees());
         }
+        Logger.recordOutput("Arm/Endpoint Degrees", getEndpointAngle().getDegrees());
+        Logger.recordOutput("Arm/Encoder Connected", elbowEncoder.isConnected());
+        Logger.recordOutput("Arm/Motor Applied Outpu", armMotor.getAppliedOutput());
     }
 
     @Override
@@ -427,7 +428,7 @@ public class Arm extends SubsystemBase {
         // // }
 
         // Increment the simulation of the motor
-        armMotorSim.iterate(armMotorSim.getAppliedOutput() * MAX_VELOCITY, RobotController.getBatteryVoltage(), 0.02);
+        armMotorSim.iterate(armMotorSim.getAppliedOutput() * 2, RobotController.getBatteryVoltage(), 0.02);
 
         // Because I don't feel like doing physics, assume each joint is moving at a
         // constant velocity
@@ -441,10 +442,10 @@ public class Arm extends SubsystemBase {
         // that the encoders always read between 0 and 1 rotation (0 and 360 degrees)
 
         elbowEncoderSim.set(
-                ((getElbowAngle().getRotations() + (armMotor.getAppliedOutput() * MAX_VELOCITY) * 0.02)) % 1);
+                ((getElbowAngle().getRotations() + (armMotor.getAppliedOutput() * 2) * 0.02)) % 1);
         wristEncoderSim.set(
                 ((getWristAngle().getRotations()
-                        - (armMotor.getAppliedOutput() * MAX_VELOCITY * ELBOW_ANGLE_TO_WRIST) * 0.02)) % 1);
+                        - (armMotor.getAppliedOutput() * 2 * ELBOW_ANGLE_TO_WRIST) * 0.02)) % 1);
 
         // Publish sim encoder positions to the network
 

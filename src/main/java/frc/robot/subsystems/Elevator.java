@@ -395,12 +395,12 @@ public class Elevator extends SubsystemBase {
     public double getExtensionRotations() {
         double leftDisplacement = (leftTalonFX.getPosition().getValueAsDouble());
         double rightDisplacement = (rightTalonFX.getPosition().getValueAsDouble());
-        if (Math.abs(leftDisplacement - rightDisplacement) > 0.2) { // TODO: lower
-            // when things get more reliable
-            Elastic.sendNotification(new Notification(
-                    NotificationLevel.WARNING, "Elevator Height Mismatch",
-                    "The two elevator encoders give different values :(", 5000));
-        }
+        // if (Math.abs(leftDisplacement - rightDisplacement) > 0.2) { // TODO: lower
+        //     // when things get more reliable
+        //     Elastic.sendNotification(new Notification(
+        //             NotificationLevel.WARNING, "Elevator Height Mismatch",
+        //             "The two elevator encoders give different values :(", 5000));
+        // }
 
         return (leftDisplacement + rightDisplacement) / 2.0;
     }
