@@ -76,7 +76,7 @@ public class RobotContainer {
     // http://roborio-555-FRC.local:5811 will now forward to limelight-right.local:5801
     for (int i = 5800; i <= 5807; i++) {
       PortForwarder.add(i, "limelight-left.local", i);
-      PortForwarder.add(i+10, "limelight-right.local", i+10);
+      PortForwarder.add(i+10, "limelight-right.local", i);
     }
   }
 
