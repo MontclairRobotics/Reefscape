@@ -1,5 +1,6 @@
 package frc.robot.vision;
 
+import java.util.Set;
 import java.util.function.DoubleSupplier;
 
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -23,6 +24,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.RobotContainer;
 import frc.robot.util.PoseUtils;
+import frc.robot.vision.LimelightHelpers.RawFiducial;
 
 public class Limelight extends SubsystemBase {
 
@@ -241,6 +243,7 @@ public class Limelight extends SubsystemBase {
         return ty * -angleMult;
     }
 
+
     public DoubleSupplier tySupplier() {
         return () -> getTY();
     }
@@ -280,5 +283,49 @@ public class Limelight extends SubsystemBase {
 
     public Command ifHasTarget(Command cmd) {
         return cmd.onlyWhile(this::hasValidTarget);
+    }
+
+    public double getCameraHeightMeters() {
+        return cameraHeightMeters;
+    }
+    public double getCameraOffsetX() {
+        return cameraOffsetX;
+    }
+    public double getCameraOffsetY() {
+        return cameraOffsetY;
+    }
+    public double getCameraAngle() {
+        return cameraAngle;
+    }
+    public void setPriorityTagID(int id) {
+        LimelightHelpers.setPriorityTagID(cameraName, id);
+    }
+
+    public int getLargestAprilTag(Set<Integer> validIDs) {
+        RawFiducial[] fiducials = LimelightHelpers.getRawFiducials(cameraName);
+        int largestID = -1;
+        double largestArea = 0;
+        for (RawFiducial fiducial : fiducials) {
+            if (validIDs.contains(fiducial.id) && fiducial.ta > largestArea) {
+                largestArea = fiducial.ta;
+                largestID = fiducial.id;
+            }
+        }
+        return largestID;
+    }
+
+
+    public double[] getCorners(int tagId) {
+
+        var entry = LimelightHelpers.getLimelightNTTableEntry(cameraName, "tcornxy");
+        var tcornxy = entry.getDoubleArray(new double[0]);
+
+        RawFiducial[] fiducials = LimelightHelpers.getRawFiducials(cameraName);
+        for (int i=0; i<fiducials.length; i++) {
+            if (fiducials[i].id == tagId) {
+                return new double[] { tcornxy[i*8], tcornxy[i*8+1], tcornxy[i*8+2], tcornxy[i*8+3], tcornxy[i*8+4], tcornxy[i*8+5], tcornxy[i*8+6], tcornxy[i*8+7] };
+            }
+        }
+        return null;
     }
 }
