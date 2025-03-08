@@ -61,7 +61,7 @@ public class RobotContainer {
   public static Orchestra orchestra = new Orchestra();
   public static Arm arm = new Arm();
   public static Auto auto = new Auto();
-  // public static Telemetry telemetryLogger = new Telemetry(TunerConstants.kSpeedAt12Volts.in(MetersPerSecond));
+  public static Telemetry telemetryLogger = new Telemetry(TunerConstants.kSpeedAt12Volts.in(MetersPerSecond));
 
   //Alliance
   public static boolean isBlueAlliance;
@@ -76,7 +76,7 @@ public class RobotContainer {
     // http://roborio-555-FRC.local:5811 will now forward to limelight-right.local:5801
     for (int i = 5800; i <= 5807; i++) {
       PortForwarder.add(i, "limelight-left.local", i);
-      PortForwarder.add(i+10, "limelight-right.local", i+10);
+      PortForwarder.add(i+10, "limelight-right.local", i);
     }
   }
 
@@ -210,7 +210,7 @@ public class RobotContainer {
     driverController.touchpad().onTrue(drivetrain.zeroGyroCommand());
     
     //telemetry
-    // drivetrain.registerTelemetry(telemetryLogger::telemeterize);    
+     drivetrain.registerTelemetry(telemetryLogger::telemeterize);    
 
     /* ---------------------------------------- TESTING BINDINGS --------------------------------------- */
 

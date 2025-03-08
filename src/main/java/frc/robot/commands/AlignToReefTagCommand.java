@@ -7,6 +7,8 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.RobotContainer;
 import frc.robot.util.TagOffset;
 import frc.robot.vision.Limelight;
+import frc.robot.vision.LimelightHelpers;
+import frc.robot.vision.LimelightHelpers.RawFiducial;
 
 public class AlignToReefTagCommand extends Command {
     
@@ -58,6 +60,6 @@ public class AlignToReefTagCommand extends Command {
 
     @Override
     public boolean isFinished() {
-        return xController.atSetpoint() && yController.atSetpoint() && thetaController.atSetpoint() && camera.hasValidTarget();
+        return (xController.atSetpoint() && yController.atSetpoint() && thetaController.atSetpoint()) || !camera.hasValidTarget();
     }
 }

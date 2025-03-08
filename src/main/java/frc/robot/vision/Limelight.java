@@ -1,6 +1,7 @@
 package frc.robot.vision;
 
 import java.util.Set;
+import java.util.HashMap;
 import java.util.function.DoubleSupplier;
 
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -42,7 +43,23 @@ public class Limelight extends SubsystemBase {
     public static final int[] coralStationIDsRed = { 1, 2 };
     public static final int[] coralStationIDsBlue = { 12, 13 };
     public static final int[] coralStationIDs = { 1, 2, 12, 13 };
+    public static HashMap<Integer, Rotation2d> tagRotationsMap = new HashMap<Integer, Rotation2d>();
+    {
+        tagRotationsMap.put(6, Rotation2d.fromDegrees(120));
+        tagRotationsMap.put(7, Rotation2d.fromDegrees(180));
+        tagRotationsMap.put(8, Rotation2d.fromDegrees(-120));
+        tagRotationsMap.put(9, Rotation2d.fromDegrees(-60));
+        tagRotationsMap.put(10, Rotation2d.fromDegrees(0));
+        tagRotationsMap.put(11, Rotation2d.fromDegrees(60));
 
+        // TODO: Should these be flipped?
+        tagRotationsMap.put(17, Rotation2d.fromDegrees(60));
+        tagRotationsMap.put(18, Rotation2d.fromDegrees(0));
+        tagRotationsMap.put(19, Rotation2d.fromDegrees(-60));
+        tagRotationsMap.put(20, Rotation2d.fromDegrees(-120));
+        tagRotationsMap.put(21, Rotation2d.fromDegrees(180));
+        tagRotationsMap.put(22, Rotation2d.fromDegrees(120));
+    }
     public static final double TARGET_DEBOUNCE_TIME = 0.2;
 
     /* INSTANCE VARIABLES */
@@ -57,8 +74,8 @@ public class Limelight extends SubsystemBase {
 
     private double cameraHeightMeters;
     public double cameraAngle;
-    private double cameraOffsetX; // right is positive
-    private double cameraOffsetY; //forward is positive
+    public double cameraOffsetX; // right is positive
+    public double cameraOffsetY; //forward is positive
     private double angleMult;
     
     private DoublePublisher yDistPub;
@@ -86,7 +103,6 @@ public class Limelight extends SubsystemBase {
         yDistPub = lightTable.getDoubleTopic("Y Distance").publish();
         xDistPub = lightTable.getDoubleTopic("X Distance").publish();
         horizontalDistPub = lightTable.getDoubleTopic("Horizontal Distance").publish();
-
     }
 
     // might not be needed
@@ -129,6 +145,22 @@ public class Limelight extends SubsystemBase {
         // LimelightHelpers.setLimelightNTDouble(cameraName, "throttle_set", 0); //TODO check needs to be 1? // manage thermals
     }
 
+    public RawFiducial getClosestTag() {
+        RawFiducial[] tags = LimelightHelpers.getRawFiducials(cameraName);
+        RawFiducial largest = tags[0];
+        for (RawFiducial tag : tags) {
+            if (tag.distToRobot > largest.distToRobot) {
+                largest = tag;
+            }
+        }
+        return largest;
+    }
+
+    public Rotation2d getClosestTagAngle() {
+        int closestId = getClosestTag().id;
+        return tagRotationsMap.get(closestId);
+    }
+
     public void poseEstimationMegatag2() {
 
 
@@ -147,7 +179,7 @@ public class Limelight extends SubsystemBase {
             if (Math.abs(RobotContainer.drivetrain.getCurrentSpeeds().omegaRadiansPerSecond) > angleVelocityTolerance) {
                 shouldRejectUpdate = true;
             }
-            if (mt2.pose.getTranslation().getDistance(RobotContainer.drivetrain.getRobotPose().getTranslation()) > 0.3 && !DriverStation.isDisabled()) {
+            if (mt2.pose.getTranslation().getDistance(RobotContainer.drivetrain.getRobotPose().getTranslation()) > 0.3 && !DriverStation.isDisabled() && !DriverStation.isTeleopEnabled()) {
                 shouldRejectUpdate = true;
             }
             if (Math.abs(PoseUtils.wrapRotation(mt2.pose.getRotation()).minus(PoseUtils.wrapRotation(RobotContainer.drivetrain.getRobotPose().getRotation())).getDegrees()) > 3) {
