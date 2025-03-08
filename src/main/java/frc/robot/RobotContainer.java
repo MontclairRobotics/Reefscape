@@ -61,7 +61,7 @@ public class RobotContainer {
   public static Orchestra orchestra = new Orchestra();
   public static Arm arm = new Arm();
   public static Auto auto = new Auto();
-  public static Telemetry telemetryLogger = new Telemetry(TunerConstants.kSpeedAt12Volts.in(MetersPerSecond));
+  // public static Telemetry telemetryLogger = new Telemetry(TunerConstants.kSpeedAt12Volts.in(MetersPerSecond));
 
   //Alliance
   public static boolean isBlueAlliance;
@@ -210,7 +210,7 @@ public class RobotContainer {
     driverController.touchpad().onTrue(drivetrain.zeroGyroCommand());
     
     //telemetry
-    drivetrain.registerTelemetry(telemetryLogger::telemeterize);    
+    // drivetrain.registerTelemetry(telemetryLogger::telemeterize);    
 
     /* ---------------------------------------- TESTING BINDINGS --------------------------------------- */
 

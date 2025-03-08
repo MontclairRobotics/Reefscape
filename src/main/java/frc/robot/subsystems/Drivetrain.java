@@ -297,7 +297,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
                 rotVelocity);
         }
 
-        driveWithSetpoint(getVelocityYFromController(), getVelocityXFromController(), rotVelocity, fieldRelative, true); // drives
+        drive(getVelocityYFromController(), getVelocityXFromController(), rotVelocity, fieldRelative, true); // drives
                                                                                                              // using
                                                                                                              // supposed
                                                                                                              // velocities,

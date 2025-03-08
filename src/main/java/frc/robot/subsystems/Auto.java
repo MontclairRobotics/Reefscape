@@ -74,7 +74,7 @@ public class Auto extends SubsystemBase {
     // public double autoArmAngle = 0;
 
     //TODO: probably won't want a INTAKE timeout, we can just wait until piece is intaked
-    private final double SCORING_TIMEOUT = 0.15;
+    private final double SCORING_TIMEOUT = 0.13;
     private final double INTAKE_PREDICTED_TIME = 0.3;
 
     public int estimatedScore = 3; //Starts at 3 because of the leave bonus!
