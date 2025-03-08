@@ -118,12 +118,12 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
             Rotation2d(Math.toRadians(-127.000))), //top coral station
             new Pose2d(new Translation2d(1.091, 7.000), new
             Rotation2d(Math.toRadians(127.000))), //bottom coral station
-            new Pose2d(new Translation2d(3.680, 2.600), new Rotation2d(Math.toRadians(60.000))),
-            new Pose2d(new Translation2d(2.870, 4.030), new Rotation2d(Math.toRadians(0.000))),
-            new Pose2d(new Translation2d(3.670, 5.450), new Rotation2d(Math.toRadians(-60.000))),
-            new Pose2d(new Translation2d(5.320, 5.450), new Rotation2d(Math.toRadians(-120.000))),
-            new Pose2d(new Translation2d(6.130, 4.030), new Rotation2d(Math.toRadians(180.000))),
-            new Pose2d(new Translation2d(5.320, 2.600), new Rotation2d(Math.toRadians(120.000)))
+            new Pose2d(new Translation2d(3.16, 4.04), new Rotation2d(Math.toRadians(60.000))),
+            new Pose2d(new Translation2d(5.81, 4.04), new Rotation2d(Math.toRadians(0.000))),
+            new Pose2d(new Translation2d(3.83, 2.90), new Rotation2d(Math.toRadians(-60.000))),
+            new Pose2d(new Translation2d(3.84, 5.15), new Rotation2d(Math.toRadians(-120.000))),
+            new Pose2d(new Translation2d(5.13, 2.88), new Rotation2d(Math.toRadians(180.000))),
+            new Pose2d(new Translation2d(5.15, 5.17), new Rotation2d(Math.toRadians(120.000)))
     };
 
     public static final Pose2d[] LEFT_BLUE_SCORING_POSES = {
