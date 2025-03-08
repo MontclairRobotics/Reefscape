@@ -1,8 +1,8 @@
 package frc.robot.util;
 
 public enum TagOffset {
-    LEFT(0, 0, 0, 0), //TODO: SET
-    RIGHT(0, 0, 0, 0),
+    LEFT(0, 0, -0.165, 0), //TODO: SET
+    RIGHT(0, 0, 0.165, 0),
     CENTER(0, 0, 0, 0),
     LEFT_INTAKE(0, 0, 0, 0),
     RIGHT_INTAKE(0, 0, 0, 0),

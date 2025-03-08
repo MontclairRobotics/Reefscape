@@ -12,7 +12,7 @@ import frc.robot.vision.Limelight;
 import frc.robot.vision.LimelightHelpers;
 import frc.robot.vision.LimelightHelpers.RawFiducial;
 
-public class AlignToAprilTagCommandOffset extends Command {
+public class AlignToClosestReefTagOffset extends Command {
     
     private PIDController xController;
     private PIDController yController;
@@ -20,17 +20,25 @@ public class AlignToAprilTagCommandOffset extends Command {
 
     private Limelight camera;
     //private int tagID;
-    private double xOffset;
-    private double yOffset;
+    private static double xOffset;
+    private static double yOffset;
     private double thetaOffset;
-    private double tagHeightMeters;
 
-    public AlignToAprilTagCommandOffset(Limelight camera, double xOffset, double yOffset, double thetaOffset, double tagHeightMeters) {
-        this.camera = camera;
-        this.xOffset = xOffset;
-        this.yOffset = yOffset;
-        this.thetaOffset = thetaOffset;
-        this.tagHeightMeters = tagHeightMeters;
+
+    public AlignToClosestReefTagOffset(TagOffset offset, boolean isOffset) {
+        if (offset.isLeft()) {
+            camera = RobotContainer.leftLimelight;
+        } else {
+            camera = RobotContainer.rightLimelight;
+        }
+
+        xOffset = offset.getXOffsetM();
+        if (isOffset) {
+            yOffset = 0.3;
+        } else {
+            yOffset = 0.02;
+        }
+
         //TODO: tune + make global PID Constants
         xController = new PIDController(3.5, 0, 0);
         xController.setTolerance(0.02); //0.5 degrees, I think? if its based on tx
@@ -44,9 +52,10 @@ public class AlignToAprilTagCommandOffset extends Command {
     public void initialize(){
         //sets the tx and ty setpoints
         // TODO we want our setpoints to be zero, right?
+
         xController.setSetpoint(xOffset);
         yController.setSetpoint(yOffset);
-        thetaController.setSetpoint(thetaOffset);
+        thetaController.setSetpoint(thetaOffset * (Math.PI / 180.0));
     }
 
     @Override
@@ -57,20 +66,24 @@ public class AlignToAprilTagCommandOffset extends Command {
         double xSpeed = 0;
         double ySpeed = 0;
 
+        RawFiducial closest = camera.getClosestTag();
         //TODO will this just get stuck against a wall?
-        double thetaSpeed = thetaController.calculate(camera.getTX());
+        double thetaSpeed = thetaController.calculate(RobotContainer.drivetrain.getRobotPose().getRotation().getRadians());
 
-        if (thetaController.atSetpoint()) {
+        // if (thetaController.atSetpoint()) {
+
+            double xDist = closest.distToCamera * -Math.sin(closest.txnc * (Math.PI / 180.0)) + camera.cameraOffsetX; // TODO invert?
+            double yDist = closest.distToCamera * -Math.cos(closest.txnc * (Math.PI / 180.0)) + camera.cameraOffsetY;
             // TODO these may need inverts
-            xSpeed = xController.calculate(camera.getHorizontalDistanceToTag(tagHeightMeters));
-            ySpeed = yController.calculate(camera.getStraightDistanceToTag(tagHeightMeters));
-        }
+            xSpeed = xController.calculate(xDist);
+            ySpeed = yController.calculate(yDist);
+        // }
 
         //drives robot relative because tx and ty are robot relative
         //no rotation input, we assume this is being used when robot is aligned heading-wise, but not translationally
         //can add one to also move rotationally then translate later
         //doesn't respect operator persective (this doesn't matter because its robot relative anyways)
-        RobotContainer.drivetrain.drive(xSpeed, ySpeed, thetaSpeed, false, false);
+        RobotContainer.drivetrain.driveWithSetpoint(xSpeed, ySpeed, thetaSpeed, false, false, false);
     }
 
     @Override
@@ -80,6 +93,6 @@ public class AlignToAprilTagCommandOffset extends Command {
 
     @Override
     public boolean isFinished() {
-        return xController.atSetpoint() && yController.atSetpoint() && thetaController.atSetpoint() && camera.hasValidTarget();
+        return (xController.atSetpoint() && yController.atSetpoint() && thetaController.atSetpoint()) || !camera.hasValidTarget();
     }
 }
