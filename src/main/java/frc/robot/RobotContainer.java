@@ -49,7 +49,7 @@ public class RobotContainer {
   public static CommandPS5Controller operatorController = new CommandPS5Controller(1);
   public static CommandPS5Controller testingController = new CommandPS5Controller(2);
 
-  public static final boolean debugMode = true;
+  public static final boolean debugMode = false;
   public static final boolean logMode = true;
 
   //Subsystems
