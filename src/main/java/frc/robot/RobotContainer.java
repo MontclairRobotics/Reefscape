@@ -22,6 +22,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.commands.AlignToClosestReefTagOffset;
+import frc.robot.commands.GoToReefCameraSpace;
 import frc.robot.commands.GoToReefCommand;
 import frc.robot.leds.LEDs;
 import frc.robot.subsystems.Ratchet;
@@ -140,7 +141,7 @@ public class RobotContainer {
 
     // L4 
     operatorController.circle().and(operatorController.L2().negate())
-      .whileTrue(arm.holdState(RobotState.L4))
+      .whileTrue(arm.holdState(RobotState.L4).alongWith(elevator.setState(RobotState.L3)))
       .onFalse(
         elevator.setState(RobotState.L4)
         .alongWith(arm.holdState(RobotState.L4))
@@ -215,11 +216,11 @@ public class RobotContainer {
     driverController.triangle()
        .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(0)), false));
     driverController.square()
-      .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(127)), false));
+      .onTrue(drivetrain.alignToAngleFieldRelativeCommand((Rotation2d.fromDegrees(-54)), false));
     driverController.cross()
       .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(180)), false));
     driverController.circle()
-      .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(-127)), false)); 
+      .onTrue(drivetrain.alignToAngleFieldRelativeCommand(Rotation2d.fromDegrees(54), false)); 
     
     //zeros gyro
     driverController.touchpad().onTrue(drivetrain.zeroGyroCommand());
@@ -231,6 +232,9 @@ public class RobotContainer {
 
     testingController.L1().onTrue(Commands.runOnce(() -> SignalLogger.start()));
     testingController.R1().onTrue(Commands.runOnce(() -> SignalLogger.stop()));
+
+    // testingController.povLeft().whileTrue(new GoToReefCameraSpace(TagOffset.LEFT, true));
+    // testingController.povRight().whileTrue(new GoToReefCameraSpace(TagOffset.RIGHT, true));
     // testingController.triangle().whileTrue(
     //   drivetrain.sysIdDynamic(Direction.kForward)
     // );

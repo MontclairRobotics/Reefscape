@@ -9,6 +9,7 @@ import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -27,19 +28,22 @@ import frc.robot.util.PoseUtils;
 import frc.robot.util.TagOffset;
 import frc.robot.util.Tunable;
 import frc.robot.util.TunerConstants;
+import frc.robot.vision.Limelight;
+import frc.robot.vision.LimelightHelpers;
 
-public class GoToReefCommand extends Command {
+public class GoToReefCameraSpace extends Command {
 
     private PIDController xController;
     private PIDController yController;
     private PIDController thetaController;
+
+    private Limelight camera;
 
     private Pose2d targetPose;
     private TagOffset direction;
  
     double targetHeading;
     double offset = .3;
-    double otherOffset = -.03;
     boolean isOffset;
 
     DoublePublisher xOutputPub;
@@ -53,23 +57,10 @@ public class GoToReefCommand extends Command {
     @Override
     public void initialize() {
 
-
         //defaults to center
         // if(direction == ScoreDirection.CENTER) {
-
-        targetPose = new Pose2d();
-
-        //}
-        if(direction.isLeft()) {
-            targetPose = RobotContainer.drivetrain.getClosestScoringPose(Drivetrain.LEFT_BLUE_SCORING_POSES);
-        } else if(direction.isRight()) {
-            targetPose = RobotContainer.drivetrain.getClosestScoringPose(Drivetrain.RIGHT_BLUE_SCORING_POSES);
-        } else {
-            //defaults to center
-            targetPose = RobotContainer.drivetrain.getClosestScoringPose(Drivetrain.BLUE_SCORING_POSES);
-        }
-        
-        
+        Pose3d currentPose = LimelightHelpers.getBotPose3d_TargetSpace(camera.cameraName);
+        targetPose = new Pose2d(direction.getYOffsetM(), direction.getXOffsetM(), Rotation2d.fromRadians(currentPose.getRotation().getZ()));
 
         if(isOffset) {
             //flips the angle if we are on red, so that the trig functions will work properly
@@ -80,21 +71,8 @@ public class GoToReefCommand extends Command {
             //when target heading is zero, we want the offset to be backwards but cos(0) 
             //is positive, so we multiply by negative 1
             //same thing for sin(x)
-            double updatedX = targetPose.getX() + (-1 * offset * Math.cos(targetHeading));
-            double updatedY = targetPose.getY() + (-1 * offset * Math.sin(targetHeading));
-            //creates new updated pose
-            targetPose = new Pose2d(new Translation2d(updatedX, updatedY), Rotation2d.fromRadians(targetHeading));
-        } else {
-            //flips the angle if we are on red, so that the trig functions will work properly
-            //On red, the pose for POINT A on RED ALLIANCE has a heading of 180 (I think), 
-            //but the pose for POINT A on BLUE ALLIANCE has a heading of 0 (I think), so we 
-            //just have to make them the same again
-            targetHeading = targetPose.getRotation().getRadians();
-            //when target heading is zero, we want the offset to be backwards but cos(0) 
-            //is positive, so we multiply by negative 1
-            //same thing for sin(x)
-            double updatedX = targetPose.getX() + (-1 * otherOffset * Math.cos(targetHeading));
-            double updatedY = targetPose.getY() + (-1 * otherOffset * Math.sin(targetHeading));
+            double updatedX = targetPose.getX();// + (-1 * offset * Math.cos(targetHeading));
+            double updatedY = targetPose.getY() + offset;//+ (-1 * offset * Math.sin(targetHeading));
             //creates new updated pose
             targetPose = new Pose2d(new Translation2d(updatedX, updatedY), Rotation2d.fromRadians(targetHeading));
         }
@@ -105,7 +83,7 @@ public class GoToReefCommand extends Command {
             cancel();
         }
 
-        Logger.recordOutput("PoseCommand/TargetPose", targetPose);
+        Logger.recordOutput("CameraSpacePoseCommand/TargetPose", targetPose);
         //Logger.recordOutput("PoseCommand/TargetPose", RobotContainer.drivetrain.getRobotPose());
 
         // NetworkTableInstance inst = NetworkTableInstance.getDefault();
@@ -143,13 +121,19 @@ public class GoToReefCommand extends Command {
         thetaController.setSetpoint(targetPose.getRotation().getRadians());
     }
 
-    public GoToReefCommand(TagOffset direction, boolean isOffset) {
+    public GoToReefCameraSpace(TagOffset direction, boolean isOffset) {
         this.isOffset = isOffset;
         this.direction = direction; //sets the direction
         addRequirements(RobotContainer.drivetrain); //requires the drivetrain
-        xController = new PIDController(3.5, 0, .035); //creates the PIDControllers
-        yController = new PIDController(3.5, 0, .035); //TODO tolerances
+        xController = new PIDController(3.8, 0, .035); //creates the PIDControllers
+        yController = new PIDController(3.8, 0, .035); //TODO tolerances
         thetaController = RobotContainer.drivetrain.thetaController;
+
+        if (direction.isLeft()) {
+            camera = RobotContainer.rightLimelight;
+        } else {
+            camera = RobotContainer.leftLimelight;
+        }
 
         // TODO I think I need to log the 1st pose2d in disabled to prevent overruns
         Logger.recordOutput("PoseCommand/TargetPose", targetPose);
@@ -159,7 +143,11 @@ public class GoToReefCommand extends Command {
     @Override
     public void execute() {
         //current pose to PID from
-        Pose2d currentPose = RobotContainer.drivetrain.getState().Pose;
+        Pose3d currentPose3d = LimelightHelpers.getBotPose3d_TargetSpace(camera.cameraName);
+
+        Pose2d currentPose = new Pose2d(currentPose3d.getX(), currentPose3d.getY(), Rotation2d.fromRadians(currentPose3d.getRotation().getZ()));
+
+        System.out.println(currentPose);
 
         // //logging
         // xPosePub.set(currentPose.getX());
@@ -172,7 +160,7 @@ public class GoToReefCommand extends Command {
         double omegaSpeed = thetaController.calculate(currentPose.getRotation().getRadians());
 
         //sets control output to the drivetrain
-        RobotContainer.drivetrain.drive(xSpeed, ySpeed, omegaSpeed, true, false);
+        // RobotContainer.drivetrain.drive(xSpeed, ySpeed, omegaSpeed, true, false);
     }
 
     @Override
@@ -182,7 +170,7 @@ public class GoToReefCommand extends Command {
 
     @Override
     public boolean isFinished() {
-        return xController.atSetpoint() && yController.atSetpoint() && thetaController.atSetpoint();
+        return (xController.atSetpoint() && yController.atSetpoint() && thetaController.atSetpoint()) || !camera.hasValidTarget();
     }
 
 }

@@ -473,6 +473,9 @@ public class Auto extends SubsystemBase {
                                     ,Commands.print("Finished elevator command path 1")
                                 )    
                         ));
+                        // if (i > 3) {
+                        //     autoCommand.addCommands(new GoToReefCommand(TagOffset.LEFT, false));
+                        // }
                         // List<Pose2d> pts = path1.getPathPoses();
                         // Pose2d lastPathPose = pts.get(pts.size() - 1);
                         // Pose2d targetPose = new Pose2d(lastPathPose.getX(), lastPathPose.getY(), path1.getGoalEndState().rotation());

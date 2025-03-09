@@ -171,9 +171,14 @@ public class Limelight extends SubsystemBase {
         LimelightHelpers.SetRobotOrientation(cameraName, angle, 0, 0, 0, 0, 0);
         LimelightHelpers.PoseEstimate mt2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(cameraName);
         // System.out.println(Utils.getCurrentTimeSeconds());
-
         boolean shouldRejectUpdate = false;
-        if (mt2 != null) { 
+        if (mt2 != null) {
+            RawFiducial[] tags = mt2.rawFiducials;
+            int[] ids = new int[tags.length];
+            for (int i = 0; i < tags.length; i++) {
+                ids[i] = tags[i].id;
+            }
+            Logger.recordOutput(cameraName + "/SeenTags", ids); 
             if (mt2.tagCount == 0) {
                 //rejects current measurement if there are no aprilTags
                 shouldRejectUpdate = true;

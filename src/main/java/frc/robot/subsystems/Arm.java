@@ -138,7 +138,7 @@ public class Arm extends SubsystemBase {
         TrapezoidProfile.Constraints constraints = new
         TrapezoidProfile.Constraints(MAX_VELOCITY, MAX_ACCELERATION);
         armMotor = new SparkMax(29, MotorType.kBrushless);
-        elbowEncoder = new DutyCycleEncoder(1, 1 , ELBOW_ENCODER_OFFSET.getRotations());
+        elbowEncoder = new DutyCycleEncoder(6, 1 , ELBOW_ENCODER_OFFSET.getRotations());
         elbowEncoder.setInverted(true);
          // 1st number is port, 2nd is
                                                                                          // range in this case 1
