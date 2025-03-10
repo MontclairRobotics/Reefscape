@@ -18,7 +18,7 @@ public enum RobotState {
     DrivingNone(0, Intake.getAngle()),
     L1Algae(.08, Rotation2d.fromDegrees(-15)),
     L2Algae(0.5, Rotation2d.fromDegrees(-15)),
-    ClimbUp(0.2, Rotation2d.fromDegrees(-58)),
+    ClimbUp(0.4, Rotation2d.fromDegrees(-58)),
     ClimbDown(0, Rotation2d.fromDegrees(-58));
     
 

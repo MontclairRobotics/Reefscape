@@ -83,7 +83,7 @@ public class RobotContainer {
       PortForwarder.add(i+10, "10.5.55.12", i);
     }
 
-    // CameraServer.startAutomaticCapture();
+    CameraServer.startAutomaticCapture();
   }
 
   private void configureBindings() {

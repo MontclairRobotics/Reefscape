@@ -277,7 +277,7 @@ public class Arm extends SubsystemBase {
 
         // SmartDashboard.putNumber("Arm/preclamped Target", target);
         target = MathUtil.clamp(target, MIN_ANGLE.getRotations(), MAX_ANGLE.getRotations());
-        System.out.println("Target: " + target);
+        // System.out.println("Target: " + target);
         // SmartDashboard.putNumber("Arm/Clamped Target", target);
         double wristVoltage = pidController.calculate(getEndpointAngle().getRotations(), target);
         Logger.recordOutput("Arm/PID Setpoint", target * 360);
