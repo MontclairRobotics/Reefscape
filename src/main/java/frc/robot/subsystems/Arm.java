@@ -23,7 +23,6 @@ import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
-import edu.wpi.first.units.measure.MomentOfInertia;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
 import edu.wpi.first.wpilibj.RobotController;
@@ -48,9 +47,9 @@ public class Arm extends SubsystemBase {
     public final double MAX_VELOCITY = 60.0 / 360.0; // rotations per sec
     public final double MAX_ACCELERATION = 20.0 / 360.0; // rotations per sec per sec
     public final int GEAR_RATIO = 12; //TODO: get from cad
-    public final double MOMENT_OF_INERTIA = 0; //TODO: get from cad
-    public final double LENGTH = 0; //TODO: get from cad 
-    public final double STARTING_ANGLE = 0; //TODO: get
+    public final double MOMENT_OF_INERTIA = 1; //TODO: get from cad
+    public final double LENGTH = 1; //TODO: get from cad 
+    public final double STARTING_ANGLE = 1; //TODO: get
 
     // The max safe angle of the endpoint to the horizontal 
     public static final Rotation2d MAX_ANGLE = Rotation2d.fromDegrees(180); //TODO: FIND
@@ -82,8 +81,6 @@ public class Arm extends SubsystemBase {
     DutyCycleEncoderSim encoderSim;
     private SparkMax armMotor;
     private SparkMaxSim armMotorSim;
-    // public double smallWristAngle;
-    // public double largeWristAngle;
 
     private DoublePublisher voltagePub;
     private DoublePublisher RotPub;
@@ -91,7 +88,6 @@ public class Arm extends SubsystemBase {
     private DoublePublisher setpointPub;
     private DoublePublisher percentRotPub;
 
-    private StructPublisher<Pose3d> elbowPosePub;
     private StructPublisher<Pose3d> posePub;
 
     public Tunable kG = new Tunable("Arm kG", 0.2, (val) -> {
@@ -206,7 +202,7 @@ public class Arm extends SubsystemBase {
         target = MathUtil.clamp(target, MIN_ANGLE.getRotations(), MAX_ANGLE.getRotations());
         // System.out.println("Target: " + target);
         // SmartDashboard.putNumber("Arm/Clamped Target", target);
-        double wristVoltage = pidController.calculate(getAngle().getRotations(), target);
+        double voltage = pidController.calculate(getAngle().getRotations(), target);
         Logger.recordOutput("Arm/PID Setpoint", target * 360);
 
         setpointPub.set(target * 360);
@@ -215,17 +211,17 @@ public class Arm extends SubsystemBase {
 
         //needs feedforward only when we have algae, because algae is heavy!
         // if(RobotContainer.rollers.hasAlgae()) 
-        // if(getElbowAngle().getDegrees() > 0)
-        // wristVoltage += -armFeedforward.calculate(getElbowAngle().getRadians(), 0);
-        // else wristVoltage += armFeedforward.calculate(getElbowAngle().getRadians(), 0);
+        // if(getAngle().getDegrees() > 0)
+        // voltage += -armFeedforward.calculate(getAngle().getRadians(), 0);
+        // else voltage += armFeedforward.calculate(getAngle().getRadians(), 0);
     
-        wristVoltage = MathUtil.clamp(wristVoltage, -armLimitVoltage, armLimitVoltage);
-        // System.out.println(-wristVoltage);
+        voltage = MathUtil.clamp(voltage, -armLimitVoltage, armLimitVoltage);
+        // System.out.println(-voltage);
         // TODO do we need feedforward? If so we have to figure out the equation
         // negative voltage brings it up, positive brings it down AFAIK
-        voltagePub.set(-wristVoltage);
-        Logger.recordOutput("Arm/AppliedVoltage", -wristVoltage);
-        armMotor.setVoltage(-wristVoltage);
+        voltagePub.set(-voltage);
+        Logger.recordOutput("Arm/AppliedVoltage", -voltage);
+        armMotor.setVoltage(-voltage);
 
     }
 
@@ -260,7 +256,7 @@ public class Arm extends SubsystemBase {
             }
         }
         
-        // double ffVoltage = armSim.feedforward(VecBuilder.fill(getElbowAngle().getRadians(), getWristAngle().getRadians())).get(0,0);
+        // double ffVoltage = armSim.feedforward(VecBuilder.fill(getAngle().getRadians(), getAngle().getRadians())).get(0,0);
         // voltage = voltage - ffVol
         // if(RobotContainer.rollers.hasAlgae())
         //TODO check safeties after ff 
@@ -275,9 +271,9 @@ public class Arm extends SubsystemBase {
         // highest voltage allowed */;
         // This clamps the voltage as it gets closer to the the top or the bottom. The
         // slow down zone is the area at the top or the bottom when things.
-        // The slowest speed will allow the wrist to still go up and down no mater
+        // The slowest speed will allow the arm to still go up and down no mater
         // what as long it has not hit the limit switch
-        // Puting it to the power of 3 makes the slowdown more noticable
+        // Putting it to the power of 3 makes the slowdown more noticeable
         // appliedVoltage = voltage;
         armMotor.setVoltage(voltage);
     }
