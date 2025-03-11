@@ -194,7 +194,7 @@ public class Limelight extends SubsystemBase {
             }
             if (mt2.avgTagDist > 4) {
                 shouldRejectUpdate = true;
-            }
+            } 
             //adds vision measurement if conditions are met
             if (!shouldRejectUpdate) {
                 Logger.recordOutput(cameraName + "/mt2Pose", mt2.pose);
@@ -311,8 +311,26 @@ public class Limelight extends SubsystemBase {
 
     public void periodic() {
         // tagID = (int) Limetable.getEntry("tid").getDouble(-1);
+        // TODO if you get a pose estimate in the frame before this is applied it may not work
         tx = LimelightHelpers.getTX(cameraName);
         ty = LimelightHelpers.getTY(cameraName);
+        RawFiducial[] allTags = LimelightHelpers.getRawFiducials(cameraName);
+        int numValidTags = 0;
+        for(LimelightHelpers.RawFiducial t : allTags) {
+            if(t.distToCamera < 4.0) {
+                numValidTags++;
+            }
+        }
+
+        int[] validTags = new int[numValidTags];
+        int counter = 0;
+        for(RawFiducial t : allTags) {
+            if(t.distToCamera < 4.0) {
+                validTags[counter] = t.id;
+                counter++;
+            }
+        }
+        LimelightHelpers.SetFiducialIDFiltersOverride(cameraName, validTags);
         poseEstimationMegatag2();
         xDistPub.set(getHorizontalDistanceToReef());
         yDistPub.set(getStraightDistanceToReef());
