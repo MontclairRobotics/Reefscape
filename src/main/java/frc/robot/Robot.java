@@ -31,7 +31,7 @@ public class Robot extends LoggedRobot {
     if (RobotContainer.logMode) {
       Logger.recordMetadata("ProjectName", "Reefscape"); // Set a metadata value
 
-      if (isReal()) {
+      if (/*isReal()*/ true) {
       Logger.addDataReceiver(new WPILOGWriter()); // Log to a USB stick ("/U/logs")
       Logger.addDataReceiver(new NT4Publisher()); // Publish data to NetworkTables
       new PowerDistribution(1, ModuleType.kRev); // Enables power distribution

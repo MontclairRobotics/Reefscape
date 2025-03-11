@@ -2,6 +2,8 @@ package frc.robot.subsystems;
 
 import frc.robot.Robot;
 import frc.robot.RobotContainer;
+import frc.robot.commands.AlignToAprilTagCommandOffset;
+import frc.robot.commands.GoToPoseCommand;
 import frc.robot.commands.GoToReefCommand;
 import frc.robot.util.TunerConstants;
 import frc.robot.util.TunerConstants.TunerSwerveDrivetrain;
@@ -13,6 +15,8 @@ import static edu.wpi.first.math.util.Units.*;
 import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Volts;
 
+import java.util.Set;
+import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.AutoLog;
@@ -41,6 +45,8 @@ import com.pathplanner.lib.util.swerve.SwerveSetpoint;
 import com.pathplanner.lib.util.swerve.SwerveSetpointGenerator;
 
 import frc.robot.util.PoseUtils;
+import frc.robot.util.RobotState;
+import frc.robot.util.TagOffset;
 import frc.robot.util.Tunable;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
@@ -297,8 +303,10 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
         // Always take max rotational accel over max drive (I think?)
         double maxAccel = Math
-                .sqrt(Math.abs(Math.pow((9.81 * (ROBOT_WIDTH / 2.0)) / getCOMHeight(), 2) - Math.pow(targetRotAccel, 2))) * 0.9;
-        System.out.println(maxAccel);
+                .sqrt(Math.abs(Math.pow((9.81 * (ROBOT_WIDTH / 2.0)) / getCOMHeight(), 2) - Math.pow(targetRotAccel * COM_TO_CENTER_OF_ROTATION, 2))) * 0.9;
+
+        // System.out.println("Max Accel: " + maxAccel + "; Max Rot Accel:" + maxRotAccel);
+        // System.out.println(maxAccel);
         targetXAccel = MathUtil.clamp(targetXAccel, -maxAccel, maxAccel);
         targetYAccel = MathUtil.clamp(targetYAccel, -maxAccel, maxAccel);
 
@@ -310,7 +318,34 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         targetXSpeed = (timestep * targetXAccel) + currentXSpeed;
         targetYSpeed = (timestep * targetYAccel) + currentYSpeed;
 
+        // System.out.println("Target X Speed: " + targetSpeeds.vxMetersPerSecond + "Limited Speed: " + targetXSpeed);
+        Logger.recordOutput("Drive/TargetXSpeed", targetSpeeds.vxMetersPerSecond);
+        Logger.recordOutput("Drive/LimitedXSpeed", targetXSpeed);
+        
+        Logger.recordOutput("Drive/TargetYSpeed", targetSpeeds.vyMetersPerSecond);
+        Logger.recordOutput("Drive/LimitedYSpeed", targetYSpeed);
+
+        Logger.recordOutput("Drive/TargetOmegaSpeed", targetSpeeds.omegaRadiansPerSecond);
+        Logger.recordOutput("Drive/LimitedOmegaSpeed", targetOmegaSpeed);
+
+        Logger.recordOutput("Drive/MaxAccel", maxAccel);
+        Logger.recordOutput("Drive/MaxThetaAccel", maxRotAccel);
+        
+        Logger.recordOutput("Drive/TargetRotAccel", targetRotAccel);
+        Logger.recordOutput("Drive/TargetXAccel", targetXAccel);
+        Logger.recordOutput("Drive/TargetYAccel", targetYAccel);
         return new ChassisSpeeds(targetXSpeed, targetYSpeed, targetOmegaSpeed);
+    }
+
+    public Command driveToReefCommandFast(TagOffset direction) {
+        BooleanSupplier isL4 = () -> {return RobotContainer.elevator.getState() == RobotState.L4;};
+        return Commands.sequence(
+            Commands.parallel(
+                Commands.defer(() -> new GoToReefCommand(direction, !isL4.getAsBoolean()), Set.of(this)),
+                RobotContainer.elevator.setState(RobotContainer.elevator.getState())
+            ),
+            new GoToReefCommand(direction, false).unless(isL4)
+        );
     }
 
     double ROBOT_COM_NO_ELEVATOR = inchesToMeters(5.8); // the COM of the robot and stage 1 of the elevator
@@ -320,6 +355,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     public double getCOMHeight() {
         // return ROBOT_COM_NO_ELEVATOR +
         double elevatorCOMHeight = RobotContainer.elevator.getHeight() - inchesToMeters(11.1); // TODO make an interpolating tree map or something better
+        // System.out.println(((ROBOT_MASS_NO_ELEVATOR * ROBOT_COM_NO_ELEVATOR) + (ROBOT_MASS_ELEVATOR * elevatorCOMHeight)) / ROBOT_MASS);
         return ((ROBOT_MASS_NO_ELEVATOR * ROBOT_COM_NO_ELEVATOR) + (ROBOT_MASS_ELEVATOR * elevatorCOMHeight)) / ROBOT_MASS;
     }
 
@@ -349,7 +385,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         double rotInput = -MathUtil.applyDeadband(RobotContainer.driverController.getRightX(), 0.07);
         double rotVelocity = Math.pow(rotInput, 3) * MAX_ROT_SPEED;
 
-        drive(getVelocityYFromController(), getVelocityXFromController(), rotVelocity, fieldRelative, true); // drives
+        driveWithSetpoint(getVelocityYFromController(), getVelocityXFromController(), rotVelocity, fieldRelative, true); // drives
                                                                                                              // using
     }
 
@@ -449,18 +485,18 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
             speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds, getWrappedHeading());
         }
 
-        prevSetpoint = setpointGen.generateSetpoint(
-                prevSetpoint, // The previous setpoint
-                speeds, // The desired target speeds
-                new PathConstraints(MAX_SPEED, getMaxForwardAccel(), getMaxRotSpeed(), getMaxRotAccel()),
-                0.02 // The loop time of the robot code, in seconds
-        );
+        // prevSetpoint = setpointGen.generateSetpoint(
+        //         prevSetpoint, // The previous setpoint
+        //         speeds, // The desired target speeds
+        //         new PathConstraints(MAX_SPEED, getMaxForwardAccel(), getMaxRotSpeed(), getMaxRotAccel()),
+        //         0.02 // The loop time of the robot code, in seconds
+        // );
 
-        // speeds = getMaxSpeedsNoTip(speeds);
+        speeds = getMaxSpeedsNoTip(speeds);
         // System.out.println(getMaxSpeedsNoTip(speeds));
 
         SwerveRequest req = new SwerveRequest.ApplyRobotSpeeds()
-                .withSpeeds(prevSetpoint.robotRelativeSpeeds())
+                .withSpeeds(speeds)
                 .withDriveRequestType(DriveRequestType.Velocity)
                 .withSteerRequestType(SteerRequestType.Position)
                 .withWheelForceFeedforwardsX(prevSetpoint.feedforwards().robotRelativeForcesXNewtons())

@@ -5,6 +5,9 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.MetersPerSecond;
+
+import java.util.function.BooleanSupplier;
+
 import com.ctre.phoenix6.Orchestra;
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.signals.NeutralModeValue;
@@ -20,6 +23,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.commands.AlignToClosestReefTagOffset;
 import frc.robot.commands.GoToReefCameraSpace;
@@ -111,15 +115,18 @@ public class RobotContainer {
       .onFalse(rollers.stopCommand());
 
     //L1 scoring
+    // TODO this seems wrong
     operatorController.R2().and(operatorController.cross())
       .whileTrue(rollers.scoreL1())
       .onFalse(rollers.stopCommand());
 
+    Trigger autoAligning = RobotContainer.driverController.L1().or(RobotContainer.driverController.R1()).or(RobotContainer.driverController.R2());
+    
     // L1 
     operatorController.cross().and(operatorController.L2().negate())
       .whileTrue(arm.holdState(RobotState.L1))
       .onFalse(
-        elevator.setState(RobotState.L1)
+        elevator.setState(RobotState.L1).onlyIf(autoAligning.negate()).alongWith(elevator.setTargetState(RobotState.L1))
         .alongWith(arm.holdState(RobotState.L1))
       );
       
@@ -127,7 +134,7 @@ public class RobotContainer {
     operatorController.square().and(operatorController.L2().negate())
       .whileTrue(arm.holdState(RobotState.L2))
       .onFalse(
-        elevator.setState(RobotState.L2)
+        elevator.setState(RobotState.L2).onlyIf(autoAligning.negate()).alongWith(elevator.setTargetState(RobotState.L2))
         .alongWith(arm.holdState(RobotState.L2))
       );
 
@@ -135,7 +142,7 @@ public class RobotContainer {
     operatorController.triangle().and(operatorController.L2().negate())
       .whileTrue((arm.holdState(RobotState.L3)))
       .onFalse(
-        elevator.setState(RobotState.L3)
+        elevator.setState(RobotState.L3).onlyIf(autoAligning.negate()).alongWith(elevator.setTargetState(RobotState.L3))
         .alongWith(arm.holdState(RobotState.L3))
       );
 
@@ -143,7 +150,7 @@ public class RobotContainer {
     operatorController.circle().and(operatorController.L2().negate())
       .whileTrue(arm.holdState(RobotState.L4).alongWith(elevator.setState(RobotState.L3)))
       .onFalse(
-        elevator.setState(RobotState.L4)
+        elevator.setState(RobotState.L4).onlyIf(autoAligning.negate()).alongWith(elevator.setTargetState(RobotState.L4))
         .alongWith(arm.holdState(RobotState.L4))
       );
 
