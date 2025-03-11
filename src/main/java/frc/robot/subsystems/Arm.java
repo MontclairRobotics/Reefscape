@@ -18,19 +18,17 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
+import edu.wpi.first.units.measure.MomentOfInertia;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
 import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.simulation.DutyCycleEncoderSim;
+import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -43,19 +41,22 @@ import frc.robot.util.Elastic;
 import frc.robot.util.PoseUtils;
 import frc.robot.util.Elastic.Notification;
 import frc.robot.util.Elastic.Notification.NotificationLevel;
-import frc.robot.util.simulation.DoubleJointedArmModel;
 
 public class Arm extends SubsystemBase {
 
     public double armLimitVoltage = 1.7;
     public final double MAX_VELOCITY = 60.0 / 360.0; // rotations per sec
     public final double MAX_ACCELERATION = 20.0 / 360.0; // rotations per sec per sec
+    public final int GEAR_RATIO = 12; //TODO: get from cad
+    public final double MOMENT_OF_INERTIA = 0; //TODO: get from cad
+    public final double LENGTH = 0; //TODO: get from cad 
+    public final double STARTING_ANGLE = 0; //TODO: get
 
     // The max safe angle of the endpoint to the horizontal 
-    public static final Rotation2d MAX_ANGLE = Rotation2d.fromDegrees(0); //TODO: FIND
+    public static final Rotation2d MAX_ANGLE = Rotation2d.fromDegrees(180); //TODO: FIND
                                                                               
     // The min safe angle of the endpoint to the horizontal
-    public static final Rotation2d MIN_ANGLE = Rotation2d.fromDegrees(0); 
+    public static final Rotation2d MIN_ANGLE = Rotation2d.fromDegrees(-180); 
 
     // TODO: grab value from real robot using protractor
 
@@ -74,6 +75,9 @@ public class Arm extends SubsystemBase {
     private final double SLOWEST_SPEED = 0.3;  // TODO: probs can take this out because we dont need to allow the arm to move 24/7
 
     private DutyCycleEncoder encoder;
+
+    SingleJointedArmSim sim = new SingleJointedArmSim(DCMotor.getNEO(1), GEAR_RATIO, MOMENT_OF_INERTIA, LENGTH,
+        MIN_ANGLE.getRadians(), MAX_ANGLE.getRadians(), true, STARTING_ANGLE);
 
     DutyCycleEncoderSim encoderSim;
     private SparkMax armMotor;
@@ -113,15 +117,13 @@ public class Arm extends SubsystemBase {
     // double appliedVoltage = 0;
 
     public Arm() {
-        TrapezoidProfile.Constraints constraints = new
-        TrapezoidProfile.Constraints(MAX_VELOCITY, MAX_ACCELERATION);
         armMotor = new SparkMax(29, MotorType.kBrushless);
-                                                                                         // range in this case 1
-                                                                                         // rotation
-                                                                                         // per rotation, 3rd number is
-                                                                                         // offset (whatever number you
-                                                                                         // have to add so it reads zero
-                                                                                         // degrees when horizontal)
+                                                                    // range in this case 1
+                                                                    // rotation
+                                                                    // per rotation, 3rd number is
+                                                                    // offset (whatever number you
+                                                                    // have to add so it reads zero
+                                                                    // degrees when horizontal)
         encoder = new DutyCycleEncoder(0, 1, 0); // 1st # is port, 2nd is ratio to rotations of
                                                                   // mechanism
                                                                   // (1 here), 3rd is initial offset (TODO to be
@@ -280,16 +282,14 @@ public class Arm extends SubsystemBase {
         armMotor.setVoltage(voltage);
     }
 
-    public void stop() {
-        armMotor.stopMotor();
-    }
-
     public Command stopCommand() {
         return Commands.runOnce(() -> stopMotor());
     }
 
+    @SuppressWarnings("unused")
     @Override
     public void periodic() {
+
         if(RobotContainer.debugMode && !DriverStation.isFMSAttached()) {
             SmartDashboard.putBoolean("Arm/At Setpoint", atSetPoint());
             percentRotPub.set(getPercentRotation());
@@ -312,10 +312,6 @@ public class Arm extends SubsystemBase {
         return Commands.run(() -> setAngle(angle), this).until(this::atSetPoint).finallyDo(this::stopMotor);
     }
 
-    public Command goToAngleContinuousCommand(Rotation2d angle) {
-        return Commands.run(() -> setAngle(angle), this).finallyDo(this::stopMotor);
-    }
-
     public Command joystickControlCommand() {
         return Commands.run(this::joystickControl, this);
     }
@@ -329,7 +325,6 @@ public class Arm extends SubsystemBase {
     }
 
     public Command holdState(RobotState state) {
-        return goToAngleContinuousCommand(state.getAngle());
+        return Commands.run(() -> setAngle(state.getAngle()), this).finallyDo(this::stopMotor);
     }
-
 }
