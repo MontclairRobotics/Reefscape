@@ -8,6 +8,7 @@ import frc.robot.util.TunerConstants.TunerSwerveDrivetrain;
 import frc.robot.util.simulation.MapleSimSwerveDrivetrain;
 import frc.robot.vision.Limelight;
 import frc.robot.vision.LimelightHelpers;
+import static edu.wpi.first.math.util.Units.*;
 
 import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Volts;
@@ -80,28 +81,30 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     public static double ROT_ACCEL = 16; // radians / s^2
     public static double MIN_TRANSLATIONAL_ACCEL = 2;
     public static double MIN_ROT_ACCEL = 1.5;
-    public static boolean IS_LIMITING_ACCEL = true; //TODO remove this, not needed w/ driveWithSetpoint
+    public static boolean IS_LIMITING_ACCEL = true; // TODO remove this, not needed w/ driveWithSetpoint
 
     DoublePublisher driveCurrentPub;
     DoublePublisher driveVelocityPub;
 
-     /* Acceleration limiters for our drivetrain */
-     private DynamicSlewRateLimiter forwardLimiter = new DynamicSlewRateLimiter(FORWARD_ACCEL); // TODO: actually set this
-     private DynamicSlewRateLimiter strafeLimiter = new DynamicSlewRateLimiter(SIDE_ACCEL); // TODO: actually set this
-     private DynamicSlewRateLimiter rotationLimiter = new DynamicSlewRateLimiter(ROT_ACCEL); // TODO: actually set this
-     private Rotation2d targetHeading = Rotation2d.fromDegrees(0);
+    /* Acceleration limiters for our drivetrain */
+    private DynamicSlewRateLimiter forwardLimiter = new DynamicSlewRateLimiter(FORWARD_ACCEL); // TODO: actually set
+                                                                                               // this
+    private DynamicSlewRateLimiter strafeLimiter = new DynamicSlewRateLimiter(SIDE_ACCEL); // TODO: actually set this
+    private DynamicSlewRateLimiter rotationLimiter = new DynamicSlewRateLimiter(ROT_ACCEL); // TODO: actually set this
+    private Rotation2d targetHeading = Rotation2d.fromDegrees(0);
 
     public Tunable forwardAccelTunable = new Tunable("Forward Accel Limit", 1.5, (value) -> {
-        //forwardLimiter.setLimit(value);
-        //FORWARD_ACCEL = value;
+        // forwardLimiter.setLimit(value);
+        // FORWARD_ACCEL = value;
         MIN_TRANSLATIONAL_ACCEL = value;
-        });
-    // public Tunable sideAccelTunable = new Tunable("Side Accel Limit", 1.5, (value) -> {
-    //     //strafeLimiter.setLimit(value);
-    //     SIDE_ACCEL = value;
+    });
+    // public Tunable sideAccelTunable = new Tunable("Side Accel Limit", 1.5,
+    // (value) -> {
+    // //strafeLimiter.setLimit(value);
+    // SIDE_ACCEL = value;
     // });
     public Tunable rotAccelTunable = new Tunable("Rotation Accel Limit", 0.3, (value) -> {
-        //rotationLimiter.setLimit(value);
+        // rotationLimiter.setLimit(value);
         // ROT_ACCEL = value;
         MIN_ROT_ACCEL = value;
     });
@@ -109,16 +112,16 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     public Tunable rotMaxSpeedTunable = new Tunable("Rotation MIN Speed", 1, (value) -> {
         MIN_ROT_SPEED = value;
     });
-    // public Tunable isLimitAccel = new Tunable("Is limiting accel", 1, (value) -> {
-    //     if(value == 1) IS_LIMITING_ACCEL = true;
-    //     if(value == 0) IS_LIMITING_ACCEL = false;
+    // public Tunable isLimitAccel = new Tunable("Is limiting accel", 1, (value) ->
+    // {
+    // if(value == 1) IS_LIMITING_ACCEL = true;
+    // if(value == 0) IS_LIMITING_ACCEL = false;
     // });
 
     public static final Pose2d[] BLUE_SCORING_POSES = {
-            new Pose2d(new Translation2d(1.091, 1.060), new
-            Rotation2d(Math.toRadians(-127.000))), //top coral station
-            new Pose2d(new Translation2d(1.091, 7.000), new
-            Rotation2d(Math.toRadians(127.000))), //bottom coral station
+            new Pose2d(new Translation2d(1.091, 1.060), new Rotation2d(Math.toRadians(-127.000))), // top coral station
+            new Pose2d(new Translation2d(1.091, 7.000), new Rotation2d(Math.toRadians(127.000))), // bottom coral
+                                                                                                  // station
             new Pose2d(new Translation2d(3.16, 4.04), new Rotation2d(Math.toRadians(0))),
             new Pose2d(new Translation2d(5.81, 4.04), new Rotation2d(Math.toRadians(180))),
             new Pose2d(new Translation2d(3.83, 2.90), new Rotation2d(Math.toRadians(60.000))),
@@ -203,15 +206,12 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         NetworkTable table = inst.getTable("Drive");
         driveCurrentPub = table.getDoubleTopic("Drive stator current").publish();
         driveVelocityPub = table.getDoubleTopic("Drive velocity").publish();
-        
-
 
         thetaController.setTolerance(1 * Math.PI / 180); // degrees converted to radians
         thetaController.enableContinuousInput(-Math.PI, Math.PI);
         configurePathPlanner();
 
         resetPose(new Pose2d(3, 3, Rotation2d.fromDegrees(0)));
-        // resetPose(LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight-left").pose);
 
         RobotConfig config = null;
         try {
@@ -222,11 +222,13 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         }
 
         setpointGen = new SwerveSetpointGenerator(
-                config, // The robot configuration. This is the same config used for generating trajectories and running path following commands.
+                config, // The robot configuration. This is the same config used for generating
+                        // trajectories and running path following commands.
                 10.0 * 2 * Math.PI // The max rotation velocity of a swerve module in radians per second.
-                                               // This should probably be stored in your Constants file
+                                   // This should probably be stored in your Constants file
         );
-        prevSetpoint = new SwerveSetpoint(getCurrentSpeeds(), getState().ModuleStates, DriveFeedforwards.zeros(config.numModules));
+        prevSetpoint = new SwerveSetpoint(getCurrentSpeeds(), getState().ModuleStates,
+                DriveFeedforwards.zeros(config.numModules));
     }
 
     /*
@@ -258,6 +260,69 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         return Math.max(-(MAX_ROT_SPEED * percentHeight) + MAX_ROT_SPEED, MIN_ROT_SPEED);
     }
 
+    double ROBOT_MASS = 68;
+    double ROBOT_WIDTH = inchesToMeters(30);
+    double COM_TO_CENTER_OF_ROTATION = inchesToMeters(Math.sqrt(1.5 * 1.5 + 0.55 * 0.55));
+
+    // double COMX = (ROBOT_WIDTH / 2.0) + inchesToMeters(1.5); // back from front
+    // of robot
+    // double COMY = (ROBOT_WIDTH / 2.0) + inchesToMeters(0.55); // from side of
+    // robot // COM approx centered -- good enough?
+    public ChassisSpeeds getMaxSpeedsNoTip(ChassisSpeeds targetSpeeds) {
+        double timestep = 0.02;
+
+        double targetXSpeed = targetSpeeds.vxMetersPerSecond;
+        double targetYSpeed = targetSpeeds.vyMetersPerSecond;
+        double targetOmegaSpeed = targetSpeeds.omegaRadiansPerSecond;
+
+        targetXSpeed = MathUtil.clamp(targetXSpeed, -MAX_SPEED, MAX_SPEED);
+        targetYSpeed = MathUtil.clamp(targetYSpeed, -MAX_SPEED, MAX_SPEED);
+        targetOmegaSpeed = MathUtil.clamp(targetOmegaSpeed, -MAX_ROT_SPEED, MAX_ROT_SPEED);
+
+        ChassisSpeeds currentSpeeds = getCurrentSpeeds();
+
+        double currentXSpeed = currentSpeeds.vxMetersPerSecond;
+        double currentYSpeed = currentSpeeds.vyMetersPerSecond;
+        double currentOmegaSpeed = currentSpeeds.omegaRadiansPerSecond;
+
+        double targetXAccel = (targetXSpeed - currentXSpeed) / timestep;
+        double targetYAccel = (targetYSpeed - currentYSpeed) / timestep;
+        double targetRotAccel = (targetOmegaSpeed - currentOmegaSpeed) / timestep;
+
+        // double maxAccel = (9.81 * (ROBOT_WIDTH / 2.0)) / getCOMHeight() * 0.9; //0.9
+        // is safety factor // TODO use this or version below?
+        double maxRotAccel = (9.81 * (ROBOT_WIDTH / 2.0)) / (getCOMHeight() * COM_TO_CENTER_OF_ROTATION) * 0.9;
+
+        targetRotAccel = MathUtil.clamp(targetRotAccel, -maxRotAccel, maxRotAccel);
+
+        // Always take max rotational accel over max drive (I think?)
+        double maxAccel = Math
+                .sqrt(Math.abs(Math.pow((9.81 * (ROBOT_WIDTH / 2.0)) / getCOMHeight(), 2) - Math.pow(targetRotAccel, 2))) * 0.9;
+        System.out.println(maxAccel);
+        targetXAccel = MathUtil.clamp(targetXAccel, -maxAccel, maxAccel);
+        targetYAccel = MathUtil.clamp(targetYAccel, -maxAccel, maxAccel);
+
+        // TODO redundant, can get from accel? I think?
+        double maxRotSpeed = Math.sqrt((9.81 * (ROBOT_WIDTH / 2)) / (COM_TO_CENTER_OF_ROTATION * getCOMHeight()));
+
+        targetOmegaSpeed = MathUtil.clamp(targetOmegaSpeed, -maxRotSpeed, maxRotSpeed);
+
+        targetXSpeed = (timestep * targetXAccel) + currentXSpeed;
+        targetYSpeed = (timestep * targetYAccel) + currentYSpeed;
+
+        return new ChassisSpeeds(targetXSpeed, targetYSpeed, targetOmegaSpeed);
+    }
+
+    double ROBOT_COM_NO_ELEVATOR = inchesToMeters(5.8); // the COM of the robot and stage 1 of the elevator
+    double ROBOT_MASS_NO_ELEVATOR = lbsToKilograms(115.34);
+
+    double ROBOT_MASS_ELEVATOR = ROBOT_MASS - ROBOT_MASS_NO_ELEVATOR;
+    public double getCOMHeight() {
+        // return ROBOT_COM_NO_ELEVATOR +
+        double elevatorCOMHeight = RobotContainer.elevator.getHeight() - inchesToMeters(11.1); // TODO make an interpolating tree map or something better
+        return ((ROBOT_MASS_NO_ELEVATOR * ROBOT_COM_NO_ELEVATOR) + (ROBOT_MASS_ELEVATOR * elevatorCOMHeight)) / ROBOT_MASS;
+    }
+
     /*
      * RETURNS Y VELOCITY FROM CONTROLLER
      * 
@@ -268,11 +333,11 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     }
 
     public boolean joystickInputDetected() {
-        if(Math.abs(getVelocityXFromController()) > 0
-        && Math.abs(getVelocityYFromController()) > 0
-        ) {
+        if (Math.abs(getVelocityXFromController()) > 0
+                && Math.abs(getVelocityYFromController()) > 0) {
             return true;
-        } else return false;
+        } else
+            return false;
     }
 
     /*
@@ -288,7 +353,6 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
                                                                                                              // using
     }
 
-
     public void drive(ChassisSpeeds speeds, boolean fieldRelative, boolean respectOperatorPerspective) {
         drive(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond, fieldRelative,
                 respectOperatorPerspective);
@@ -302,7 +366,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
      */
     public void drive(double velocityX, double velocityY, double rotationalVelocity, boolean fieldRelative,
             boolean respectOperatorPerspective) {
-
+        
         if (IS_LIMITING_ACCEL) {
             rotationalVelocity = rotationLimiter.calculate(rotationalVelocity);
             velocityX = forwardLimiter.calculate(velocityX);
@@ -310,10 +374,11 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         }
 
         // if (respectOperatorPerspective) {
-        //     if (DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get() == Alliance.Red && fieldRelative)  {
-        //         velocityX *= -1;
-        //         velocityY *= -1;
-        //      }
+        // if (DriverStation.getAlliance().isPresent() &&
+        // DriverStation.getAlliance().get() == Alliance.Red && fieldRelative) {
+        // velocityX *= -1;
+        // velocityY *= -1;
+        // }
         // }
 
         if (fieldRelative) {
@@ -353,16 +418,16 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     }
 
     public void driveWithSetpoint(double xSpeed, double ySpeed, double thetaSpeed, boolean fieldRelative,
-    boolean respectOperatorPerspective) {
+            boolean respectOperatorPerspective) {
         driveWithSetpoint(xSpeed, ySpeed, thetaSpeed, fieldRelative, respectOperatorPerspective, true);
     }
 
-    //TODO Check
+    // TODO Check
     public void driveWithSetpoint(double xSpeed, double ySpeed, double thetaSpeed, boolean fieldRelative,
-    boolean respectOperatorPerspective, boolean headingCorrection) {
+            boolean respectOperatorPerspective, boolean headingCorrection) {
 
-      
-        if (headingCorrection && Math.abs(thetaSpeed - 0.002) > 0) { //if angular speed commanded and heading correction enabled
+        if (headingCorrection && Math.abs(thetaSpeed - 0.002) > 0) { // if angular speed commanded and heading
+                                                                     // correction enabled
             targetHeading = odometryHeading; // update target heading
         }
 
@@ -371,11 +436,12 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         }
 
         if (respectOperatorPerspective) {
-            if (DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get() == Alliance.Red && fieldRelative)  {
-     
+            if (DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get() == Alliance.Red
+                    && fieldRelative) {
+
                 xSpeed *= -1;
                 ySpeed *= -1;
-             }
+            }
         }
         ChassisSpeeds speeds = new ChassisSpeeds(xSpeed, ySpeed, thetaSpeed);
 
@@ -384,33 +450,35 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         }
 
         prevSetpoint = setpointGen.generateSetpoint(
-            prevSetpoint, // The previous setpoint
-            speeds, // The desired target speeds
-            new PathConstraints(MAX_SPEED, getMaxForwardAccel(), getMaxRotSpeed(), getMaxRotAccel()),
-            0.02 // The loop time of the robot code, in seconds
+                prevSetpoint, // The previous setpoint
+                speeds, // The desired target speeds
+                new PathConstraints(MAX_SPEED, getMaxForwardAccel(), getMaxRotSpeed(), getMaxRotAccel()),
+                0.02 // The loop time of the robot code, in seconds
         );
 
-
-
+        // speeds = getMaxSpeedsNoTip(speeds);
+        // System.out.println(getMaxSpeedsNoTip(speeds));
 
         SwerveRequest req = new SwerveRequest.ApplyRobotSpeeds()
-                                    .withSpeeds(prevSetpoint.robotRelativeSpeeds())
-                                    .withDriveRequestType(DriveRequestType.Velocity)
-                                    .withSteerRequestType(SteerRequestType.Position)
-                                    .withWheelForceFeedforwardsX(prevSetpoint.feedforwards().robotRelativeForcesXNewtons())
-                                    .withWheelForceFeedforwardsY(prevSetpoint.feedforwards().robotRelativeForcesYNewtons());
+                .withSpeeds(prevSetpoint.robotRelativeSpeeds())
+                .withDriveRequestType(DriveRequestType.Velocity)
+                .withSteerRequestType(SteerRequestType.Position)
+                .withWheelForceFeedforwardsX(prevSetpoint.feedforwards().robotRelativeForcesXNewtons())
+                .withWheelForceFeedforwardsY(prevSetpoint.feedforwards().robotRelativeForcesYNewtons());
 
         setControl(req);
-    
-        
+
     }
 
     public void driveWithSetpoint(ChassisSpeeds speeds, boolean fieldRelative, boolean respectOperatorPerspective) {
-        driveWithSetpoint(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond, fieldRelative, respectOperatorPerspective);
+        driveWithSetpoint(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond,
+                fieldRelative, respectOperatorPerspective);
     }
 
-    public void driveWithSetpoint(ChassisSpeeds speeds, boolean fieldRelative, boolean respectOperatorPerspective, boolean headingCorrection) {
-        driveWithSetpoint(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond, fieldRelative, respectOperatorPerspective, headingCorrection);
+    public void driveWithSetpoint(ChassisSpeeds speeds, boolean fieldRelative, boolean respectOperatorPerspective,
+            boolean headingCorrection) {
+        driveWithSetpoint(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond,
+                fieldRelative, respectOperatorPerspective, headingCorrection);
     }
 
     /*
@@ -537,7 +605,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
                 // System.out.println("YAYA YAYAY AYAYAYClosest pose: " + closestPose);
             }
         }
-       // System.out.println("Closest pose: " + closestPose);
+        // System.out.println("Closest pose: " + closestPose);
         return closestPose;
     }
 
@@ -590,7 +658,8 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
                     // Consumer of ChassisSpeeds and feedforwards to drive the robot
                     (speeds, feedforwards) -> this.setControl(
                             new SwerveRequest.ApplyRobotSpeeds().withSpeeds(speeds)
-                            .withSteerRequestType(SteerRequestType.Position).withDriveRequestType(DriveRequestType.Velocity)
+                                    .withSteerRequestType(SteerRequestType.Position)
+                                    .withDriveRequestType(DriveRequestType.Velocity)
                                     .withWheelForceFeedforwardsX(feedforwards.robotRelativeForcesXNewtons())
                                     .withWheelForceFeedforwardsY(feedforwards.robotRelativeForcesYNewtons())),
                     new PPHolonomicDriveController(
@@ -777,17 +846,16 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
     @Override
     public void periodic() {
-       // System.out.println(forwardAccelTunable.getValue());
+        // System.out.println(forwardAccelTunable.getValue());
         // Not sure if this is correct at all
         odometryHeading = getRobotPose().getRotation();
         isRobotAtAngleSetPoint = thetaController.atSetpoint();
         fieldRelative = !RobotContainer.driverController.L2().getAsBoolean();
 
-
         strafeLimiter.setLimit(getMaxHorizontalAccel());
         forwardLimiter.setLimit(getMaxForwardAccel());
         rotationLimiter.setLimit(getMaxRotAccel());
-        
+
         if (DriverStation.isTeleopEnabled()) {
             Auto.field.setRobotPose(getRobotPose());
         }
