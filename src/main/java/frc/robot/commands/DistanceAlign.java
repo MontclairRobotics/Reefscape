@@ -1,57 +1,54 @@
 package frc.robot.commands;
 
-import com.pathplanner.lib.config.RobotConfig;
-
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import frc.robot.RobotContainer;
+import frc.robot.subsystems.Drivetrain;
 import frc.robot.util.TagOffset;
 import frc.robot.vision.Limelight;
-import frc.robot.vision.LimelightHelpers;
-import frc.robot.vision.LimelightHelpers.RawFiducial;
 
-public class AlignToReefTagCommand extends Command {
+public class DistanceAlign extends Command{
     
     private PIDController xController;
     private PIDController yController;
     private PIDController thetaController;
-    //private int tagID;
     private TagOffset direction;
 
     private Limelight camera;
 
-    public AlignToReefTagCommand(TagOffset direction, Limelight camera) {
+    public DistanceAlign(TagOffset direction) {
         this.direction = direction; //left or right for coral, center for grabbing algae
-        this.camera = camera;
-        //TODO: tune + make global PID Constants
+        this.camera = direction == TagOffset.LEFT ? RobotContainer.rightLimelight : RobotContainer.leftLimelight;
         xController = new PIDController(5, 0, 0);
-        xController.setTolerance(0.5); //0.5 degrees, I think? if its based on tx
+        xController.setTolerance(0.02); //meters
         yController = new PIDController(5, 0, 0);
-        yController.setTolerance(0.5); //degrees
+        yController.setTolerance(0.02); //meters
         thetaController = RobotContainer.drivetrain.thetaController;
     }
 
     @Override
     public void initialize(){
-        //sets the tx and ty setpoints
-        //TODO: does PIDing to a tx setpoint actually work?
-        xController.setSetpoint(direction.getTxTargetError());
-        yController.setSetpoint(direction.getTyTargetError());
-        addRequirements(RobotContainer.drivetrain);
+        xController.setSetpoint(direction.getXOffsetM());
+        yController.setSetpoint(direction.getYOffsetM());
+        double wrappedSetPoint = Drivetrain.wrapAngle(RobotContainer.drivetrain.odometryHeading.plus(Rotation2d.fromDegrees(camera.getTX()))).getRadians();
+        thetaController.setSetpoint(wrappedSetPoint);
     }
 
     @Override
     public void execute() {
 
         //PID calculated outputs
-        double xSpeed = xController.calculate(camera.getTX());
-        double ySpeed = yController.calculate(camera.getTY());
+        double xSpeed = xController.calculate(camera.getStrafeDistanceToReef());
+        double ySpeed = yController.calculate(camera.getStraightDistanceToReef());
+        double thetaSpeed = thetaController.calculate(RobotContainer.drivetrain.odometryHeading.getRadians());
 
         //drives robot relative because tx and ty are robot relative
         //no rotation input, we assume this is being used when robot is aligned heading-wise, but not translationally
         //can add one to also move rotationally then translate later
         //doesn't respect operator persective (this doesn't matter because its robot relative anyways)
-        RobotContainer.drivetrain.drive(xSpeed, ySpeed, 0, false, false);
+        RobotContainer.drivetrain.drive(xSpeed, ySpeed, thetaSpeed, false, false);
     }
 
     @Override
@@ -63,4 +60,5 @@ public class AlignToReefTagCommand extends Command {
     public boolean isFinished() {
         return (xController.atSetpoint() && yController.atSetpoint() && thetaController.atSetpoint()) || !camera.hasValidTarget();
     }
+
 }

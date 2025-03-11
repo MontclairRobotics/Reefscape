@@ -166,7 +166,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     public PIDController thetaController = new PIDController(5, 0, .1);
 
     /* variable to store our heading */
-    private Rotation2d odometryHeading = new Rotation2d();
+    public Rotation2d odometryHeading = new Rotation2d();
 
     // private Pigeon2 gyro = thifs.getPigeon2(); //they say not to use this like
     // this, allegedly
