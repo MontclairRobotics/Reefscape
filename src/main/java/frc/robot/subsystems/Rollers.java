@@ -22,28 +22,23 @@ import frc.robot.RobotContainer;
 import frc.robot.util.GamePiece;
 
 public class Rollers extends SubsystemBase {
-    public SparkMax rightMotor;
-    public SparkMax leftMotor;
+    public SparkMax motor;
     public final double CORAL_INTAKE_SPEED = 0.5;
     public final double CORAL_OUTTAKE_SPEED = -1;
-    public final double ALGAE_INTAKE_SPEED = 0.3;
-    public final double ALGAE_OUTTAKE_SPEED = -1;
-    public final double ROLLER_STALL_CURRENT = 30; // TODO check/tune
+    public final double ROLLER_STALL_CURRENT = 30; 
     public final double CORAL_HOLDING_SPEED = 0.1;
-    public final double ALGAE_HOLDING_SPEED = 0.5;
+    public final double ALGAE_CLEARING_SPEED = 0.7;
 
     private NetworkTableEntry entry;
 
-    private GamePiece heldPiece = GamePiece.None; // TODO init to Coral for auton? not needed?
+    private GamePiece heldPiece = GamePiece.None; 
 
     public Rollers() {
-        rightMotor = new SparkMax(31, MotorType.kBrushless);
-        leftMotor = new SparkMax(30, MotorType.kBrushless);
+        motor = new SparkMax(31, MotorType.kBrushless);
 
         var config = new SparkMaxConfig();
         config.smartCurrentLimit(20).idleMode(IdleMode.kBrake);
-        rightMotor.configure(config.inverted(true), ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-        leftMotor.configure(config.inverted(false), ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+        motor.configure(config.inverted(true), ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
         NetworkTableInstance nt = NetworkTableInstance.getDefault();
         // nt.startServer(); 
         entry = nt.getTable("Testing").getEntry("IsHeld");
@@ -61,62 +56,39 @@ public class Rollers extends SubsystemBase {
             return false;
         }
     }
-    public boolean hasAlgae() {
-        if (getHeldPiece() == GamePiece.Algae){
-            return true;
-        } else{
-            return false;
-        }
-    }
 
-    // TODO need to be debounced? probably not?
     public boolean isStalled() {
-        return rightMotor.getOutputCurrent() > ROLLER_STALL_CURRENT
-                || leftMotor.getOutputCurrent() > ROLLER_STALL_CURRENT;
+        return motor.getOutputCurrent() > ROLLER_STALL_CURRENT;
     }
 
     public void setSpeed(double speed) {
-        setSpeed(speed, speed);
+        motor.set(speed);
     }
 
-    private void setSpeed(double leftSpeed, double rightSpeed) {
-        rightMotor.set(leftSpeed);
-        leftMotor.set(rightSpeed);
-    }
-
-    private void stopMotors() {
-        rightMotor.stopMotor();
-        leftMotor.stopMotor();
+    private void stopMotor() {
+        motor.stopMotor();
     }
 
     public Command stopCommand() {
-        return Commands.runOnce(() -> stopMotors(), this);
+        return Commands.runOnce(() -> stopMotor(), this);
     }
 
-    public Command intakeAlgaeCommand() {
-        return Commands.run(() -> setSpeed(ALGAE_INTAKE_SPEED, 0), this)
+
+    public Command clearAlgaeCommand() {
+        return Commands.run(() -> setSpeed(ALGAE_CLEARING_SPEED), this)
                 .finallyDo(() -> {
                     setSpeed(0);
-                    // if(isStalled())
-                    this.heldPiece = GamePiece.Algae;
                 })
                 .until(this::isStalled);
     }
 
-    public Command outtakeAlgaeCommand() {
-        return Commands.run(() -> setSpeed(ALGAE_OUTTAKE_SPEED), this)
-                .finallyDo(() -> {
-                    stopMotors();
-                    this.heldPiece = GamePiece.None;
-                }).withTimeout(2); // TODO find timeout
-    }
 
     public Command scoreL1() {
         return Commands.run(() -> {
-                setSpeed(0, CORAL_OUTTAKE_SPEED);
+                setSpeed(CORAL_OUTTAKE_SPEED);
         }, this)
                 .finallyDo(() -> {
-                    stopMotors();
+                    stopMotor();
                     this.heldPiece = GamePiece.None;
                 }).withTimeout(2); // TODO find timeout
     }
@@ -124,7 +96,7 @@ public class Rollers extends SubsystemBase {
     public Command intakeCoralCommand() {
         return Commands.run(() -> setSpeed(CORAL_INTAKE_SPEED), this)
                 .finallyDo(() -> {
-                    stopMotors();
+                    stopMotor();
                     // if(isStalled())
                     this.heldPiece = GamePiece.Coral;
                 })
@@ -137,7 +109,7 @@ public class Rollers extends SubsystemBase {
                 setSpeed(CORAL_OUTTAKE_SPEED);
         }, this)
                 .finallyDo(() -> {
-                    stopMotors();
+                    stopMotor();
                     this.heldPiece = GamePiece.None;
                 }).withTimeout(2); // TODO find timeout
     }
@@ -176,10 +148,8 @@ public class Rollers extends SubsystemBase {
         }
 
         Logger.recordOutput("Rollers/Held Piece", heldPiece);
-        Logger.recordOutput("Rollers/LeftSpeed", leftMotor.getAppliedOutput());
-        Logger.recordOutput("Rollers/RightSpeed", rightMotor.getAppliedOutput());
-        Logger.recordOutput("Rollers/RightCurrent", rightMotor.getOutputCurrent());
-        Logger.recordOutput("Rollers/LeftCurrent", leftMotor.getOutputCurrent());
+        Logger.recordOutput("Rollers/LeftSpeed", motor.getAppliedOutput());
+        Logger.recordOutput("Rollers/RightCurrent", motor.getOutputCurrent());
 
     }
 
@@ -187,10 +157,6 @@ public class Rollers extends SubsystemBase {
         return Commands.run(() -> {
             if(hasCoral()) {
                 this.setSpeed(CORAL_HOLDING_SPEED);
-            }
-    
-            if(hasAlgae()) {
-                this.setSpeed(ALGAE_HOLDING_SPEED, 0);
             }
         }, this);
     }

@@ -21,8 +21,6 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
-import frc.robot.commands.AlignToClosestReefTagOffset;
-import frc.robot.commands.GoToReefCameraSpace;
 import frc.robot.commands.GoToReefCommand;
 import frc.robot.leds.LEDs;
 import frc.robot.subsystems.Ratchet;
@@ -157,7 +155,7 @@ public class RobotContainer {
       .whileTrue(
         arm.setState(RobotState.L1Algae)
         .alongWith(elevator.setState(RobotState.L1Algae))
-        .alongWith(rollers.outtakeAlgaeCommand())
+        .alongWith(rollers.clearAlgaeCommand())
       );
 
     //Higher algae
@@ -165,7 +163,7 @@ public class RobotContainer {
       .whileTrue(
         arm.setState(RobotState.L2Algae)
         .alongWith(elevator.setState(RobotState.L2Algae))
-        .alongWith(rollers.outtakeAlgaeCommand())
+        .alongWith(rollers.clearAlgaeCommand())
       );
 
     //Climb
