@@ -18,6 +18,7 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTable;
@@ -89,6 +90,8 @@ public class Arm extends SubsystemBase {
     private DoublePublisher percentRotPub;
 
     private StructPublisher<Pose3d> posePub;
+    
+    
 
     public Tunable kG = new Tunable("Arm kG", 0.2, (val) -> {
         armFeedforward = new ArmFeedforward(armFeedforward.getKs(), val, armFeedforward.getKv());
@@ -152,6 +155,7 @@ public class Arm extends SubsystemBase {
 
         NetworkTableInstance inst = NetworkTableInstance.getDefault();
         NetworkTable armTable = inst.getTable("Arm");
+        posePub = armTable.getStructTopic("Joint2Pose", Pose3d.struct).publish();
         voltagePub = armTable.getDoubleTopic("Arm Voltage").publish();
         RotPub = armTable.getDoubleTopic("Arm Angle Degrees").publish();
         setpointPub = armTable.getDoubleTopic("PID Setpoint - Angle Desgrees").publish();
@@ -301,6 +305,14 @@ public class Arm extends SubsystemBase {
     public void simulationPeriodic() {
         // Increment the simulation of the motor
         armMotorSim.iterate(armMotorSim.getAppliedOutput() * 2, RobotController.getBatteryVoltage(), 0.02);
+
+        // Publish the pose for joint 1. The x coordinate is the coordinate of the
+        // elevator
+        // Y coordinate is zero because it is centered on that axis.
+        posePub.set(new Pose3d(0.121, 0, RobotContainer.elevator.getExtension() + 0.937,
+                new Rotation3d(0, sim.getAngleRads(), 0)));
+
+        sim.update(0.02);
 
     }
 
