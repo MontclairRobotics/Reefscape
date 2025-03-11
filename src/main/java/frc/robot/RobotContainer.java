@@ -22,6 +22,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
@@ -95,7 +96,7 @@ public class RobotContainer {
     /* --------------------------------------------OPERATOR BINDINGS --------------------------------------------*/
 
     rollers.setDefaultCommand(rollers.getDefaultCommand());
-
+    elevator.setDefaultCommand(elevator.joystickControlCommand());
     
     //Intake
     operatorController.L1()
@@ -157,23 +158,26 @@ public class RobotContainer {
     // Elevator down
     operatorController.R2()
       .onTrue(elevator.setState(RobotState.getDefaultForPiece(rollers.getHeldPiece())))
-      .onTrue(arm.holdState(RobotState.getDefaultForPiece(rollers.getHeldPiece())));
+      .onTrue(arm.holdState(RobotState.getDefaultForPiece(rollers.getHeldPiece())))
+      .onTrue(rollers.stopCommand());
 
     //Lower algae
     operatorController.cross().and(operatorController.L2())
-      .whileTrue(
-        arm.setState(RobotState.L1Algae)
-        .alongWith(elevator.setState(RobotState.L1Algae))
-        .alongWith(rollers.outtakeAlgaeCommand())
-      );
+      .whileTrue(rollers.intakeAlgaeCommand());
+      // .whileTrue(
+      //   arm.setState(RobotState.L1Algae)
+      //   .alongWith(elevator.setState(RobotState.L1Algae))
+      //   .alongWith(rollers.outtakeAlgaeCommand())
+      // );
 
     //Higher algae
     operatorController.triangle().and(operatorController.L2())
-      .whileTrue(
-        arm.setState(RobotState.L2Algae)
-        .alongWith(elevator.setState(RobotState.L2Algae))
-        .alongWith(rollers.outtakeAlgaeCommand())
-      );
+      .whileTrue(rollers.outtakeAlgaeCommand()).onFalse(rollers.stopCommand());
+      // .whileTrue(
+      //   arm.setState(RobotState.L2Algae)
+      //   .alongWith(elevator.setState(RobotState.L2Algae))
+      //   .alongWith(rollers.outtakeAlgaeCommand())
+      // );
 
     //Climb
     operatorController.circle().and(operatorController.L2())
@@ -183,9 +187,9 @@ public class RobotContainer {
     operatorController.povUp().onTrue(ratchet.engageServos());
     operatorController.povDown().onTrue(ratchet.disengageServos());
 
-    //Processor
+    //Barge
     operatorController.square().and(operatorController.L2())
-      .onTrue(arm.setState(RobotState.Processor));
+      .onTrue(arm.holdState(RobotState.Barge).alongWith(elevator.setState(RobotState.Barge).alongWith(Commands.sequence(Commands.waitUntil(() -> elevator.getPercentHeight() > .9), rollers.outtakeAlgaeCommand()))));
 
 
     /*--------------------------------- DRIVER BINDINGS -------------------------------------------- */ 

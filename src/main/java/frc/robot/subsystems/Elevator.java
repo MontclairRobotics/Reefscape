@@ -70,7 +70,7 @@ import frc.robot.util.Tunable;
 public class Elevator extends SubsystemBase {
     // Subsystems
     // Constants
-    private static final double METERS_PER_ROTATION = 36 * 5 / 1000.0 * (1.0 / 12.0);
+    private static final double METERS_PER_ROTATION = 36 * 5 / 1000.0 * (1.0 / 9);
     private static final double ROTATIONS_PER_METER = 1.0 / METERS_PER_ROTATION;
     public static final double STARTING_HEIGHT = 0.98;// 0.9718607; // (meters) - distance between top bar and ground
                                                       // (no
@@ -88,7 +88,7 @@ public class Elevator extends SubsystemBase {
                                                      // and is trying to go farther but has not yet hit the limit switch
                                                      // during manual control
     public static final double MAX_VELOCITY_RPS = 100;
-    public static final double MAX_ACCEL_RPS = 200;
+    public static final double MAX_ACCEL_RPS = 500;
 
     public static final double ELEVATOR_PULLEY_RADIUS = Units.inchesToMeters(0.9175);
 

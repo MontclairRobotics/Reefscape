@@ -26,11 +26,11 @@ public class Rollers extends SubsystemBase {
     public SparkMax leftMotor;
     public final double CORAL_INTAKE_SPEED = 0.5;
     public final double CORAL_OUTTAKE_SPEED = -1;
-    public final double ALGAE_INTAKE_SPEED = 0.3;
+    public final double ALGAE_INTAKE_SPEED = 0.2;
     public final double ALGAE_OUTTAKE_SPEED = -1;
     public final double ROLLER_STALL_CURRENT = 30; // TODO check/tune
     public final double CORAL_HOLDING_SPEED = 0.1;
-    public final double ALGAE_HOLDING_SPEED = 0.5;
+    public final double ALGAE_HOLDING_SPEED = 0.1;
 
     private NetworkTableEntry entry;
 
@@ -41,7 +41,7 @@ public class Rollers extends SubsystemBase {
         leftMotor = new SparkMax(30, MotorType.kBrushless);
 
         var config = new SparkMaxConfig();
-        config.smartCurrentLimit(20).idleMode(IdleMode.kBrake);
+        config.smartCurrentLimit(40).idleMode(IdleMode.kBrake);
         rightMotor.configure(config.inverted(true), ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
         leftMotor.configure(config.inverted(false), ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
         NetworkTableInstance nt = NetworkTableInstance.getDefault();
@@ -94,7 +94,7 @@ public class Rollers extends SubsystemBase {
     }
 
     public Command intakeAlgaeCommand() {
-        return Commands.run(() -> setSpeed(ALGAE_INTAKE_SPEED, 0), this)
+        return Commands.run(() -> setSpeed(ALGAE_INTAKE_SPEED, ALGAE_INTAKE_SPEED), this)
                 .finallyDo(() -> {
                     setSpeed(0);
                     // if(isStalled())
@@ -190,7 +190,7 @@ public class Rollers extends SubsystemBase {
             }
     
             if(hasAlgae()) {
-                this.setSpeed(ALGAE_HOLDING_SPEED, 0);
+                this.setSpeed(ALGAE_HOLDING_SPEED);
             }
         }, this);
     }
