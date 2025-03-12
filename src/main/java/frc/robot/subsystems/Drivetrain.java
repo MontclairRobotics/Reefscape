@@ -210,7 +210,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         thetaController.enableContinuousInput(-Math.PI, Math.PI);
         configurePathPlanner();
 
-        resetPose(new Pose2d(3, 3, Rotation2d.fromDegrees(0)));
+        // resetPose(new Pose2d(3, 3, Rotation2d.fromDegrees(0)));
         // resetPose(LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight-left").pose);
 
         RobotConfig config = null;

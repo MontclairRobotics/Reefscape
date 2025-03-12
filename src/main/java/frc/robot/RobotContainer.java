@@ -48,7 +48,7 @@ public class RobotContainer {
   public static CommandPS5Controller operatorController = new CommandPS5Controller(1);
   public static CommandPS5Controller testingController = new CommandPS5Controller(2);
 
-  public static final boolean debugMode = false;
+  public static final boolean debugMode = true;
   public static final boolean logMode = true;
 
   //Subsystems
@@ -88,6 +88,7 @@ public class RobotContainer {
 
     /* --------------------------------------------OPERATOR BINDINGS --------------------------------------------*/
 
+    arm.setDefaultCommand(arm.joystickControlCommand());
     rollers.setDefaultCommand(rollers.getDefaultCommand());
 
     
@@ -115,34 +116,34 @@ public class RobotContainer {
 
     // L1 
     operatorController.cross().and(operatorController.L2().negate())
-      .whileTrue(arm.holdState(RobotState.L1))
+      .whileTrue(arm.setState(RobotState.L1))
       .onFalse(
         elevator.setState(RobotState.L1)
-        .alongWith(arm.holdState(RobotState.L1))
+        .alongWith(arm.setState(RobotState.L1))
       );
       
     // L2 
     operatorController.square().and(operatorController.L2().negate())
-      .whileTrue(arm.holdState(RobotState.L2))
+      .whileTrue(arm.setState(RobotState.L2))
       .onFalse(
         elevator.setState(RobotState.L2)
-        .alongWith(arm.holdState(RobotState.L2))
+        .alongWith(arm.setState(RobotState.L2))
       );
 
     // L3
     operatorController.triangle().and(operatorController.L2().negate())
-      .whileTrue((arm.holdState(RobotState.L3)))
+      .whileTrue((arm.setState(RobotState.L3)))
       .onFalse(
         elevator.setState(RobotState.L3)
-        .alongWith(arm.holdState(RobotState.L3))
+        .alongWith(arm.setState(RobotState.L3))
       );
 
     // L4 
     operatorController.circle().and(operatorController.L2().negate())
-      .whileTrue(arm.holdState(RobotState.L4).alongWith(elevator.setState(RobotState.L3)))
+      .whileTrue(arm.setState(RobotState.L4).alongWith(elevator.setState(RobotState.L3)))
       .onFalse(
         elevator.setState(RobotState.L4)
-        .alongWith(arm.holdState(RobotState.L4))
+        .alongWith(arm.setState(RobotState.L4))
       );
 
     // Elevator down

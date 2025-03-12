@@ -53,10 +53,10 @@ public class Arm extends SubsystemBase {
     public final double STARTING_ANGLE = 1; //TODO: get
 
     // The max safe angle of the endpoint to the horizontal 
-    public static final Rotation2d MAX_ANGLE = Rotation2d.fromDegrees(180); //TODO: FIND
+    public static final Rotation2d MAX_ANGLE = Rotation2d.fromDegrees(90); //TODO: FIND
                                                                               
     // The min safe angle of the endpoint to the horizontal
-    public static final Rotation2d MIN_ANGLE = Rotation2d.fromDegrees(-180); 
+    public static final Rotation2d MIN_ANGLE = Rotation2d.fromDegrees(-90); 
 
     // TODO: grab value from real robot using protractor
 
@@ -150,12 +150,12 @@ public class Arm extends SubsystemBase {
 
         if (Robot.isSimulation()) {
             encoderSim = new DutyCycleEncoderSim(encoder);
-            // encoderSim.set(0);
+            encoderSim.set(0);
         }
 
         NetworkTableInstance inst = NetworkTableInstance.getDefault();
         NetworkTable armTable = inst.getTable("Arm");
-        posePub = armTable.getStructTopic("Joint2Pose", Pose3d.struct).publish();
+        posePub = armTable.getStructTopic("ArmPose", Pose3d.struct).publish();
         voltagePub = armTable.getDoubleTopic("Arm Voltage").publish();
         RotPub = armTable.getDoubleTopic("Arm Angle Degrees").publish();
         setpointPub = armTable.getDoubleTopic("PID Setpoint - Angle Desgrees").publish();
@@ -171,7 +171,8 @@ public class Arm extends SubsystemBase {
     }
 
     public Rotation2d getAngle() {
-        return Rotation2d.fromRadians(encoder.get());
+      //  if(Robot.isReal()) return Rotation2d.fromRadians(encoder.get());
+         return Drivetrain.wrapAngle(Rotation2d.fromRotations(encoder.get()));
     }
 
     @AutoLogOutput
@@ -186,6 +187,7 @@ public class Arm extends SubsystemBase {
         armMotor.configure(new SparkMaxConfig().idleMode(mode), ResetMode.kNoResetSafeParameters,
                 PersistMode.kNoPersistParameters);
     }
+
     public void setAngle(Rotation2d targetAngle) {
         double target = targetAngle.getRotations();
 
@@ -224,8 +226,11 @@ public class Arm extends SubsystemBase {
         // TODO do we need feedforward? If so we have to figure out the equation
         // negative voltage brings it up, positive brings it down AFAIK
         voltagePub.set(-voltage);
+        // A
+        // System.out.println("Voltage: " + voltage);
         Logger.recordOutput("Arm/AppliedVoltage", -voltage);
         armMotor.setVoltage(-voltage);
+    
 
     }
 
@@ -236,29 +241,29 @@ public class Arm extends SubsystemBase {
 
         double percentRot = getPercentRotation();
 
-        if(getAngle().getDegrees() > 0)
-            voltage += armFeedforward.calculate(getAngle().getRadians(), 0);
-        else 
-            voltage += -armFeedforward.calculate(getAngle().getRadians(), 0);
+        // if(getAngle().getDegrees() > 0)
+        //     voltage += armFeedforward.calculate(getAngle().getRadians(), 0);
+        // else 
+        //     voltage += -armFeedforward.calculate(getAngle().getRadians(), 0);
 
-        if (voltage > 0) {
-            if (percentRot <= 0.04) {
-                voltage = 0;
-                accelLimiter.reset(0);
-            } else if (percentRot <= 0.07) {
-                voltage = Math.max(voltage,
-                        (-12 * Math.pow((percentRot * (100.0 / SLOW_DOWN_ZONE)), 3.2)) - SLOWEST_SPEED);
-            }
-        }
-        if (voltage < 0) {
-            if (percentRot >= 0.99) {
-                voltage = 0;
-                accelLimiter.reset(0);
-            } else if (percentRot >= 0.93) {
-                voltage = Math.min(voltage,
-                        (12 * Math.pow((percentRot * (100.0 / SLOW_DOWN_ZONE)), 3.2)) + SLOWEST_SPEED);
-            }
-        }
+        // if (voltage > 0) {
+        //     if (percentRot <= 0.04) {
+        //         voltage = 0;
+        //         accelLimiter.reset(0);
+        //     } else if (percentRot <= 0.07) {
+        //         voltage = Math.max(voltage,
+        //                 (-12 * Math.pow((percentRot * (100.0 / SLOW_DOWN_ZONE)), 3.2)) - SLOWEST_SPEED);
+        //     }
+        // }
+        // if (voltage < 0) {
+        //     if (percentRot >= 0.99) {
+        //         voltage = 0;
+        //         accelLimiter.reset(0);
+        //     } else if (percentRot >= 0.93) {
+        //         voltage = Math.min(voltage,
+        //                 (12 * Math.pow((percentRot * (100.0 / SLOW_DOWN_ZONE)), 3.2)) + SLOWEST_SPEED);
+        //     }
+        // }
         
         // double ffVoltage = armSim.feedforward(VecBuilder.fill(getAngle().getRadians(), getAngle().getRadians())).get(0,0);
         // voltage = voltage - ffVol
@@ -279,6 +284,7 @@ public class Arm extends SubsystemBase {
         // what as long it has not hit the limit switch
         // Putting it to the power of 3 makes the slowdown more noticeable
         // appliedVoltage = voltage;
+       // System.out.println("Default voltage "  + voltage);
         armMotor.setVoltage(voltage);
     }
 
@@ -286,7 +292,7 @@ public class Arm extends SubsystemBase {
         return Commands.runOnce(() -> stopMotor());
     }
 
-    @SuppressWarnings("unused")
+  
     @Override
     public void periodic() {
 
@@ -309,10 +315,30 @@ public class Arm extends SubsystemBase {
         // Publish the pose for joint 1. The x coordinate is the coordinate of the
         // elevator
         // Y coordinate is zero because it is centered on that axis.
-        posePub.set(new Pose3d(0.121, 0, RobotContainer.elevator.getExtension() + 0.937,
-                new Rotation3d(0, sim.getAngleRads(), 0)));
+        // encoderSim.set(
+        //     ((getAngle().getDegrees() + (armMotor.getAppliedOutput() * 2) * 0.02)) % 1);
+        // // System.out.println()
 
-        sim.update(0.02);
+    // Publish sim encoder positions to the network
+
+    // invert the angle for visualization because positive angle is down in
+    // AdvantageScope
+    // the constant added is because the CAD was exported on an angle (I think?) It
+    // Just brings the simulated arm piece to the horizontal when the encoder reads
+    // 0.
+    double largeVisualizationAngle = -getAngle().getDegrees();
+      largeVisualizationAngle = (largeVisualizationAngle + (armMotor.getAppliedOutput() * MAX_VELOCITY) * 0.02) % 1;
+
+    //   posePub.set(new Pose3d(0.121, 0, RobotContainer.elevator.getExtension() + 0.937,
+    //   new Rotation3d(0, pidController.getSetpoint() * 180 / Math.PI, 0)));
+        posePub.set(new Pose3d(0.121, 0, RobotContainer.elevator.getExtension() + 0.937,
+                new Rotation3d(0, largeVisualizationAngle, 0)));
+       //posePub.set(new Pose3d());
+     //  System.out.println(RobotContainer.elevator.getExtension());
+       // System.out.println(armMotor.getAppliedOutput());
+      // System.out.println(largeVisualizationAngle);
+
+       // armSim.update(0.02);
 
     }
 
