@@ -28,7 +28,7 @@ public class Rollers extends SubsystemBase {
     public final double CORAL_OUTTAKE_SPEED = -1;
     public final double ALGAE_INTAKE_SPEED = 0.2;
     public final double ALGAE_OUTTAKE_SPEED = -1;
-    public final double ROLLER_STALL_CURRENT = 30; // TODO check/tune
+    public final double ROLLER_STALL_CURRENT = 50; // TODO check/tune
     public final double CORAL_HOLDING_SPEED = 0.1;
     public final double ALGAE_HOLDING_SPEED = 0.1;
 
@@ -167,8 +167,8 @@ public class Rollers extends SubsystemBase {
 
     @Override
     public void periodic() {
-        // SmartDashboard.putNumber("Right Motor Current", rightMotor.getOutputCurrent());
-        // SmartDashboard.putNumber("Left Motor Current", leftMotor.getOutputCurrent());
+        SmartDashboard.putNumber("Right Motor Current", rightMotor.getOutputCurrent());
+        SmartDashboard.putNumber("Left Motor Current", leftMotor.getOutputCurrent());
         boolean isHeld = (heldPiece != GamePiece.None)&&!(DriverStation.isAutonomousEnabled());
         
         if(RobotContainer.debugMode && !DriverStation.isFMSAttached()) {

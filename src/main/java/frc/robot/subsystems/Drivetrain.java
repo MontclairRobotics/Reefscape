@@ -385,7 +385,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         double rotInput = -MathUtil.applyDeadband(RobotContainer.driverController.getRightX(), 0.07);
         double rotVelocity = Math.pow(rotInput, 3) * MAX_ROT_SPEED;
 
-        driveWithSetpoint(getVelocityYFromController(), getVelocityXFromController(), rotVelocity, fieldRelative, true); // drives
+        drive(getVelocityYFromController(), getVelocityXFromController(), rotVelocity, fieldRelative, true); // drives
                                                                                                              // using
     }
 
@@ -485,18 +485,18 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
             speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds, getWrappedHeading());
         }
 
-        // prevSetpoint = setpointGen.generateSetpoint(
-        //         prevSetpoint, // The previous setpoint
-        //         speeds, // The desired target speeds
-        //         new PathConstraints(MAX_SPEED, getMaxForwardAccel(), getMaxRotSpeed(), getMaxRotAccel()),
-        //         0.02 // The loop time of the robot code, in seconds
-        // );
+        prevSetpoint = setpointGen.generateSetpoint(
+                prevSetpoint, // The previous setpoint
+                speeds, // The desired target speeds
+                new PathConstraints(MAX_SPEED, getMaxForwardAccel(), getMaxRotSpeed(), getMaxRotAccel()),
+                0.02 // The loop time of the robot code, in seconds
+        );
 
-        speeds = getMaxSpeedsNoTip(speeds);
+        // speeds = getMaxSpeedsNoTip(speeds);
         // System.out.println(getMaxSpeedsNoTip(speeds));
 
         SwerveRequest req = new SwerveRequest.ApplyRobotSpeeds()
-                .withSpeeds(speeds)
+                .withSpeeds(prevSetpoint.robotRelativeSpeeds())
                 .withDriveRequestType(DriveRequestType.Velocity)
                 .withSteerRequestType(SteerRequestType.Position)
                 .withWheelForceFeedforwardsX(prevSetpoint.feedforwards().robotRelativeForcesXNewtons())

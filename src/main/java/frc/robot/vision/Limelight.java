@@ -330,7 +330,7 @@ public class Limelight extends SubsystemBase {
                 counter++;
             }
         }
-        LimelightHelpers.SetFiducialIDFiltersOverride(cameraName, validTags);
+     //   LimelightHelpers.SetFiducialIDFiltersOverride(cameraName, validTags);
         poseEstimationMegatag2();
         xDistPub.set(getHorizontalDistanceToReef());
         yDistPub.set(getStraightDistanceToReef());

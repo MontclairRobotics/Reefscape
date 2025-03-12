@@ -31,7 +31,9 @@ public class DistanceAlign extends Command{
     @Override
     public void initialize(){
         xController.setSetpoint(direction.getXOffsetM());
+        System.out.println("X setpoint " + xController.getSetpoint());
         yController.setSetpoint(direction.getYOffsetM());
+        System.out.println("Y setpoint " + yController.getSetpoint());
         double wrappedSetPoint = Drivetrain.wrapAngle(RobotContainer.drivetrain.odometryHeading.plus(Rotation2d.fromDegrees(camera.getTX()))).getRadians();
         thetaController.setSetpoint(wrappedSetPoint);
     }
@@ -41,7 +43,9 @@ public class DistanceAlign extends Command{
 
         //PID calculated outputs
         double xSpeed = xController.calculate(camera.getStrafeDistanceToReef());
+        System.out.println("X speed " + xSpeed);
         double ySpeed = yController.calculate(camera.getStraightDistanceToReef());
+        System.out.println("Y speed " + ySpeed);
         double thetaSpeed = thetaController.calculate(RobotContainer.drivetrain.odometryHeading.getRadians());
 
         //drives robot relative because tx and ty are robot relative
@@ -58,7 +62,8 @@ public class DistanceAlign extends Command{
 
     @Override
     public boolean isFinished() {
-        return (xController.atSetpoint() && yController.atSetpoint() && thetaController.atSetpoint()) || !camera.hasValidTarget();
+        return false;
+        //(xController.atSetpoint() && yController.atSetpoint() && thetaController.atSetpoint()) || !camera.hasValidTarget();
     }
 
 }
