@@ -1,0 +1,176 @@
+package frc.robot.commands;
+
+import org.littletonrobotics.junction.Logger;
+import static edu.wpi.first.units.Units.Inches;
+
+import com.ctre.phoenix6.swerve.SwerveRequest;
+
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.ProfiledPIDController;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.networktables.DoublePublisher;
+import edu.wpi.first.networktables.DoubleTopic;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.units.Units;
+import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.RobotContainer;
+import frc.robot.subsystems.Auto;
+import frc.robot.subsystems.Drivetrain;
+import frc.robot.util.PoseUtils;
+import frc.robot.util.TagOffset;
+import frc.robot.util.Tunable;
+import frc.robot.util.TunerConstants;
+import frc.robot.vision.Limelight;
+import frc.robot.vision.LimelightHelpers;
+
+public class GoToReefCameraSpace extends Command {
+
+    private PIDController xController;
+    private PIDController yController;
+    private PIDController thetaController;
+
+    private Limelight camera;
+
+    private Pose2d targetPose;
+    private TagOffset direction;
+ 
+    double targetHeading;
+    double offset = .3;
+    boolean isOffset;
+
+    DoublePublisher xOutputPub;
+    DoublePublisher yOutputPub;
+    DoublePublisher rotOutputPub;
+
+    // DoublePublisher xPosePub;
+    // DoublePublisher yPosePub;
+    // DoublePublisher rotPosePub;
+
+    @Override
+    public void initialize() {
+
+        //defaults to center
+        // if(direction == ScoreDirection.CENTER) {
+        Pose3d currentPose = LimelightHelpers.getBotPose3d_TargetSpace(camera.cameraName);
+        targetPose = new Pose2d(direction.getYOffsetM(), direction.getXOffsetM(), Rotation2d.fromRadians(currentPose.getRotation().getZ()));
+
+        if(isOffset) {
+            //flips the angle if we are on red, so that the trig functions will work properly
+            //On red, the pose for POINT A on RED ALLIANCE has a heading of 180 (I think), 
+            //but the pose for POINT A on BLUE ALLIANCE has a heading of 0 (I think), so we 
+            //just have to make them the same again
+            targetHeading = targetPose.getRotation().getRadians();
+            //when target heading is zero, we want the offset to be backwards but cos(0) 
+            //is positive, so we multiply by negative 1
+            //same thing for sin(x)
+            double updatedX = targetPose.getX();// + (-1 * offset * Math.cos(targetHeading));
+            double updatedY = targetPose.getY() + offset;//+ (-1 * offset * Math.sin(targetHeading));
+            //creates new updated pose
+            targetPose = new Pose2d(new Translation2d(updatedX, updatedY), Rotation2d.fromRadians(targetHeading));
+        }
+
+        //Cancels the command if for some reason the target pose is null 
+        //(i.e. if the direction is not CENTER, LEFT, or REVERSE)
+        if(targetPose == null) {
+            cancel();
+        }
+
+        Logger.recordOutput("CameraSpacePoseCommand/TargetPose", targetPose);
+        //Logger.recordOutput("PoseCommand/TargetPose", RobotContainer.drivetrain.getRobotPose());
+
+        // NetworkTableInstance inst = NetworkTableInstance.getDefault();
+        // NetworkTable poseCommandTable = inst.getTable("Pose Command");
+        //.Auto.field.setRobotPose(targetPose);
+
+        // DoubleTopic xSetpointTopic = poseCommandTable.getDoubleTopic("X Setpoint");
+        // DoublePublisher xSetpointPub = xSetpointTopic.publish();
+        // DoubleTopic ySetpointTopic = poseCommandTable.getDoubleTopic("Y Setpoint");
+        // DoublePublisher ySetpointPub = ySetpointTopic.publish();
+        // DoubleTopic rotSetpointTopic = poseCommandTable.getDoubleTopic("Rot Setpoint");
+        // DoublePublisher rotSetpointPub = rotSetpointTopic.publish();
+
+        // xSetpointPub.set(targetPose.getX());
+        // ySetpointPub.set(targetPose.getY());
+        // rotSetpointPub.set(targetPose.getRotation().getRadians());
+
+        // DoubleTopic xOutputTopic = poseCommandTable.getDoubleTopic("X Output");
+        // xOutputPub = xOutputTopic.publish();
+        // DoubleTopic yOutputTopic = poseCommandTable.getDoubleTopic("Y Output");
+        // yOutputPub = yOutputTopic.publish();
+        // DoubleTopic rotOutputTopic = poseCommandTable.getDoubleTopic("Rot Output");
+        // rotOutputPub = rotOutputTopic.publish();
+
+        // DoubleTopic xPoseTopic = poseCommandTable.getDoubleTopic("X Pose");
+        // xPosePub = xPoseTopic.publish();
+        // DoubleTopic yPoseTopic = poseCommandTable.getDoubleTopic("Y Pose");
+        // yPosePub = yPoseTopic.publish();
+        // DoubleTopic rotPoseTopic = poseCommandTable.getDoubleTopic("Rot Pose");
+        // rotPosePub = rotPoseTopic.publish();
+        xController.setTolerance(0.02);
+        yController.setTolerance(0.02);
+        xController.setSetpoint(targetPose.getX());
+        yController.setSetpoint(targetPose.getY());
+        thetaController.setSetpoint(targetPose.getRotation().getRadians());
+    }
+
+    public GoToReefCameraSpace(TagOffset direction, boolean isOffset) {
+        this.isOffset = isOffset;
+        this.direction = direction; //sets the direction
+        addRequirements(RobotContainer.drivetrain); //requires the drivetrain
+        xController = new PIDController(3.8, 0, .035); //creates the PIDControllers
+        yController = new PIDController(3.8, 0, .035); //TODO tolerances
+        thetaController = RobotContainer.drivetrain.thetaController;
+
+        if (direction.isLeft()) {
+            camera = RobotContainer.rightLimelight;
+        } else {
+            camera = RobotContainer.leftLimelight;
+        }
+
+        // TODO I think I need to log the 1st pose2d in disabled to prevent overruns
+        Logger.recordOutput("PoseCommand/TargetPose", targetPose);
+        Logger.recordOutput("PoseCommand/TargetPose", RobotContainer.drivetrain.getRobotPose());
+    }
+
+    @Override
+    public void execute() {
+        //current pose to PID from
+        Pose3d currentPose3d = LimelightHelpers.getBotPose3d_TargetSpace(camera.cameraName);
+
+        Pose2d currentPose = new Pose2d(currentPose3d.getX(), currentPose3d.getY(), Rotation2d.fromRadians(currentPose3d.getRotation().getZ()));
+
+        System.out.println(currentPose);
+
+        // //logging
+        // xPosePub.set(currentPose.getX());
+        // yPosePub.set(currentPose.getY());
+        // rotPosePub.set(currentPose.getRotation().getRadians());
+
+        //calculating outputs
+        double xSpeed = xController.calculate(currentPose.getX());
+        double ySpeed = yController.calculate(currentPose.getY());
+        double omegaSpeed = thetaController.calculate(currentPose.getRotation().getRadians());
+
+        //sets control output to the drivetrain
+        // RobotContainer.drivetrain.drive(xSpeed, ySpeed, omegaSpeed, true, false);
+    }
+
+    @Override
+    public void end(boolean interrupted) {
+        RobotContainer.drivetrain.drive(0, 0, 0, true, false);
+    }
+
+    @Override
+    public boolean isFinished() {
+        return (xController.atSetpoint() && yController.atSetpoint() && thetaController.atSetpoint()) || !camera.hasValidTarget();
+    }
+
+}

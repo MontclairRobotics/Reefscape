@@ -29,9 +29,9 @@ public class Robot extends LoggedRobot {
 
   public Robot() {
     if (RobotContainer.logMode) {
-      Logger.recordMetadata("Project Name", "Reefscape"); // Set a metadata value
+      Logger.recordMetadata("ProjectName", "Reefscape"); // Set a metadata value
 
-      if (isReal()) {
+      if (/*isReal()*/ true) {
       Logger.addDataReceiver(new WPILOGWriter()); // Log to a USB stick ("/U/logs")
       Logger.addDataReceiver(new NT4Publisher()); // Publish data to NetworkTables
       new PowerDistribution(1, ModuleType.kRev); // Enables power distribution
@@ -48,7 +48,7 @@ public class Robot extends LoggedRobot {
 
       Logger.recordMetadata("GitSHA", BuildConstants.GIT_SHA);
       Logger.start(); // Start logging! No more data receivers, replay sources, or
-      SignalLogger.start(); // CTRE logs
+      // SignalLogger.start(); // CTRE logs
       // metadata values may be added.
     }
     m_robotContainer = new RobotContainer();
@@ -112,6 +112,9 @@ public class Robot extends LoggedRobot {
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
+
+    RobotContainer.leftLimelight.setGyroMode(1);
+    RobotContainer.rightLimelight.setGyroMode(1);
 
     // Elastic.selectTab("Teleoperated");
   }

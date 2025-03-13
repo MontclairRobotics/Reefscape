@@ -9,12 +9,14 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.RobotContainer;
 import frc.robot.util.TagOffset;
 import frc.robot.vision.Limelight;
+import frc.robot.vision.LimelightHelpers;
+import frc.robot.vision.LimelightHelpers.RawFiducial;
 
 public class AlignToAprilTagCommandOffset extends Command {
     
     private PIDController xController;
     private PIDController yController;
-    private PIDController thetaController; //TODO should be PhoenixPIDController? something about timestamps?
+    private PIDController thetaController;
 
     private Limelight camera;
     //private int tagID;
@@ -30,10 +32,10 @@ public class AlignToAprilTagCommandOffset extends Command {
         this.thetaOffset = thetaOffset;
         this.tagHeightMeters = tagHeightMeters;
         //TODO: tune + make global PID Constants
-        xController = new PIDController(5, 0, 0);
-        xController.setTolerance(0.5); //0.5 degrees, I think? if its based on tx
-        yController = new PIDController(5, 0, 0);
-        yController.setTolerance(0.5); //degrees
+        xController = new PIDController(3.5, 0, 0);
+        xController.setTolerance(0.02); //0.5 degrees, I think? if its based on tx
+        yController = new PIDController(3.5, 0, 0);
+        yController.setTolerance(0.02); //degrees
         thetaController = RobotContainer.drivetrain.thetaController;
         addRequirements(RobotContainer.drivetrain);
     }

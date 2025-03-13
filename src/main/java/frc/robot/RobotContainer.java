@@ -5,20 +5,30 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.MetersPerSecond;
+
+import java.util.function.BooleanSupplier;
+
 import com.ctre.phoenix6.Orchestra;
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
+import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.net.PortForwarder;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
+import frc.robot.commands.AlignToClosestReefTagOffset;
+import frc.robot.commands.DistanceAlign;
+// import frc.robot.commands.GoToReefCameraSpace;
 import frc.robot.commands.GoToReefCommand;
 import frc.robot.leds.LEDs;
 import frc.robot.subsystems.Ratchet;
@@ -75,17 +85,19 @@ public class RobotContainer {
     // http://roborio-555-FRC.local:5801 will now forward to limelight-left.local:5801
     // http://roborio-555-FRC.local:5811 will now forward to limelight-right.local:5801
     for (int i = 5800; i <= 5807; i++) {
-      PortForwarder.add(i, "limelight-left.local", i);
-      PortForwarder.add(i+10, "limelight-right.local", i+10);
+      PortForwarder.add(i, "10.5.55.11", i);
+      PortForwarder.add(i+10, "10.5.55.12", i);
     }
+
+    CameraServer.startAutomaticCapture();
   }
 
   private void configureBindings() {
 
     /* --------------------------------------------OPERATOR BINDINGS --------------------------------------------*/
 
-    rollers.setDefaultCommand(rollers.getDefaultCommand());
-
+    // rollers.setDefaultCommand(rollers.getDefaultCommand());
+    elevator.setDefaultCommand(elevator.joystickControlCommand());
     
     //Intake
     operatorController.L1()
@@ -105,15 +117,18 @@ public class RobotContainer {
       .onFalse(rollers.stopCommand());
 
     //L1 scoring
+    // TODO this seems wrong
     operatorController.R2().and(operatorController.cross())
       .whileTrue(rollers.scoreL1())
       .onFalse(rollers.stopCommand());
 
+    Trigger autoAligning = RobotContainer.driverController.L1().or(RobotContainer.driverController.R1()).or(RobotContainer.driverController.R2());
+    
     // L1 
     operatorController.cross().and(operatorController.L2().negate())
       .whileTrue(arm.holdState(RobotState.L1))
       .onFalse(
-        elevator.setState(RobotState.L1)
+        elevator.setState(RobotState.L1).onlyIf(autoAligning.negate()).alongWith(elevator.setTargetState(RobotState.L1))
         .alongWith(arm.holdState(RobotState.L1))
       );
       
@@ -121,7 +136,7 @@ public class RobotContainer {
     operatorController.square().and(operatorController.L2().negate())
       .whileTrue(arm.holdState(RobotState.L2))
       .onFalse(
-        elevator.setState(RobotState.L2)
+        elevator.setState(RobotState.L2).onlyIf(autoAligning.negate()).alongWith(elevator.setTargetState(RobotState.L2))
         .alongWith(arm.holdState(RobotState.L2))
       );
 
@@ -129,38 +144,41 @@ public class RobotContainer {
     operatorController.triangle().and(operatorController.L2().negate())
       .whileTrue((arm.holdState(RobotState.L3)))
       .onFalse(
-        elevator.setState(RobotState.L3)
+        elevator.setState(RobotState.L3).onlyIf(autoAligning.negate()).alongWith(elevator.setTargetState(RobotState.L3))
         .alongWith(arm.holdState(RobotState.L3))
       );
 
     // L4 
     operatorController.circle().and(operatorController.L2().negate())
-      .whileTrue(arm.holdState(RobotState.L4))
+      .whileTrue(arm.holdState(RobotState.L4).alongWith(elevator.setState(RobotState.L3)))
       .onFalse(
-        elevator.setState(RobotState.L4)
+        elevator.setState(RobotState.L4).onlyIf(autoAligning.negate()).alongWith(elevator.setTargetState(RobotState.L4))
         .alongWith(arm.holdState(RobotState.L4))
       );
 
     // Elevator down
     operatorController.R2()
       .onTrue(elevator.setState(RobotState.getDefaultForPiece(rollers.getHeldPiece())))
-      .onTrue(arm.holdState(RobotState.getDefaultForPiece(rollers.getHeldPiece())));
+      .onTrue(arm.holdState(RobotState.getDefaultForPiece(rollers.getHeldPiece())))
+      .onTrue(rollers.stopCommand());
 
     //Lower algae
     operatorController.cross().and(operatorController.L2())
-      .whileTrue(
-        arm.setState(RobotState.L1Algae)
-        .alongWith(elevator.setState(RobotState.L1Algae))
-        .alongWith(rollers.intakeAlgaeCommand())
-      );
+      .whileTrue(rollers.intakeAlgaeCommand());
+      // .whileTrue(
+      //   arm.setState(RobotState.L1Algae)
+      //   .alongWith(elevator.setState(RobotState.L1Algae))
+      //   .alongWith(rollers.outtakeAlgaeCommand())
+      // );
 
     //Higher algae
     operatorController.triangle().and(operatorController.L2())
-      .whileTrue(
-        arm.setState(RobotState.L2Algae)
-        .alongWith(elevator.setState(RobotState.L2Algae))
-        .alongWith(rollers.intakeAlgaeCommand())
-      );
+      .whileTrue(rollers.outtakeAlgaeCommand()).onFalse(rollers.stopCommand());
+      // .whileTrue(
+      //   arm.setState(RobotState.L2Algae)
+      //   .alongWith(elevator.setState(RobotState.L2Algae))
+      //   .alongWith(rollers.outtakeAlgaeCommand())
+      // );
 
     //Climb
     operatorController.circle().and(operatorController.L2())
@@ -170,28 +188,43 @@ public class RobotContainer {
     operatorController.povUp().onTrue(ratchet.engageServos());
     operatorController.povDown().onTrue(ratchet.disengageServos());
 
-    //Processor
+    //Barge
     operatorController.square().and(operatorController.L2())
-      .onTrue(arm.setState(RobotState.Processor));
+      .onTrue(arm.holdState(RobotState.Barge).alongWith(elevator.setState(RobotState.Barge).alongWith(Commands.sequence(Commands.waitUntil(() -> elevator.getPercentHeight() > .9), rollers.outtakeAlgaeCommand()))));
+
 
     /*--------------------------------- DRIVER BINDINGS -------------------------------------------- */ 
 
     drivetrain.setDefaultCommand(drivetrain.driveJoystickInputCommand());
 
     //alignment buttons
-    driverController.R2()
-      .whileTrue(new GoToReefCommand(TagOffset.CENTER, true))
-      .onFalse(new GoToReefCommand(TagOffset.CENTER, false).until(() -> drivetrain.joystickInputDetected()));
+    // driverController.R2();
+      // .whileTrue(new GoToReefCommand(TagOffset.CENTER, true))
+      // .onFalse(new GoToReefCommand(TagOffset.CENTER, false).until(() -> drivetrain.joystickInputDetected()));
+    //  .whileTrue(new DistanceAlign(TagOffset.CENTER));
+   //   .onFalse(new GoToReefCommand(TagOffset.CENTER, false).until(() -> drivetrain.joystickInputDetected()));
     
     driverController.L1()
-      .whileTrue(new GoToReefCommand(TagOffset.LEFT, true))
-      .onFalse(new GoToReefCommand(TagOffset.LEFT, false).until(() -> drivetrain.joystickInputDetected()));
-    
-    driverController.R1()
-      .whileTrue(new GoToReefCommand(TagOffset.RIGHT, true))
-      .onFalse(new GoToReefCommand(TagOffset.RIGHT, false).until(() -> drivetrain.joystickInputDetected()));
+      //.whileTrue(new GoToReefCommand(TagOffset.LEFT, true))
+      //.onFalse(new GoToReefCommand(TagOffset.LEFT, false).until(() -> drivetrain.joystickInputDetected()));
+      .whileTrue(new DistanceAlign(TagOffset.LEFT));
 
-    //Robot relative
+    driverController.R1()
+      // .whileTrue(new GoToReefCommand(TagOffset.RIGHT, true))
+      // .onFalse(new GoToReefCommand(TagOffset.RIGHT, false).until(() -> drivetrain.joystickInputDetected()));
+      .whileTrue(new DistanceAlign(TagOffset.RIGHT));
+
+
+    driverController.povRight()
+      .whileTrue(Commands.run(() -> RobotContainer.drivetrain.drive(new ChassisSpeeds(0, -0.15, 0), false, false), RobotContainer.drivetrain)).onFalse(Commands.runOnce(() -> RobotContainer.drivetrain.drive(new ChassisSpeeds(), false, false), RobotContainer.drivetrain));
+    driverController.povLeft()
+      .whileTrue(Commands.run(() -> RobotContainer.drivetrain.drive(new ChassisSpeeds(0, 0.15, 0), false, false), RobotContainer.drivetrain)).onFalse(Commands.runOnce(() -> RobotContainer.drivetrain.drive(new ChassisSpeeds(), false, false), RobotContainer.drivetrain));
+      driverController.povUp()
+      .whileTrue(Commands.run(() -> RobotContainer.drivetrain.drive(new ChassisSpeeds(.15, 0, 0), false, false), RobotContainer.drivetrain)).onFalse(Commands.runOnce(() -> RobotContainer.drivetrain.drive(new ChassisSpeeds(), false, false), RobotContainer.drivetrain));
+    driverController.povDown()
+      .whileTrue(Commands.run(() -> RobotContainer.drivetrain.drive(new ChassisSpeeds(-0.15, 0, 0), false, false), RobotContainer.drivetrain)).onFalse(Commands.runOnce(() -> RobotContainer.drivetrain.drive(new ChassisSpeeds(), false, false), RobotContainer.drivetrain));
+   
+      //Robot relative
     driverController.L2()
       .onTrue(drivetrain.toRobotRelativeCommand())
       .onFalse(drivetrain.toFieldRelativeCommand());
@@ -200,22 +233,25 @@ public class RobotContainer {
     driverController.triangle()
        .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(0)), false));
     driverController.square()
-      .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(90)), false));
+      .onTrue(drivetrain.alignToAngleFieldRelativeCommand((Rotation2d.fromDegrees(-54)), false));
     driverController.cross()
       .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(180)), false));
     driverController.circle()
-      .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(270)), false)); 
+      .onTrue(drivetrain.alignToAngleFieldRelativeCommand(Rotation2d.fromDegrees(54), false)); 
     
     //zeros gyro
     driverController.touchpad().onTrue(drivetrain.zeroGyroCommand());
     
     //telemetry
-    drivetrain.registerTelemetry(telemetryLogger::telemeterize);    
+     drivetrain.registerTelemetry(telemetryLogger::telemeterize);    
 
     /* ---------------------------------------- TESTING BINDINGS --------------------------------------- */
 
     testingController.L1().onTrue(Commands.runOnce(() -> SignalLogger.start()));
     testingController.R1().onTrue(Commands.runOnce(() -> SignalLogger.stop()));
+
+    // testingController.povLeft().whileTrue(new GoToReefCameraSpace(TagOffset.LEFT, true));
+    // testingController.povRight().whileTrue(new GoToReefCameraSpace(TagOffset.RIGHT, true));
     // testingController.triangle().whileTrue(
     //   drivetrain.sysIdDynamic(Direction.kForward)
     // );

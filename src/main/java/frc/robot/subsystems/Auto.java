@@ -74,7 +74,7 @@ public class Auto extends SubsystemBase {
     // public double autoArmAngle = 0;
 
     //TODO: probably won't want a INTAKE timeout, we can just wait until piece is intaked
-    private final double SCORING_TIMEOUT = 0.3;
+    private final double SCORING_TIMEOUT = 0.13;
     private final double INTAKE_PREDICTED_TIME = 0.3;
 
     public int estimatedScore = 3; //Starts at 3 because of the leave bonus!
@@ -473,16 +473,14 @@ public class Auto extends SubsystemBase {
                                     ,Commands.print("Finished elevator command path 1")
                                 )    
                         ));
+                        // if (i > 3) {
+                        //     autoCommand.addCommands(new GoToReefCommand(TagOffset.LEFT, false));
+                        // }
                         // List<Pose2d> pts = path1.getPathPoses();
                         // Pose2d lastPathPose = pts.get(pts.size() - 1);
                         // Pose2d targetPose = new Pose2d(lastPathPose.getX(), lastPathPose.getY(), path1.getGoalEndState().rotation());
                         // System.out.println(pts.get(pts.size() - 1));
-                        autoCommand.addCommands(Commands.print("Going to reef!"));
-                        if (Character.toUpperCase(second.charAt(0)) == second.charAt(0)) {
-                            autoCommand.addCommands(new GoToReefCommand(TagOffset.LEFT, false));
-                        } else {
-                            autoCommand.addCommands(new GoToReefCommand(TagOffset.RIGHT, false));
-                        }
+                        
                         
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -529,7 +527,7 @@ public class Auto extends SubsystemBase {
             }
 
             /* ADDS AN INTAKING COMMAND */
-            autoCommand.addCommands(RobotContainer.rollers.intakeCoralJiggleCommand().withTimeout(1));
+            autoCommand.addCommands(RobotContainer.rollers.intakeCoralJiggleCommand().withTimeout(2));
             timeSeconds += INTAKE_PREDICTED_TIME;
             // Bring elevator and arm to default position after scoring last coral
 
