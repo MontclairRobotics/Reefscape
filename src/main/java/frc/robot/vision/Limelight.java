@@ -14,6 +14,7 @@ import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTable;
@@ -178,6 +179,7 @@ public class Limelight extends SubsystemBase {
             for (int i = 0; i < tags.length; i++) {
                 ids[i] = tags[i].id;
             }
+            System.out.println(Timer.getFPGATimestamp() - mt2.timestampSeconds);
             Logger.recordOutput(cameraName + "/SeenTags", ids); 
             if (mt2.tagCount == 0) {
                 //rejects current measurement if there are no aprilTags
@@ -186,10 +188,10 @@ public class Limelight extends SubsystemBase {
             if (Math.abs(RobotContainer.drivetrain.getCurrentSpeeds().omegaRadiansPerSecond) > angleVelocityTolerance) {
                 shouldRejectUpdate = true;
             }
-            if (mt2.pose.getTranslation().getDistance(RobotContainer.drivetrain.getRobotPose().getTranslation()) > 0.3 && !DriverStation.isDisabled() && !DriverStation.isTeleopEnabled()) {
+            if (mt2.pose.getTranslation().getDistance(RobotContainer.drivetrain.getPoseAtTime(mt2.timestampSeconds).orElse(new Pose2d()).getTranslation()) > 0.3 && !DriverStation.isDisabled() && !DriverStation.isTeleopEnabled()) {
                 shouldRejectUpdate = true;
             }
-            if (Math.abs(PoseUtils.wrapRotation(mt2.pose.getRotation()).minus(PoseUtils.wrapRotation(RobotContainer.drivetrain.getRobotPose().getRotation())).getDegrees()) > 3) {
+            if (Math.abs(PoseUtils.wrapRotation(mt2.pose.getRotation()).minus(PoseUtils.wrapRotation(RobotContainer.drivetrain.getPoseAtTime(mt2.timestampSeconds).orElse(new Pose2d()).getRotation())).getDegrees()) > 3) {
                 shouldRejectUpdate = true;
             }
             if (mt2.avgTagDist > 4) {
@@ -316,20 +318,20 @@ public class Limelight extends SubsystemBase {
         ty = LimelightHelpers.getTY(cameraName);
         RawFiducial[] allTags = LimelightHelpers.getRawFiducials(cameraName);
         int numValidTags = 0;
-        for(LimelightHelpers.RawFiducial t : allTags) {
-            if(t.distToCamera < 4.0) {
-                numValidTags++;
-            }
-        }
+        // for(LimelightHelpers.RawFiducial t : allTags) {
+        //     if(t.distToCamera < 4.0) {
+        //         numValidTags++;
+        //     }
+        // }
 
-        int[] validTags = new int[numValidTags];
-        int counter = 0;
-        for(RawFiducial t : allTags) {
-            if(t.distToCamera < 4.0) {
-                validTags[counter] = t.id;
-                counter++;
-            }
-        }
+        // int[] validTags = new int[numValidTags];
+        // int counter = 0;
+        // for(RawFiducial t : allTags) {
+        //     if(t.distToCamera < 4.0) {
+        //         validTags[counter] = t.id;
+        //         counter++;
+        //     }
+        // }
      //   LimelightHelpers.SetFiducialIDFiltersOverride(cameraName, validTags);
         poseEstimationMegatag2();
         xDistPub.set(getHorizontalDistanceToReef());

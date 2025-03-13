@@ -15,6 +15,7 @@ import static edu.wpi.first.math.util.Units.*;
 import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Volts;
 
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
@@ -55,6 +56,7 @@ import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.interpolation.TimeInterpolatableBuffer;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.system.plant.DCMotor;
@@ -65,6 +67,7 @@ import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
@@ -88,6 +91,9 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     public static double MIN_TRANSLATIONAL_ACCEL = 2;
     public static double MIN_ROT_ACCEL = 1.5;
     public static boolean IS_LIMITING_ACCEL = true; // TODO remove this, not needed w/ driveWithSetpoint
+
+    private TimeInterpolatableBuffer<Pose2d> poseBuffer = TimeInterpolatableBuffer.createBuffer(3);
+
 
     DoublePublisher driveCurrentPub;
     DoublePublisher driveVelocityPub;
@@ -880,6 +886,12 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         return this.getState().Speeds;
     }
 
+    public Optional<Pose2d> getPoseAtTime(double time) {
+        return poseBuffer.getSample(time);
+    }
+    
+
+
     @Override
     public void periodic() {
         // System.out.println(forwardAccelTunable.getValue());
@@ -891,6 +903,8 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         strafeLimiter.setLimit(getMaxHorizontalAccel());
         forwardLimiter.setLimit(getMaxForwardAccel());
         rotationLimiter.setLimit(getMaxRotAccel());
+
+        poseBuffer.addSample(Timer.getFPGATimestamp(), getRobotPose());
 
         if (DriverStation.isTeleopEnabled()) {
             Auto.field.setRobotPose(getRobotPose());

@@ -96,7 +96,7 @@ public class RobotContainer {
 
     /* --------------------------------------------OPERATOR BINDINGS --------------------------------------------*/
 
-    rollers.setDefaultCommand(rollers.getDefaultCommand());
+    // rollers.setDefaultCommand(rollers.getDefaultCommand());
     elevator.setDefaultCommand(elevator.joystickControlCommand());
     
     //Intake
