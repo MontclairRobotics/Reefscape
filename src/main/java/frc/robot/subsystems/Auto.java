@@ -319,7 +319,7 @@ public class Auto extends SubsystemBase {
 
             // }
 
-            String pathName; //String name so that you can access the path file
+            String pathName = ""; //String name so that you can access the path file
             String middleChar = "-"; //Stores the character connecting the two waypoints
             boolean firstPath = false; //If its the first path in auto
             PathPlannerPath path1 = null;
@@ -453,7 +453,7 @@ public class Auto extends SubsystemBase {
 
                         double pathTime = traj.getTotalTimeSeconds(); //time path will take
                         double raiseTime = RobotContainer.elevator.getRaiseTime(mechState);
-                        raiseTime = 1.6; //time elevator will take to rise
+                        raiseTime = 0.5; //time elevator will take to rise
                         double waitTime = pathTime - raiseTime; //how much time we should wait before raising elevator
                         timeSeconds += pathTime; //adds how long the path will take to the estimated time
                        // System.out.println("Path 1 Arm height: " + mechState.getHeight());
@@ -467,20 +467,22 @@ public class Auto extends SubsystemBase {
                                     Commands.print("After waiting"),
                                     Commands.parallel(
                                         //Commands.print("Starting elevator command path 1"),
-                                        RobotContainer.elevator.setState(mechState), // TODO I removed this timeout. You'd rather wait then score at wrong height
-                                        RobotContainer.arm.goToAngleCommand(mechState.getAngle())
+                                        RobotContainer.elevator.setState(mechState).withTimeout(raiseTime), // TODO I removed this timeout. You'd rather wait then score at wrong height
+                                        RobotContainer.arm.goToAngleCommand(mechState.getAngle()).withTimeout(raiseTime)
                                     )
                                     ,Commands.print("Finished elevator command path 1")
                                 )    
                         ));
-                        // if (i > 3) {
-                        //     autoCommand.addCommands(new GoToReefCommand(TagOffset.LEFT, false));
-                        // }
-                        // List<Pose2d> pts = path1.getPathPoses();
-                        // Pose2d lastPathPose = pts.get(pts.size() - 1);
-                        // Pose2d targetPose = new Pose2d(lastPathPose.getX(), lastPathPose.getY(), path1.getGoalEndState().rotation());
-                        // System.out.println(pts.get(pts.size() - 1));
                         
+                        if (Character.isLowerCase(first.charAt(0)) || Character.isLowerCase(second.charAt(0))) {
+                            autoCommand.addCommands(new GoToReefCommand(TagOffset.RIGHT, false)
+                            .alongWith(RobotContainer.elevator.setState(mechState))
+                            .alongWith(RobotContainer.arm.setState(mechState)));
+                        } else {
+                            autoCommand.addCommands(new GoToReefCommand(TagOffset.LEFT, false)
+                            .alongWith(RobotContainer.elevator.setState(mechState))
+                            .alongWith(RobotContainer.arm.setState(mechState)));
+                        }
                         
                 } catch (Exception e) {
                     e.printStackTrace();

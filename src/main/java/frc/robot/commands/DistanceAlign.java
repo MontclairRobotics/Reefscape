@@ -30,6 +30,7 @@ public class DistanceAlign extends Command{
 
     @Override
     public void initialize(){
+        addRequirements(RobotContainer.drivetrain);
         xController.setSetpoint(direction.getXOffsetM());
         System.out.println("X setpoint " + xController.getSetpoint());
         yController.setSetpoint(direction.getYOffsetM());

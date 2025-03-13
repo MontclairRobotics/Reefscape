@@ -699,7 +699,7 @@ public class Elevator extends SubsystemBase {
         // Read their actual voltage (simulated)
         var leftMotorVoltage = leftTalonFXSim.getMotorVoltage();
         var rightMotorVoltage = rightTalonFXSim.getMotorVoltage();
-        var voltage = (leftMotorVoltage + rightMotorVoltage) / 2;
+        var voltage = 2 *(leftMotorVoltage + rightMotorVoltage) / 2;
 
         simVoltagePub.set(voltage);
         // System.out.println("simVoltage: " + leftMotorVoltage);

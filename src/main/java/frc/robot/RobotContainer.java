@@ -198,21 +198,21 @@ public class RobotContainer {
     drivetrain.setDefaultCommand(drivetrain.driveJoystickInputCommand());
 
     //alignment buttons
-    // driverController.R2();
-      // .whileTrue(new GoToReefCommand(TagOffset.CENTER, true))
-      // .onFalse(new GoToReefCommand(TagOffset.CENTER, false).until(() -> drivetrain.joystickInputDetected()));
+     driverController.R2()
+      .whileTrue(new GoToReefCommand(TagOffset.CENTER, true))
+      .onFalse(new GoToReefCommand(TagOffset.CENTER, false).until(() -> drivetrain.joystickInputDetected()));
     //  .whileTrue(new DistanceAlign(TagOffset.CENTER));
    //   .onFalse(new GoToReefCommand(TagOffset.CENTER, false).until(() -> drivetrain.joystickInputDetected()));
     
     driverController.L1()
-      //.whileTrue(new GoToReefCommand(TagOffset.LEFT, true))
-      //.onFalse(new GoToReefCommand(TagOffset.LEFT, false).until(() -> drivetrain.joystickInputDetected()));
-      .whileTrue(new DistanceAlign(TagOffset.LEFT));
+      .whileTrue(new GoToReefCommand(TagOffset.LEFT, true))
+      .onFalse(new GoToReefCommand(TagOffset.LEFT, false).until(() -> drivetrain.joystickInputDetected()));
+      //.whileTrue(new DistanceAlign(TagOffset.LEFT));
 
     driverController.R1()
-      // .whileTrue(new GoToReefCommand(TagOffset.RIGHT, true))
-      // .onFalse(new GoToReefCommand(TagOffset.RIGHT, false).until(() -> drivetrain.joystickInputDetected()));
-      .whileTrue(new DistanceAlign(TagOffset.RIGHT));
+      .whileTrue(new GoToReefCommand(TagOffset.RIGHT, true))
+      .onFalse(new GoToReefCommand(TagOffset.RIGHT, false).until(() -> drivetrain.joystickInputDetected()));
+      //.whileTrue(new DistanceAlign(TagOffset.RIGHT));
 
 
     driverController.povRight()
