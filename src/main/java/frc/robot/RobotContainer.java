@@ -96,7 +96,7 @@ public class RobotContainer {
 
     /* --------------------------------------------OPERATOR BINDINGS --------------------------------------------*/
 
-    // rollers.setDefaultCommand(rollers.getDefaultCommand());
+    rollers.setDefaultCommand(rollers.getDefaultCommand());
     elevator.setDefaultCommand(elevator.joystickControlCommand());
     
     //Intake
@@ -164,21 +164,21 @@ public class RobotContainer {
 
     //Lower algae
     operatorController.cross().and(operatorController.L2())
-      .whileTrue(rollers.intakeAlgaeCommand());
-      // .whileTrue(
-      //   arm.setState(RobotState.L1Algae)
-      //   .alongWith(elevator.setState(RobotState.L1Algae))
-      //   .alongWith(rollers.outtakeAlgaeCommand())
-      // );
+     // .whileTrue(rollers.intakeAlgaeCommand());
+      .whileTrue(
+        arm.setState(RobotState.L1Algae)
+        .alongWith(elevator.setState(RobotState.L1Algae))
+        .alongWith(rollers.intakeAlgaeCommand())
+      );
 
     //Higher algae
     operatorController.triangle().and(operatorController.L2())
-      .whileTrue(rollers.outtakeAlgaeCommand()).onFalse(rollers.stopCommand());
-      // .whileTrue(
-      //   arm.setState(RobotState.L2Algae)
-      //   .alongWith(elevator.setState(RobotState.L2Algae))
-      //   .alongWith(rollers.outtakeAlgaeCommand())
-      // );
+      // .whileTrue(rollers.outtakeAlgaeCommand()).onFalse(rollers.stopCommand());
+      .whileTrue(
+        arm.setState(RobotState.L2Algae)
+        .alongWith(elevator.setState(RobotState.L2Algae))
+        .alongWith(rollers.intakeAlgaeCommand())
+      );
 
     //Climb
     operatorController.circle().and(operatorController.L2())

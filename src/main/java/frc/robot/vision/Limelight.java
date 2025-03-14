@@ -1,7 +1,6 @@
 package frc.robot.vision;
 
 import java.util.HashMap;
-import java.util.Optional;
 import java.util.function.DoubleSupplier;
 
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -15,8 +14,6 @@ import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.interpolation.TimeInterpolatableBuffer;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTable;
@@ -30,9 +27,6 @@ import frc.robot.util.PoseUtils;
 import frc.robot.vision.LimelightHelpers.RawFiducial;
 
 public class Limelight extends SubsystemBase {
-
-    // Last time we accepted a pose from the vision system
-    public static double lastAcceptablePoseTime = -1;
 
     /* CONSTANTS */
     public static final double coralStationTagHeightMeters = 1.35255; // make sure these two are correct
@@ -83,9 +77,6 @@ public class Limelight extends SubsystemBase {
     public double cameraOffsetY; //forward is positive
     private double angleMult;
     
-    // Buffer of past robot poses
-    private TimeInterpolatableBuffer<Pose2d> robotPoseBuffer;
-
     private DoublePublisher yDistPub;
     private DoublePublisher xDistPub;
     private DoublePublisher horizontalDistPub;
@@ -104,8 +95,6 @@ public class Limelight extends SubsystemBase {
         } else {
             angleMult = 1;
         }
-
-        robotPoseBuffer = TimeInterpolatableBuffer.createBuffer(2);
 
         NetworkTableInstance inst = NetworkTableInstance.getDefault();
         NetworkTable lightTable = inst.getTable(cameraName);
@@ -189,59 +178,23 @@ public class Limelight extends SubsystemBase {
             for (int i = 0; i < tags.length; i++) {
                 ids[i] = tags[i].id;
             }
-            System.out.println(Timer.getFPGATimestamp() - mt2.timestampSeconds);
             Logger.recordOutput(cameraName + "/SeenTags", ids); 
-        if (mt2 != null) { 
-            // Reject if there are no aprilTags
             if (mt2.tagCount == 0) {
+                //rejects current measurement if there are no aprilTags
                 shouldRejectUpdate = true;
             }
-            // Reject if robot is spinning too fast
             if (Math.abs(RobotContainer.drivetrain.getCurrentSpeeds().omegaRadiansPerSecond) > angleVelocityTolerance) {
                 shouldRejectUpdate = true;
             }
-            if (mt2.pose.getTranslation().getDistance(RobotContainer.drivetrain.getPoseAtTime(mt2.timestampSeconds).orElse(new Pose2d()).getTranslation()) > 0.3 && !DriverStation.isDisabled() && !DriverStation.isTeleopEnabled()) {
-            // Reject if tag distance is too far
+            if (mt2.pose.getTranslation().getDistance(RobotContainer.drivetrain.getRobotPose().getTranslation()) > 0.3 && !DriverStation.isDisabled() && !DriverStation.isTeleopEnabled()) {
+                shouldRejectUpdate = true;
+            }
+            if (Math.abs(PoseUtils.wrapRotation(mt2.pose.getRotation()).minus(PoseUtils.wrapRotation(RobotContainer.drivetrain.getRobotPose().getRotation())).getDegrees()) > 3) {
+                shouldRejectUpdate = true;
+            }
             if (mt2.avgTagDist > 4) {
                 shouldRejectUpdate = true;
-            }
-            if (Math.abs(PoseUtils.wrapRotation(mt2.pose.getRotation()).minus(PoseUtils.wrapRotation(RobotContainer.drivetrain.getPoseAtTime(mt2.timestampSeconds).orElse(new Pose2d()).getRotation())).getDegrees()) > 3) {
-            // Get pose of robot at time of vision measurement
-            // If we don't have a pose at the time of the vision measurement, just use current pose
-            // Using current pose is better than nothing
-            // It's more likely to get rejected if robot is moving, but if robot isn't moving much, it'll get accepted
-            // And that's fine
-            Optional<Pose2d> optPastRobotPose = robotPoseBuffer.getSample(mt2.timestampSeconds);
-            Pose2d robotPose = optPastRobotPose.isPresent() ? optPastRobotPose.get() : RobotContainer.drivetrain.getRobotPose();
-
-            // Reject if pose is different of angle from robot pose
-            // This is fixed because even if robot slips or is bump or anything, pigeon should still be correct
-            // So if pose is off from that, pose is probably wrong
-            double acceptableAngle = 3; 
-            if (Math.abs(PoseUtils.wrapRotation(mt2.pose.getRotation()).minus(PoseUtils.wrapRotation(robotPose.getRotation())).getDegrees()) > acceptableAngle) {
-                shouldRejectUpdate = true;
-            }
-
-            // Reject if pose is too far from robot pose
-            // Accepted difference of vision to robot pose grows with time
-            // 20cm to start, then 10cm per second since vision estimate was accepted
-            // We assume that if 
-            double accepatbleDistance = 0.2 + 0.1 * (Timer.getFPGATimestamp() - lastAcceptablePoseTime);
-            if (mt2.pose.getTranslation().getDistance(robotPose.getTranslation()) > accepatbleDistance && !DriverStation.isDisabled()) {
-                shouldRejectUpdate = true;
             } 
-            } else {
-                // Last acceptable pose time is update, when we have a vision measurement that
-                // we are rejecting only because of distance
-                // We don't want accepatbleDistance to grov if we aren't getting poses at all
-                // Or if the poses we are getting are just bad
-                // Only if we are getting good poses that are just a little off
-                if (!shouldRejectUpdate) {
-                    lastAcceptablePoseTime = Timer.getFPGATimestamp();
-                }
-            }
-
-
             //adds vision measurement if conditions are met
             if (!shouldRejectUpdate) {
                 Logger.recordOutput(cameraName + "/mt2Pose", mt2.pose);
@@ -258,8 +211,6 @@ public class Limelight extends SubsystemBase {
             }
         }
     }
-}
-}
 
     //TODO: Do we need these / check if the trig is right
     
@@ -359,35 +310,26 @@ public class Limelight extends SubsystemBase {
     }
 
     public void periodic() {
-        // Update the robot pose buffer
-        Pose2d robotPose = RobotContainer.drivetrain.getRobotPose();
-        robotPoseBuffer.addSample(Timer.getFPGATimestamp(), robotPose);
-
-        // On first run, set last accepted pose time to current time
-        if (lastAcceptablePoseTime < 0) {
-            lastAcceptablePoseTime = Timer.getFPGATimestamp();
-        }
-
         // tagID = (int) Limetable.getEntry("tid").getDouble(-1);
         // TODO if you get a pose estimate in the frame before this is applied it may not work
         tx = LimelightHelpers.getTX(cameraName);
         ty = LimelightHelpers.getTY(cameraName);
         RawFiducial[] allTags = LimelightHelpers.getRawFiducials(cameraName);
         int numValidTags = 0;
-        // for(LimelightHelpers.RawFiducial t : allTags) {
-        //     if(t.distToCamera < 4.0) {
-        //         numValidTags++;
-        //     }
-        // }
+        for(LimelightHelpers.RawFiducial t : allTags) {
+            if(t.distToCamera < 4.0) {
+                numValidTags++;
+            }
+        }
 
-        // int[] validTags = new int[numValidTags];
-        // int counter = 0;
-        // for(RawFiducial t : allTags) {
-        //     if(t.distToCamera < 4.0) {
-        //         validTags[counter] = t.id;
-        //         counter++;
-        //     }
-        // }
+        int[] validTags = new int[numValidTags];
+        int counter = 0;
+        for(RawFiducial t : allTags) {
+            if(t.distToCamera < 4.0) {
+                validTags[counter] = t.id;
+                counter++;
+            }
+        }
      //   LimelightHelpers.SetFiducialIDFiltersOverride(cameraName, validTags);
         poseEstimationMegatag2();
         xDistPub.set(getHorizontalDistanceToReef());
