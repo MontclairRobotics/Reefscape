@@ -62,10 +62,10 @@ public class Arm extends SubsystemBase {
     public static final Rotation2d MIN_ANGLE = Rotation2d.fromDegrees(-(180 - 102.143)); 
 
     // Angle of endpoint is -37.8
-    private static final double ELBOW_ANGLE_TO_WRIST = 30.0 / 14.0; // TODO check
+    private static final double ELBOW_ANGLE_TO_WRIST = 2.5 / 1.0; // TODO check
 
     // TODO: grab value from real robot using protractor
-    private static final Rotation2d WRIST_ANGLE_WHEN_ELBOW_IS_HORIZONTAL = Rotation2d.fromDegrees(-34.903); 
+    private static final Rotation2d WRIST_ANGLE_WHEN_ELBOW_IS_HORIZONTAL = Rotation2d.fromDegrees(91.2); 
 
     private ArmFeedforward armFeedforward = new ArmFeedforward(0, 0.2, 0); 
 
@@ -183,7 +183,7 @@ public class Arm extends SubsystemBase {
             elbowEncoderSim = new DutyCycleEncoderSim(elbowEncoder);
             wristEncoderSim = new DutyCycleEncoderSim(wristEncoder);
             elbowEncoderSim.set(0);
-            // wristEncoderSim.set(WRIST_ANGLE_WHEN_ELBOW_IS_HORIZONTAL.getRotations());
+            wristEncoderSim.set(WRIST_ANGLE_WHEN_ELBOW_IS_HORIZONTAL.getRotations());
             // wristEncoderSim.set(0);
             // j2EncoderSim.set(0);
         }
@@ -296,9 +296,9 @@ public class Arm extends SubsystemBase {
         // System.out.println(-wristVoltage);
         // TODO do we need feedforward? If so we have to figure out the equation
         // negative voltage brings it up, positive brings it down AFAIK
-        voltagePub.set(-wristVoltage);
-        Logger.recordOutput("Arm/AppliedVoltage", -wristVoltage);
-        armMotor.setVoltage(-wristVoltage);
+        voltagePub.set(wristVoltage);
+        Logger.recordOutput("Arm/AppliedVoltage", wristVoltage);
+        armMotor.setVoltage(wristVoltage);
 
     }
 
@@ -445,7 +445,7 @@ public class Arm extends SubsystemBase {
                 ((getElbowAngle().getRotations() + (armMotor.getAppliedOutput() * 2) * 0.02)) % 1);
         wristEncoderSim.set(
                 ((getWristAngle().getRotations()
-                        - (armMotor.getAppliedOutput() * 2 * ELBOW_ANGLE_TO_WRIST) * 0.02)) % 1);
+                        + (armMotor.getAppliedOutput() * 2 * ELBOW_ANGLE_TO_WRIST) * 0.02)) % 1);
 
         // Publish sim encoder positions to the network
 
