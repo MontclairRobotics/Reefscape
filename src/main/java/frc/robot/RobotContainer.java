@@ -45,7 +45,6 @@ import frc.robot.util.GamePiece;
 import frc.robot.util.PoseUtils;
 import frc.robot.util.TagOffset;
 import frc.robot.util.TunerConstants;
-import frc.robot.vision.ElevatorLimelight;
 import frc.robot.vision.Limelight;
 
 
@@ -62,10 +61,10 @@ public class RobotContainer {
   //Subsystems
   public static Limelight leftLimelight = new Limelight("limelight-left", 0.38, 0, 0, 0, true);
   public static Limelight rightLimelight = new Limelight("limelight-right", 0.38, 0, 0, 0, false);
+  public static Limelight backLimelight = new Limelight("limelight-back", 0.38, 0, 0, 0, false);
   public static Ratchet ratchet = new Ratchet();
   public static Drivetrain drivetrain = new Drivetrain();
   public static Elevator elevator = new Elevator();
-  public static ElevatorLimelight elevatorLimelight = new ElevatorLimelight("limelight-elevator", 0, 0, 0, 0, true);
   public static LEDs leds = new LEDs();
   public static Rollers rollers = new Rollers();
   public static Orchestra orchestra = new Orchestra();
@@ -98,6 +97,8 @@ public class RobotContainer {
 
     rollers.setDefaultCommand(rollers.getDefaultCommand());
     elevator.setDefaultCommand(elevator.joystickControlCommand());
+
+    arm.setDefaultCommand(arm.joystickControlCommand());
     
     //Intake
     operatorController.L1()
@@ -144,7 +145,8 @@ public class RobotContainer {
     operatorController.triangle().and(operatorController.L2().negate())
       .whileTrue((arm.holdState(RobotState.L3)))
       .onFalse(
-        elevator.setState(RobotState.L3).onlyIf(autoAligning.negate()).alongWith(elevator.setTargetState(RobotState.L3))
+        elevator.setState(RobotState.L3)
+        //.onlyIf(autoAligning.negate()).alongWith(elevator.setTargetState(RobotState.L3))
         .alongWith(arm.holdState(RobotState.L3))
       );
 
@@ -152,7 +154,8 @@ public class RobotContainer {
     operatorController.circle().and(operatorController.L2().negate())
       .whileTrue(arm.holdState(RobotState.L4).alongWith(elevator.setState(RobotState.L3)))
       .onFalse(
-        elevator.setState(RobotState.L4).onlyIf(autoAligning.negate()).alongWith(elevator.setTargetState(RobotState.L4))
+        elevator.setState(RobotState.L4)
+        //.onlyIf(autoAligning.negate()).alongWith(elevator.setTargetState(RobotState.L4))
         .alongWith(arm.holdState(RobotState.L4))
       );
 

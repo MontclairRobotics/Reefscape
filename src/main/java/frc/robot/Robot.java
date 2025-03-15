@@ -32,7 +32,7 @@ public class Robot extends LoggedRobot {
       Logger.recordMetadata("ProjectName", "Reefscape"); // Set a metadata value
 
       if (/*isReal()*/ true) {
-      Logger.addDataReceiver(new WPILOGWriter()); // Log to a USB stick ("/U/logs")
+      Logger.addDataReceiver(new WPILOGWriter("/home/lvuser/logs")); // Log to a USB stick ("/U/logs")
       Logger.addDataReceiver(new NT4Publisher()); // Publish data to NetworkTables
       new PowerDistribution(1, ModuleType.kRev); // Enables power distribution
       // logging
@@ -67,7 +67,6 @@ public class Robot extends LoggedRobot {
   public void disabledInit() {
     RobotContainer.leftLimelight.disable();
     RobotContainer.rightLimelight.disable();
-    RobotContainer.elevatorLimelight.disable();
   }
 
   @Override
@@ -85,7 +84,6 @@ public class Robot extends LoggedRobot {
   public void disabledExit() {
     RobotContainer.leftLimelight.enable();
     RobotContainer.rightLimelight.enable();
-    RobotContainer.elevatorLimelight.enable();
   }
 
   @Override

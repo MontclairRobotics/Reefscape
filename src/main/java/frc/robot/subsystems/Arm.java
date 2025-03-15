@@ -47,11 +47,11 @@ import frc.robot.util.simulation.DoubleJointedArmModel;
 
 public class Arm extends SubsystemBase {
 
-    public double armLimitVoltage = 1.7;
+    public double armLimitVoltage = 1.7*5;
     public final double MAX_VELOCITY = 60.0 / 360.0; // rotations per sec
     public final double MAX_ACCELERATION = 20.0 / 360.0; // rotations per sec per sec
     
-    private static final Rotation2d ELBOW_ENCODER_OFFSET = Rotation2d.fromDegrees(-83);
+    private static final Rotation2d ELBOW_ENCODER_OFFSET = Rotation2d.fromDegrees(-83+3.5);
     private static final Rotation2d ELBOW_MAX_ANGLE = Rotation2d.fromDegrees(34); //TODO: use protractor to get this for the real robot
     private static final Rotation2d ELBOW_MIN_ANGLE = Rotation2d.fromDegrees(-56); //TODO: use protractor to get this for the real robot
 
@@ -279,7 +279,7 @@ public class Arm extends SubsystemBase {
         target = MathUtil.clamp(target, MIN_ANGLE.getRotations(), MAX_ANGLE.getRotations());
         // System.out.println("Target: " + target);
         // SmartDashboard.putNumber("Arm/Clamped Target", target);
-        double wristVoltage = pidController.calculate(getEndpointAngle().getRotations(), target);
+        double wristVoltage = pidController.calculate(getEndpointAngle().getRotations(), target) * 5;
         Logger.recordOutput("Arm/PID Setpoint", target * 360);
 
         setpointPub.set(target * 360);

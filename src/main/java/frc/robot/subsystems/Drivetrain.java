@@ -142,6 +142,9 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     };
 
     public static final Pose2d[] LEFT_BLUE_SCORING_POSES = {
+        new Pose2d(new Translation2d(1.66, .67), new Rotation2d(Math.toRadians(-127.000))), // top coral station
+            new Pose2d(new Translation2d(.67, 6.65), new Rotation2d(Math.toRadians(127.000))), // bottom coral
+             
             new Pose2d(new Translation2d(3.17, 4.19), new Rotation2d(Math.toRadians(0))),
             new Pose2d(new Translation2d(3.98, 5.25), new Rotation2d(Math.toRadians(-60))),
             new Pose2d(new Translation2d(5.3, 5.09), new Rotation2d(Math.toRadians(-120))),
@@ -151,6 +154,9 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     };
 
     public static final Pose2d[] RIGHT_BLUE_SCORING_POSES = {
+        new Pose2d(new Translation2d(.67, 1.39), new Rotation2d(Math.toRadians(-127.000))), // top coral station
+            new Pose2d(new Translation2d(1.66, 7.36), new Rotation2d(Math.toRadians(127.000))), // bottom coral
+             
             new Pose2d(new Translation2d(3.17, 3.86), new Rotation2d(Math.toRadians(0))),
             new Pose2d(new Translation2d(3.69, 5.09), new Rotation2d(Math.toRadians(-60))),
             new Pose2d(new Translation2d(5, 5.25), new Rotation2d(Math.toRadians(-120))),
@@ -247,7 +253,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
      * lemon
      */
     public double getVelocityXFromController() {
-        double xInput = -MathUtil.applyDeadband(RobotContainer.driverController.getLeftX(), 0.07);
+        double xInput = -MathUtil.applyDeadband(RobotContainer.driverController.getLeftX(), 0.15);
         return Math.pow(xInput, 3) * MAX_SPEED;
     }
 
@@ -378,7 +384,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
      * 
      */
     public double getVelocityYFromController() {
-        double yInput = -MathUtil.applyDeadband(RobotContainer.driverController.getLeftY(), 0.07);
+        double yInput = -MathUtil.applyDeadband(RobotContainer.driverController.getLeftY(), 0.15);
         return Math.pow(yInput, 3) * MAX_SPEED;
     }
 
@@ -396,7 +402,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
      * 
      */
     public void driveJoystick() {
-        double rotInput = -MathUtil.applyDeadband(RobotContainer.driverController.getRightX(), 0.07);
+        double rotInput = -MathUtil.applyDeadband(RobotContainer.driverController.getRightX(), 0.15);
         double rotVelocity = Math.pow(rotInput, 3) * MAX_ROT_SPEED;
 
         drive(getVelocityYFromController(), getVelocityXFromController(), rotVelocity, fieldRelative, true); // drives
@@ -422,6 +428,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
             xSpeed = forwardLimiter.calculate(xSpeed);
             ySpeed = strafeLimiter.calculate(ySpeed);
         }
+        System.out.println(new ChassisSpeeds(xSpeed, ySpeed, thetaSpeed));
 
         // if (respectOperatorPerspective) {
         // if (DriverStation.getAlliance().isPresent() &&
@@ -489,9 +496,9 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         SwerveRequest req = new SwerveRequest.ApplyRobotSpeeds()
                 .withSpeeds(speeds)
                 .withDriveRequestType(DriveRequestType.Velocity)
-                .withSteerRequestType(SteerRequestType.Position)
-                .withWheelForceFeedforwardsX(prevSetpoint.feedforwards().robotRelativeForcesXNewtons())
-                .withWheelForceFeedforwardsY(prevSetpoint.feedforwards().robotRelativeForcesYNewtons());
+                .withSteerRequestType(SteerRequestType.Position);
+                // .withWheelForceFeedforwardsX(prevSetpoint.feedforwards().robotRelativeForcesXNewtons())
+                // .withWheelForceFeedforwardsY(prevSetpoint.feedforwards().robotRelativeForcesYNewtons());
 
         setControl(req);
 
