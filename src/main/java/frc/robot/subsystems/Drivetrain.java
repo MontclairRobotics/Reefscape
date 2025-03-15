@@ -12,11 +12,13 @@ import frc.robot.vision.LimelightHelpers;
 import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Volts;
 
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.AutoLog;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
+import org.opencv.core.Point;
 
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.DoubleTopic;
@@ -48,6 +50,7 @@ import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.interpolation.TimeInterpolatableBuffer;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.system.plant.DCMotor;
@@ -58,11 +61,13 @@ import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.util.DynamicSlewRateLimiter;
+import frc.robot.util.FieldPositionUtils;
 
 public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
@@ -165,6 +170,8 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     private boolean isRobotAtAngleSetPoint; // for angle turning
     private boolean fieldRelative;
 
+    private TimeInterpolatableBuffer<Pose2d> poseBuffer = TimeInterpolatableBuffer.createBuffer(3);
+
     /* Blue alliance sees forward as 0 degrees (toward red alliance wall) */
     private static final Rotation2d kBlueAlliancePerspectiveRotation = Rotation2d.kZero;
     /* Red alliance sees forward as 180 degrees (toward blue alliance wall) */
@@ -195,9 +202,6 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
                                 TunerConstants.BackLeft,
                                 TunerConstants.BackRight
                         }));
-        if (Utils.isSimulation()) {
-            startSimThread();
-        }
 
         NetworkTableInstance inst = NetworkTableInstance.getDefault();
         NetworkTable table = inst.getTable("Drive");
@@ -210,7 +214,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         thetaController.enableContinuousInput(-Math.PI, Math.PI);
         configurePathPlanner();
 
-        resetPose(new Pose2d(3, 3, Rotation2d.fromDegrees(0)));
+        resetPose(new Pose2d(2.5, 4, Rotation2d.fromDegrees(0)));
         // resetPose(LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight-left").pose);
 
         RobotConfig config = null;
@@ -227,6 +231,10 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
                                                // This should probably be stored in your Constants file
         );
         prevSetpoint = new SwerveSetpoint(getCurrentSpeeds(), getState().ModuleStates, DriveFeedforwards.zeros(config.numModules));
+
+        if (Utils.isSimulation()) {
+            startSimThread();
+        }
     }
 
     /*
@@ -775,6 +783,10 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         return this.getState().Speeds;
     }
 
+    public Optional<Pose2d> getPoseAtTime(double time) {
+        return poseBuffer.getSample(time);
+    }
+
     @Override
     public void periodic() {
        // System.out.println(forwardAccelTunable.getValue());
@@ -782,7 +794,15 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         odometryHeading = getRobotPose().getRotation();
         isRobotAtAngleSetPoint = thetaController.atSetpoint();
         fieldRelative = !RobotContainer.driverController.L2().getAsBoolean();
+        fieldRelative = false;
 
+        Pose2d robotPose = getRobotPose();
+        Logger.recordOutput("Drive/robotPose", robotPose);
+        robotPose = FieldPositionUtils.getNearestPositionOnField(robotPose);
+        Logger.recordOutput("Drive/onFieldRobotPose", robotPose);
+        resetPose(robotPose);
+
+        poseBuffer.addSample(Timer.getFPGATimestamp(), robotPose);
 
         strafeLimiter.setLimit(getMaxHorizontalAccel());
         forwardLimiter.setLimit(getMaxForwardAccel());
@@ -823,6 +843,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     private void startSimThread() {
         mapleSimSwerveDrivetrain = new MapleSimSwerveDrivetrain(
                 Units.Seconds.of(0.002),
+                getRobotPose(),
                 // TODO: modify the following constants according to your robot
                 Units.Pounds.of(60), // robot weight
                 Units.Inches.of(35.5), // bumper length
@@ -841,4 +862,5 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         m_simNotifier = new Notifier(mapleSimSwerveDrivetrain::update);
         m_simNotifier.startPeriodic(0.002);
     }
+
 }

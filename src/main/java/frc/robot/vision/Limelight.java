@@ -9,13 +9,20 @@ import org.littletonrobotics.junction.Logger;
 
 import com.ctre.phoenix6.Utils;
 
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -23,6 +30,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Robot;
 import frc.robot.RobotContainer;
 import frc.robot.util.PoseUtils;
 import frc.robot.vision.LimelightHelpers.RawFiducial;
@@ -147,9 +155,13 @@ public class Limelight extends SubsystemBase {
 
     public RawFiducial getClosestTag() {
         RawFiducial[] tags = LimelightHelpers.getRawFiducials(cameraName);
+        if (tags.length == 0) {
+            System.out.println("TAGS IS ZERO");
+            return null;
+        }
         RawFiducial largest = tags[0];
         for (RawFiducial tag : tags) {
-            if (tag.distToRobot > largest.distToRobot) {
+            if (tag.ta > largest.ta) {
                 largest = tag;
             }
         }
@@ -193,12 +205,12 @@ public class Limelight extends SubsystemBase {
                 Logger.recordOutput(cameraName + "/mt2Pose", mt2.pose);
                 Logger.recordOutput(cameraName + "/Calculated stdevs", Math.pow(0.5, mt2.tagCount) * 2 * mt2.avgTagDist);
                 // Vector<N3> = VecBuilder.fill
-                RobotContainer.drivetrain.addVisionMeasurement(
-                    mt2.pose,
-                    Utils.fpgaToCurrentTime(mt2.timestampSeconds),
-                    // VecBuilder.fill(0.000716, 0.0003, Double.POSITIVE_INFINITY));
-                    VecBuilder.fill(Math.pow(0.5, mt2.tagCount) * 2 * mt2.avgTagDist, Math.pow(0.5, mt2.tagCount) * 2 * mt2.avgTagDist, Double.POSITIVE_INFINITY)
-                );
+                // RobotContainer.drivetrain.addVisionMeasurement(
+                //     mt2.pose,
+                //     Utils.fpgaToCurrentTime(mt2.timestampSeconds),
+                //     // VecBuilder.fill(0.000716, 0.0003, Double.POSITIVE_INFINITY));
+                //     VecBuilder.fill(Math.pow(0.5, mt2.tagCount) * 2 * mt2.avgTagDist, Math.pow(0.5, mt2.tagCount) * 2 * mt2.avgTagDist, Double.POSITIVE_INFINITY)
+                // );
             } else {
                 Logger.recordOutput(cameraName + "/mt2PoseRejected", mt2.pose);
             }
@@ -267,12 +279,20 @@ public class Limelight extends SubsystemBase {
 
     @AutoLogOutput
     public double getTX() {
-        return tx * angleMult;
+        if (Robot.isReal()) {
+            return tx * angleMult;
+        } else {
+            return tx;
+        }
     }
 
     @AutoLogOutput
     public double getTY() {
-        return ty * -angleMult;
+        if (Robot.isReal()) {
+            return ty * -angleMult;
+        } else {
+            return ty;
+        }
     }
 
 
@@ -303,6 +323,12 @@ public class Limelight extends SubsystemBase {
         return (int) LimelightHelpers.getFiducialID(cameraName);
     }
 
+    private Translation2d tagPosition = LimelightSim.loadDefaultFieldLayout().getTagPose(18).get().toPose2d().getTranslation();
+    
+    private long lastHeartBeat = 0;
+    private long frameCount = 0;
+    private long aprilTagFrameCount = 0;
+    private double startTime = -1;
     public void periodic() {
         // tagID = (int) Limetable.getEntry("tid").getDouble(-1);
         tx = LimelightHelpers.getTX(cameraName);
@@ -311,6 +337,90 @@ public class Limelight extends SubsystemBase {
         xDistPub.set(getHorizontalDistanceToReef());
         yDistPub.set(getStraightDistanceToReef());
         horizontalDistPub.set(getDistanceToReef());
+        
+        Logger.recordOutput(cameraName + "/Tag18/tagID", getTagID());
+        if (getTagID() == 18) {
+            Logger.recordOutput(cameraName + "/Tag18/tx", tx);
+            Logger.recordOutput(cameraName + "/Tag18/ty", ty);
+        }
+
+        if (startTime < 0) {
+            startTime = Timer.getFPGATimestamp();
+        }
+        var entry = LimelightHelpers.getLimelightNTTableEntry(cameraName, "hb");
+        long heartBeat = entry.getInteger(0);
+        if (heartBeat != lastHeartBeat) {
+            lastHeartBeat = heartBeat;
+            frameCount++;
+            Logger.recordOutput(cameraName + "/frameCount", frameCount);
+            Logger.recordOutput(cameraName + "/framesPerSecond", frameCount / (Timer.getFPGATimestamp() - startTime));
+            if (LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(cameraName) != null) {
+                aprilTagFrameCount++;
+                Logger.recordOutput(cameraName + "/aprilTagFrameCount", aprilTagFrameCount);
+                Logger.recordOutput(cameraName + "/aprilTagFramesPerSecond", aprilTagFrameCount / (Timer.getFPGATimestamp() - startTime));
+            }
+        }
+
+        double[] corners = getCorners(18);
+        if (corners != null) {
+            // Get min and max because limelight documentation says corners can be in any order?
+            // Maybe we should determine the bottom left and bottom right corners and use those?
+            // Not sure it makes a difference
+            double minX = Double.MAX_VALUE;
+            double maxX = Double.MIN_VALUE;
+            double minY = Double.MAX_VALUE;
+            double maxY = Double.MIN_VALUE;
+            for (int i=0; i<corners.length; i+=2) {
+                if (corners[i] < minX) {
+                    minX = corners[i];
+                }
+                if (corners[i] > maxX) {
+                    maxX = corners[i];
+                }
+                if (corners[i+1] < minY) {
+                    minY = corners[i+1];
+                }
+                if (corners[i+1] > maxY) {
+                    maxY = corners[i+1];
+                }
+            }
+            // Width and height of tag in pixels
+            double width = maxX - minX;
+            double height = maxY - minY;
+            Logger.recordOutput(cameraName + "/Tag/width", width);
+            Logger.recordOutput(cameraName + "/Tag/height", height);
+            // Width and height of tag as angles (radians)
+            double HORIZONTAL_FOCAL_LENGTH = (1280.0 / 2.0) / Math.tan(Units.degreesToRadians(82.0 / 2.0));
+            double VERTICAL_FOCAL_LENGTH = (720.0 / 2.0) / Math.tan(Units.degreesToRadians(52.8 / 2.0));
+            double xAngle = Math.atan(width / HORIZONTAL_FOCAL_LENGTH);
+            double yAngle = Math.atan(height / VERTICAL_FOCAL_LENGTH);
+            Logger.recordOutput(cameraName + "/Tag/xAngle", Units.radiansToDegrees(xAngle));
+            Logger.recordOutput(cameraName + "/Tag/yAngle", Units.radiansToDegrees(yAngle));
+
+            // Size of tags are 8.75 inches
+            // So x distance to tag = size / tan()
+            double x = Math.abs(Units.inchesToMeters(8.75) / Math.tan(yAngle));
+            // y distance to tag is x distance * tan(x angle to tag)
+            double y = x * Math.tan(Units.degreesToRadians(getTX()));
+            Logger.recordOutput(cameraName + "/Tag/x", x);
+            Logger.recordOutput(cameraName + "/Tag/y", y);
+            Logger.recordOutput(cameraName + "/Tag/dist", Math.sqrt(x*x + y*y));
+
+            Translation2d robotPosition = RobotContainer.drivetrain.getRobotPose().getTranslation();
+            double x2 = Math.abs(robotPosition.getX() - tagPosition.getX());
+            double y2 = Math.abs(robotPosition.getY() - tagPosition.getY());
+            Logger.recordOutput(cameraName + "/Tag/angle2", RobotContainer.drivetrain.getRobotPose().getRotation().getDegrees());
+            Logger.recordOutput(cameraName + "/Tag/x2", x2);
+            Logger.recordOutput(cameraName + "/Tag/y2", y2);
+            Logger.recordOutput(cameraName + "/Tag/dist2", Math.sqrt(x2*x2 + y2*y2));
+
+            double yAngle2 = Math.atan(Units.inchesToMeters(8.75) / x2);
+            Logger.recordOutput(cameraName + "/Tag/yAngle2", yAngle2);
+
+            double verticalFocalLength2 = height / Math.tan(yAngle2);
+            Logger.recordOutput(cameraName + "/Tag/verticalFocalLength", VERTICAL_FOCAL_LENGTH);
+            Logger.recordOutput(cameraName + "/Tag/verticalFocalLength2", verticalFocalLength2);
+        }
     }
 
     public Command ifHasTarget(Command cmd) {
@@ -355,9 +465,22 @@ public class Limelight extends SubsystemBase {
         RawFiducial[] fiducials = LimelightHelpers.getRawFiducials(cameraName);
         for (int i=0; i<fiducials.length; i++) {
             if (fiducials[i].id == tagId) {
+                if (tcornxy.length < i*8+8) {
+                    return null;
+                }
                 return new double[] { tcornxy[i*8], tcornxy[i*8+1], tcornxy[i*8+2], tcornxy[i*8+3], tcornxy[i*8+4], tcornxy[i*8+5], tcornxy[i*8+6], tcornxy[i*8+7] };
             }
         }
         return null;
+    }
+    /**
+     * Returns the transform from the robot to the camera
+     * @return
+     */
+    public Transform3d getRobotToCamera() {
+        Translation3d robotToCameraTrl = new Translation3d(cameraOffsetX, cameraOffsetY, cameraHeightMeters);
+        Rotation3d robotToCameraRot = new Rotation3d(0, Units.degreesToRadians(cameraAngle), 0);
+        // return new Transform3d(robotToCameraTrl, Rotation3d.kZero);
+        return new Transform3d(robotToCameraTrl, robotToCameraRot);
     }
 }

@@ -12,6 +12,7 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.net.PortForwarder;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -19,6 +20,13 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
+import frc.robot.commands.AlignToClosestReefTagOffset;
+import frc.robot.commands.AlignToReefTagCommand2;
+import frc.robot.commands.AlignToReefTagCommand3;
+import frc.robot.commands.AlignToReefTagCommand4;
+import frc.robot.commands.AlignToTagCommand;
+import frc.robot.commands.AlignToTagCommand2;
+import frc.robot.commands.AlignToTagCommand4;
 import frc.robot.commands.GoToReefCommand;
 import frc.robot.leds.LEDs;
 import frc.robot.subsystems.Ratchet;
@@ -38,6 +46,10 @@ import frc.robot.util.TunerConstants;
 import frc.robot.vision.ElevatorLimelight;
 import frc.robot.vision.Limelight;
 
+import frc.robot.vision.LimelightSim;
+import frc.robot.vision.LimelightSim.LimelightModel;
+import frc.robot.vision.LimelightSim.LimelightResolution;
+
 
 public class RobotContainer {
 
@@ -50,13 +62,16 @@ public class RobotContainer {
   public static final boolean logMode = true;
 
   //Subsystems
-  public static Limelight leftLimelight = new Limelight("limelight-left", 0.38, 0, 0, 0, true);
-  public static Limelight rightLimelight = new Limelight("limelight-right", 0.38, 0, 0, 0, false);
+  public static Limelight leftLimelight = new Limelight("limelight-left", Units.inchesToMeters(14.5995), 0, Units.inchesToMeters(4.9305), Units.inchesToMeters(8.827), true);
+  public static Limelight rightLimelight = new Limelight("limelight-right", Units.inchesToMeters(14.5995), 0, Units.inchesToMeters(4.9305), -Units.inchesToMeters(8.827), false);
+  // public static Limelight rightLimelight = new Limelight("limelight-right", Units.inchesToMeters(14.5995), 0, 0, 0, false);
   public static Ratchet ratchet = new Ratchet();
   public static Drivetrain drivetrain = new Drivetrain();
   public static Elevator elevator = new Elevator();
   public static ElevatorLimelight elevatorLimelight = new ElevatorLimelight("limelight-elevator", 0, 0, 0, 0, true);
+  public static LimelightSim limelightSim;
   public static LEDs leds = new LEDs();
+
   public static Rollers rollers = new Rollers();
   public static Orchestra orchestra = new Orchestra();
   public static Arm arm = new Arm();
@@ -77,6 +92,15 @@ public class RobotContainer {
     for (int i = 5800; i <= 5807; i++) {
       PortForwarder.add(i, "limelight-left.local", i);
       PortForwarder.add(i+10, "limelight-right.local", i);
+    }
+
+    // Setup limelight sim
+    if (Robot.isSimulation()) {
+      limelightSim = new LimelightSim(() -> drivetrain.getRobotPose());
+
+      // Add bottom limelight to sim
+      limelightSim.addCamera(leftLimelight.getRobotToCamera(), "limelight-left", LimelightModel.LIMELIGHT_4, LimelightResolution.RESOLTUION_1280x960, 20, 30);
+      limelightSim.addCamera(rightLimelight.getRobotToCamera(), "limelight-right", LimelightModel.LIMELIGHT_4, LimelightResolution.RESOLTUION_1280x960, 20, 30);
     }
   }
 
@@ -228,13 +252,42 @@ public class RobotContainer {
     // testingController.square().whileTrue(
     //   drivetrain.sysIdQuasistatic(Direction.kReverse)
     // );
-    testingController.circle().onTrue(ratchet.engageServos()).onFalse(ratchet.disengageServos());
+    // testingController.triangle().whileTrue()
+    // testingController.circle().onTrue(ratchet.engageServos()).onFalse(ratchet.disengageServos());
 
-    testingController.touchpad().onTrue(Commands.runOnce(() -> elevator.resetEncoders(0)).ignoringDisable(true));
-   // testingController.triangle().whileTrue(new WheelRadiusCharacterization(WheelRadiusCharacterization.Direction.CLOCKWISE, drivetrain));
-   // testingController.circle().whileTrue(new WheelRadiusCharacterization(WheelRadiusCharacterization.Direction.COUNTER_CLOCKWISE, drivetrain));
-    testingController.cross().onTrue(Commands.runOnce(() -> elevator.setNeutralMode(NeutralModeValue.Coast)).ignoringDisable(true)).onFalse(Commands.runOnce(() -> elevator.setNeutralMode(NeutralModeValue.Brake)).ignoringDisable(true));
-   }
+  //   testingController.touchpad().onTrue(Commands.runOnce(() -> elevator.resetEncoders(0)).ignoringDisable(true));
+  //  // testingController.triangle().whileTrue(new WheelRadiusCharacterization(WheelRadiusCharacterization.Direction.CLOCKWISE, drivetrain));
+  //  // testingController.circle().whileTrue(new WheelRadiusCharacterization(WheelRadiusCharacterization.Direction.COUNTER_CLOCKWISE, drivetrain));
+  //   testingController.cross().onTrue(Commands.runOnce(() -> elevator.setNeutralMode(NeutralModeValue.Coast)).ignoringDisable(true)).onFalse(Commands.runOnce(() -> elevator.setNeutralMode(NeutralModeValue.Brake)).ignoringDisable(true));
+
+    // testingController.circle()
+    //   .whileTrue(new AlignToClosestReefTagOffset(TagOffset.CENTER, true))
+    //   .onFalse(new AlignToClosestReefTagOffset(TagOffset.CENTER, false).until(() -> drivetrain.joystickInputDetected()));
+
+      // testingController.cross()
+      //   .whileTrue(new AlignToReefTagCommand4(18, TagOffset.LEFT, rightLimelight));
+
+      testingController.cross()
+        .whileTrue(new AlignToTagCommand(TagOffset.LEFT, true, false))
+        .onFalse(new AlignToTagCommand(TagOffset.LEFT, false, false ).until(() -> drivetrain.joystickInputDetected()));
+      
+      testingController.circle()
+        .whileTrue(new AlignToTagCommand(TagOffset.RIGHT, true, false))
+        .onFalse(new AlignToTagCommand(TagOffset.RIGHT, false, false ).until(() -> drivetrain.joystickInputDetected()));
+
+        // testingController.square()
+      //   .whileTrue(new AlignToTagCommand(TagOffset.LEFT, false, false));
+      // testingController.triangle()
+      //   .whileTrue(new AlignToTagCommand(TagOffset.RIGHT, true, false));
+    // testingController.square()
+    //   .whileTrue(new AlignToTagCommand4(leftLimelight, 18, TagOffset.RIGHT, false, true));
+      // testingController.triangle()
+      //   .whileTrue(new AlignToTagCommand4(rightLimelight, 18, TagOffset.LEFT, false, false));
+      // testingController.square()
+      //   .whileTrue(new AlignToTagCommand(leftLimelight, 18, TagOffset.RIGHT, false, true));
+      // testingController.cross()
+      //   .whileTrue(new AlignToTagCommand(leftLimelight, 18, TagOffset.RIGHT, false, false));
+    }
 
 
   /* MUSIC */

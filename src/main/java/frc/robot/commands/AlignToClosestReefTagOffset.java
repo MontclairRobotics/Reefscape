@@ -12,6 +12,9 @@ import frc.robot.vision.Limelight;
 import frc.robot.vision.LimelightHelpers;
 import frc.robot.vision.LimelightHelpers.RawFiducial;
 
+import org.littletonrobotics.junction.Logger;
+
+
 public class AlignToClosestReefTagOffset extends Command {
     
     private PIDController xController;
@@ -27,9 +30,9 @@ public class AlignToClosestReefTagOffset extends Command {
 
     public AlignToClosestReefTagOffset(TagOffset offset, boolean isOffset) {
         if (offset.isLeft()) {
-            camera = RobotContainer.leftLimelight;
-        } else {
             camera = RobotContainer.rightLimelight;
+        } else {
+            camera = RobotContainer.leftLimelight;
         }
 
         xOffset = offset.getXOffsetM();
@@ -53,6 +56,15 @@ public class AlignToClosestReefTagOffset extends Command {
         //sets the tx and ty setpoints
         // TODO we want our setpoints to be zero, right?
 
+        RawFiducial closest = camera.getClosestTag();
+        if (closest == null) {
+            System.out.println("**************** CANCELED IN INIT ****************");
+            cancel();
+            return;
+        }
+        System.out.println("CLOSEST: " + closest.id);
+        thetaOffset = Limelight.tagRotationsMap.get(closest.id).getRadians();
+
         xController.setSetpoint(xOffset);
         yController.setSetpoint(yOffset);
         thetaController.setSetpoint(thetaOffset * (Math.PI / 180.0));
@@ -67,23 +79,39 @@ public class AlignToClosestReefTagOffset extends Command {
         double ySpeed = 0;
 
         RawFiducial closest = camera.getClosestTag();
+        if (closest == null) {
+            System.out.println("**************** CANCELED ****************");
+            cancel();
+            return;
+        }
+
         //TODO will this just get stuck against a wall?
         double thetaSpeed = thetaController.calculate(RobotContainer.drivetrain.getRobotPose().getRotation().getRadians());
+        Logger.recordOutput("AlignCommand/xDist", thetaSpeed);
 
         // if (thetaController.atSetpoint()) {
 
             double xDist = closest.distToCamera * -Math.sin(closest.txnc * (Math.PI / 180.0)) + camera.cameraOffsetX; // TODO invert?
             double yDist = closest.distToCamera * -Math.cos(closest.txnc * (Math.PI / 180.0)) + camera.cameraOffsetY;
+
+            Logger.recordOutput("AlignCommand/xDist", xDist);
+            Logger.recordOutput("AlignCommand/yDist", yDist);
+            System.out.println("xDist: " + xDist + " yDist: " + yDist);
+
             // TODO these may need inverts
             xSpeed = xController.calculate(xDist);
             ySpeed = yController.calculate(yDist);
-        // }
+
+            Logger.recordOutput("AlignCommand/xSpeed", xSpeed);
+            Logger.recordOutput("AlignCommand/ySpeed", ySpeed);
+            System.out.println("xSpeed: " + xSpeed + " ySpeed: " + ySpeed);
+            // }
 
         //drives robot relative because tx and ty are robot relative
         //no rotation input, we assume this is being used when robot is aligned heading-wise, but not translationally
         //can add one to also move rotationally then translate later
         //doesn't respect operator persective (this doesn't matter because its robot relative anyways)
-        RobotContainer.drivetrain.driveWithSetpoint(xSpeed, ySpeed, thetaSpeed, false, false, false);
+        RobotContainer.drivetrain.driveWithSetpoint(0, xDist, thetaSpeed, false, false, false);
     }
 
     @Override

@@ -32,19 +32,19 @@ public class Robot extends LoggedRobot {
       Logger.recordMetadata("Project Name", "Reefscape"); // Set a metadata value
 
       if (isReal()) {
-      Logger.addDataReceiver(new WPILOGWriter()); // Log to a USB stick ("/U/logs")
-      Logger.addDataReceiver(new NT4Publisher()); // Publish data to NetworkTables
-      new PowerDistribution(1, ModuleType.kRev); // Enables power distribution
+        Logger.addDataReceiver(new WPILOGWriter()); // Log to a USB stick ("/U/logs")
+        Logger.addDataReceiver(new NT4Publisher()); // Publish data to NetworkTables
+        new PowerDistribution(1, ModuleType.kRev); // Enables power distribution
       // logging
+      } else if (isSimulation()) {
+        Logger.addDataReceiver(new NT4Publisher()); // Publish data to NetworkTables
+      } else {
+        setUseTiming(false); // Run as fast as possible
+        String logPath = LogFileUtil.findReplayLog(); // Pull the replay log from
+        // AdvantageScope (or prompt the user)
+        Logger.setReplaySource(new WPILOGReader(logPath)); // Read replay log
+        Logger.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim"))); // Save outputs to a new log
       }
-      // } else {
-      // setUseTiming(false); // Run as fast as possible
-      // String logPath = LogFileUtil.findReplayLog(); // Pull the replay log from
-      // // AdvantageScope (or prompt the user)
-      // Logger.setReplaySource(new WPILOGReader(logPath)); // Read replay log
-      // Logger.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath,
-      // "_sim"))); // Save outputs to a new log
-      // }
 
       Logger.recordMetadata("GitSHA", BuildConstants.GIT_SHA);
       Logger.start(); // Start logging! No more data receivers, replay sources, or

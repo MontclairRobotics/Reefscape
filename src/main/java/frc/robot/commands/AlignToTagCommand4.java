@@ -1,9 +1,13 @@
 package frc.robot.commands;
 
+import java.io.IOException;
 import java.util.HashMap;
+import java.util.Optional;
 
 import org.littletonrobotics.junction.Logger;
 
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -17,10 +21,10 @@ import frc.robot.vision.Limelight;
 /**
  * This command will align to the left, right or center of a tag
  */
-public class AlignToTagCommand extends Command {
+public class AlignToTagCommand4 extends Command {
     
     // Focal lengths in pixels
-    // Assumes resolution of 1280x800 and Limelight 4 with FOV of 82 horizonatl and 52.8 vertical
+    // Assumes resolution of 1280x720 and Limelight 4 with FOV of 82 horizonatl and 52.8 vertical
     public static final double HORIZONTAL_FOCAL_LENGTH = (1280.0 / 2.0) / Math.tan(Units.degreesToRadians(82.0 / 2.0));
     public static final double VERTICAL_FOCAL_LENGTH = (800.0 / 2.0) / Math.tan(Units.degreesToRadians(52.8 / 2.0));
 
@@ -33,17 +37,51 @@ public class AlignToTagCommand extends Command {
     private Limelight camera;
     private int assignedTagId = -1;
     private int tagId = -1;
+    private boolean useTagSize = false;
     private TagOffset tagOffset;
     private Rotation2d targetRotation;
     private boolean isOffset;
-    private boolean useTagSize = false;
     
+    public static HashMap<Integer, Rotation2d> tagRotationsMap = new HashMap<Integer, Rotation2d>();
+    {
+        tagRotationsMap.put(6, Rotation2d.fromDegrees(120));
+        tagRotationsMap.put(7, Rotation2d.fromDegrees(180));
+        tagRotationsMap.put(8, Rotation2d.fromDegrees(-120));
+        tagRotationsMap.put(9, Rotation2d.fromDegrees(-60));
+        tagRotationsMap.put(10, Rotation2d.fromDegrees(0));
+        tagRotationsMap.put(11, Rotation2d.fromDegrees(60));
+
+        // TODO: Should these be flipped?
+        tagRotationsMap.put(17, Rotation2d.fromDegrees(60));
+        tagRotationsMap.put(18, Rotation2d.fromDegrees(0));
+        tagRotationsMap.put(19, Rotation2d.fromDegrees(-60));
+        tagRotationsMap.put(20, Rotation2d.fromDegrees(-120));
+        tagRotationsMap.put(21, Rotation2d.fromDegrees(180));
+        tagRotationsMap.put(22, Rotation2d.fromDegrees(120));
+    }
+
+    // Field
+    public static AprilTagFieldLayout fieldLayout = loadDefaultFieldLayout();
+    /**
+     * Load the field layout from the default field
+     */
+    private static AprilTagFieldLayout loadDefaultFieldLayout() {
+        try {
+            return AprilTagFieldLayout.loadFromResource(AprilTagFields.kDefaultField.m_resourceFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+
+
     /**
      * Aligns to the given tag
      * @param camera The limelight to use
      * @param useTagSize If true, uses the size of the tag to determine distance, otherwise uses the height of the tag
      */
-    public AlignToTagCommand(TagOffset offset, boolean isOffset, boolean useTagSize) {
+    private AlignToTagCommand4(TagOffset offset, boolean useTagSize, boolean isOffset) {
         if (offset == TagOffset.LEFT) {
             this.camera = RobotContainer.rightLimelight;
         } else {
@@ -69,7 +107,7 @@ public class AlignToTagCommand extends Command {
      * @param offset The offset to align to
      * @param useTagSize If true, uses the size of the tag to determine distance, otherwise uses the height of the tag
      */
-    public AlignToTagCommand(int tagId, TagOffset offset, boolean isOffset, boolean useTagSize) {
+    public AlignToTagCommand4(int tagId, TagOffset offset, boolean useTagSize, boolean isOffset) {
         this(offset, useTagSize, isOffset);
         this.assignedTagId = tagId;
     }
@@ -79,21 +117,20 @@ public class AlignToTagCommand extends Command {
      */
     @Override
     public void initialize() {
-        // System.out.println("AlignToTagCommand initialize");
+        System.out.println("initializing align to tag command");
         // Find largest tag
         if (assignedTagId != -1) {
             tagId = assignedTagId;
         } else {
-            tagId = camera.getLargestAprilTag(Limelight.tagRotationsMap.keySet());
+            tagId = camera.getLargestAprilTag(tagRotationsMap.keySet());
         }
         if (tagId == -1) {
             System.out.println("No tag found");
             return;
         }
-        this.targetRotation = Limelight.tagRotationsMap.get(tagId);
+        this.targetRotation = tagRotationsMap.get(tagId);
 
         // Set limelight priority tag
-        // So we always get tx and ty to this tag
         camera.setPriorityTagID(tagId);
 
         // x is forward and back, y is side to side
@@ -196,7 +233,7 @@ public class AlignToTagCommand extends Command {
 
         // Get tx and ty
         double tx = camera.getTX();
-        double ty = -camera.getTY();
+        double ty = camera.getTY();
         Logger.recordOutput("AlignToTag/tx", tx);
         Logger.recordOutput("AlignToTag/ty", ty);
 
@@ -273,13 +310,12 @@ public class AlignToTagCommand extends Command {
     }
 
     /**
-     * Stop the robot and clear camera priority on end
+     * Stop the robot on end
      */
     @Override
     public void end(boolean interrupted) {
-        // System.out.println("AlignToTagCommand end");
+        System.out.println("AlignToTagCommand4 end");
         tagId = -1;
-        camera.setPriorityTagID(-1);
         RobotContainer.drivetrain.drive(0, 0, 0, true, false);
     }
 

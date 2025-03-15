@@ -69,6 +69,7 @@ public class MapleSimSwerveDrivetrain {
      */
     public MapleSimSwerveDrivetrain(
             Time simPeriod,
+            Pose2d robotPose,
             Mass robotMassWithBumpers,
             Distance bumperLengthX,
             Distance bumperWidthY,
@@ -97,14 +98,16 @@ public class MapleSimSwerveDrivetrain {
                         Meters.of(moduleConstants[0].WheelRadius),
                         KilogramSquareMeters.of(moduleConstants[0].SteerInertia),
                         wheelCOF));
-        mapleSimDrive = new SwerveDriveSimulation(simulationConfig, new Pose2d());
+        mapleSimDrive = new SwerveDriveSimulation(simulationConfig, robotPose);
 
         SwerveModuleSimulation[] moduleSimulations = mapleSimDrive.getModules();
         for (int i = 0; i < this.simModules.length; i++)
             simModules[i] = new SimSwerveModule(moduleConstants[0], moduleSimulations[i], modules[i]);
 
+        SimulatedArena.overrideInstance(new EmtpyArena());
         SimulatedArena.overrideSimulationTimings(simPeriod, 1);
         SimulatedArena.getInstance().addDriveTrainSimulation(mapleSimDrive);
+        
     }
 
     /**
