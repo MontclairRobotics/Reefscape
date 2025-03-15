@@ -174,8 +174,26 @@ public class Limelight extends SubsystemBase {
         return tagRotationsMap.get(closestId);
     }
 
+    private long lastHeartBeat = 0;
+    private long frameCount = 0;
+    private long aprilTagFrameCount = 0;
+    private long validAprilTagFrameCount = 0;
+    private double startTime = -1;
     public void poseEstimationMegatag2() {
 
+        if (RobotContainer.debugMode) {
+            if (startTime < 0) {
+                startTime = Timer.getFPGATimestamp();
+            }
+            var entry = LimelightHelpers.getLimelightNTTableEntry(cameraName, "hb");
+            long heartBeat = entry.getInteger(0);
+            if (heartBeat != lastHeartBeat) {
+                lastHeartBeat = heartBeat;
+                frameCount++;
+                Logger.recordOutput(cameraName + "/frameCount", frameCount);
+                Logger.recordOutput(cameraName + "/framesPerSecond", frameCount / (Timer.getFPGATimestamp() - startTime));
+            }
+        }
 
         // System.out.println(RobotContainer.drivetrain.getWrappedHeading().getDegrees());
         double angle = (RobotContainer.drivetrain.getWrappedHeading().getDegrees() + 360) % 360;
@@ -184,6 +202,12 @@ public class Limelight extends SubsystemBase {
         // System.out.println(Utils.getCurrentTimeSeconds());
         boolean shouldRejectUpdate = false;
         if (mt2 != null) {
+            if (RobotContainer.debugMode) {
+                aprilTagFrameCount++;
+                Logger.recordOutput(cameraName + "/aprilTagFrameCount", aprilTagFrameCount);
+                Logger.recordOutput(cameraName + "/aprilTagFramesPerSecond", aprilTagFrameCount / (Timer.getFPGATimestamp() - startTime));
+            }
+
             RawFiducial[] tags = mt2.rawFiducials;
             int[] ids = new int[tags.length];
             for (int i = 0; i < tags.length; i++) {
@@ -244,6 +268,12 @@ public class Limelight extends SubsystemBase {
 
             //adds vision measurement if conditions are met
             if (!shouldRejectUpdate) {
+                if (RobotContainer.debugMode) {
+                    validAprilTagFrameCount++;
+                    Logger.recordOutput(cameraName + "/validAprilTagFrameCount", validAprilTagFrameCount);
+                    Logger.recordOutput(cameraName + "/validAprilTagFramesPerSecond", validAprilTagFrameCount / (Timer.getFPGATimestamp() - startTime));
+                }
+
                 Logger.recordOutput(cameraName + "/mt2Pose", mt2.pose);
                 Logger.recordOutput(cameraName + "/Calculated stdevs", Math.pow(0.5, mt2.tagCount) * 2 * mt2.avgTagDist);
                 // Vector<N3> = VecBuilder.fill
