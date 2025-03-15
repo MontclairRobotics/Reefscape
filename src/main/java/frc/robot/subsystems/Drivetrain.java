@@ -94,7 +94,6 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
     private TimeInterpolatableBuffer<Pose2d> poseBuffer = TimeInterpolatableBuffer.createBuffer(3);
 
-
     DoublePublisher driveCurrentPub;
     DoublePublisher driveVelocityPub;
 
@@ -309,9 +308,12 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
         // Always take max rotational accel over max drive (I think?)
         double maxAccel = Math
-                .sqrt(Math.abs(Math.pow((9.81 * (ROBOT_WIDTH / 2.0)) / getCOMHeight(), 2) - Math.pow(targetRotAccel * COM_TO_CENTER_OF_ROTATION, 2))) * 0.9;
+                .sqrt(Math.abs(Math.pow((9.81 * (ROBOT_WIDTH / 2.0)) / getCOMHeight(), 2)
+                        - Math.pow(targetRotAccel * COM_TO_CENTER_OF_ROTATION, 2)))
+                * 0.9;
 
-        // System.out.println("Max Accel: " + maxAccel + "; Max Rot Accel:" + maxRotAccel);
+        // System.out.println("Max Accel: " + maxAccel + "; Max Rot Accel:" +
+        // maxRotAccel);
         // System.out.println(maxAccel);
         targetXAccel = MathUtil.clamp(targetXAccel, -maxAccel, maxAccel);
         targetYAccel = MathUtil.clamp(targetYAccel, -maxAccel, maxAccel);
@@ -324,10 +326,11 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         targetXSpeed = (timestep * targetXAccel) + currentXSpeed;
         targetYSpeed = (timestep * targetYAccel) + currentYSpeed;
 
-        // System.out.println("Target X Speed: " + targetSpeeds.vxMetersPerSecond + "Limited Speed: " + targetXSpeed);
+        // System.out.println("Target X Speed: " + targetSpeeds.vxMetersPerSecond +
+        // "Limited Speed: " + targetXSpeed);
         Logger.recordOutput("Drive/TargetXSpeed", targetSpeeds.vxMetersPerSecond);
         Logger.recordOutput("Drive/LimitedXSpeed", targetXSpeed);
-        
+
         Logger.recordOutput("Drive/TargetYSpeed", targetSpeeds.vyMetersPerSecond);
         Logger.recordOutput("Drive/LimitedYSpeed", targetYSpeed);
 
@@ -336,7 +339,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
         Logger.recordOutput("Drive/MaxAccel", maxAccel);
         Logger.recordOutput("Drive/MaxThetaAccel", maxRotAccel);
-        
+
         Logger.recordOutput("Drive/TargetRotAccel", targetRotAccel);
         Logger.recordOutput("Drive/TargetXAccel", targetXAccel);
         Logger.recordOutput("Drive/TargetYAccel", targetYAccel);
@@ -344,25 +347,30 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     }
 
     public Command driveToReefCommandFast(TagOffset direction) {
-        BooleanSupplier isL4 = () -> {return RobotContainer.elevator.getState() == RobotState.L4;};
+        BooleanSupplier isL4 = () -> {
+            return RobotContainer.elevator.getState() == RobotState.L4;
+        };
         return Commands.sequence(
-            Commands.parallel(
-                Commands.defer(() -> new GoToReefCommand(direction, !isL4.getAsBoolean()), Set.of(this)),
-                RobotContainer.elevator.setState(RobotContainer.elevator.getState())
-            ),
-            new GoToReefCommand(direction, false).unless(isL4)
-        );
+                Commands.parallel(
+                        Commands.defer(() -> new GoToReefCommand(direction, !isL4.getAsBoolean()), Set.of(this)),
+                        RobotContainer.elevator.setState(RobotContainer.elevator.getState())),
+                new GoToReefCommand(direction, false).unless(isL4));
     }
 
     double ROBOT_COM_NO_ELEVATOR = inchesToMeters(5.8); // the COM of the robot and stage 1 of the elevator
     double ROBOT_MASS_NO_ELEVATOR = lbsToKilograms(115.34);
 
     double ROBOT_MASS_ELEVATOR = ROBOT_MASS - ROBOT_MASS_NO_ELEVATOR;
+
     public double getCOMHeight() {
         // return ROBOT_COM_NO_ELEVATOR +
-        double elevatorCOMHeight = RobotContainer.elevator.getHeight() - inchesToMeters(11.1); // TODO make an interpolating tree map or something better
-        // System.out.println(((ROBOT_MASS_NO_ELEVATOR * ROBOT_COM_NO_ELEVATOR) + (ROBOT_MASS_ELEVATOR * elevatorCOMHeight)) / ROBOT_MASS);
-        return ((ROBOT_MASS_NO_ELEVATOR * ROBOT_COM_NO_ELEVATOR) + (ROBOT_MASS_ELEVATOR * elevatorCOMHeight)) / ROBOT_MASS;
+        double elevatorCOMHeight = RobotContainer.elevator.getHeight() - inchesToMeters(11.1); // TODO make an
+                                                                                               // interpolating tree map
+                                                                                               // or something better
+        // System.out.println(((ROBOT_MASS_NO_ELEVATOR * ROBOT_COM_NO_ELEVATOR) +
+        // (ROBOT_MASS_ELEVATOR * elevatorCOMHeight)) / ROBOT_MASS);
+        return ((ROBOT_MASS_NO_ELEVATOR * ROBOT_COM_NO_ELEVATOR) + (ROBOT_MASS_ELEVATOR * elevatorCOMHeight))
+                / ROBOT_MASS;
     }
 
     /*
@@ -406,13 +414,13 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
      * 
      * 
      */
-    public void drive(double velocityX, double velocityY, double rotationalVelocity, boolean fieldRelative,
+    public void drive(double xSpeed, double ySpeed, double thetaSpeed, boolean fieldRelative,
             boolean respectOperatorPerspective) {
-        
+
         if (IS_LIMITING_ACCEL) {
-            rotationalVelocity = rotationLimiter.calculate(rotationalVelocity);
-            velocityX = forwardLimiter.calculate(velocityX);
-            velocityY = strafeLimiter.calculate(velocityY);
+            thetaSpeed = rotationLimiter.calculate(thetaSpeed);
+            xSpeed = forwardLimiter.calculate(xSpeed);
+            ySpeed = strafeLimiter.calculate(ySpeed);
         }
 
         // if (respectOperatorPerspective) {
@@ -423,40 +431,70 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         // }
         // }
 
-        if (fieldRelative) {
-            SwerveRequest.FieldCentric driveRequest = new SwerveRequest.FieldCentric()
-                    // .withDeadband(0.03) //TODO: set these
-                    // .withRotationalDeadband(1)
-                    .withDriveRequestType(DriveRequestType.Velocity) // Velocity is closed-loop velocity control
-                    .withSteerRequestType(SteerRequestType.Position)
-                    .withDesaturateWheelSpeeds(true); // TODO check
+        // if (fieldRelative) {
+        // SwerveRequest.FieldCentric driveRequest = new SwerveRequest.FieldCentric()
+        // // .withDeadband(0.03) //TODO: set these
+        // // .withRotationalDeadband(1)
+        // .withDriveRequestType(DriveRequestType.Velocity) // Velocity is closed-loop
+        // velocity control
+        // .withSteerRequestType(SteerRequestType.Position)
+        // .withDesaturateWheelSpeeds(true); // TODO check
 
-            if (!respectOperatorPerspective) {
-                driveRequest = driveRequest.withForwardPerspective(ForwardPerspectiveValue.BlueAlliance);
+        // if (!respectOperatorPerspective) {
+        // driveRequest =
+        // driveRequest.withForwardPerspective(ForwardPerspectiveValue.BlueAlliance);
+        // }
+
+        // this.setControl(
+        // driveRequest
+        // .withVelocityX(velocityX)
+        // .withVelocityY(velocityY)
+        // .withRotationalRate(rotationalVelocity));
+        // } else {
+        // // Creates robot relative swerve request
+        // SwerveRequest.RobotCentric driveRequest = new SwerveRequest.RobotCentric()
+        // // .withDeadband(2) //TODO: set these
+        // // .withRotationalDeadband(3)
+        // .withDriveRequestType(DriveRequestType.Velocity) // Velocity is closed-loop
+        // velocity control
+        // .withSteerRequestType(SteerRequestType.Position)
+        // .withDesaturateWheelSpeeds(true); // TODO check
+
+        // // sets the control for the drivetrain
+        // this.setControl(
+        // driveRequest
+        // .withVelocityX(velocityX)
+        // .withVelocityY(velocityY)
+        // .withRotationalRate(rotationalVelocity));
+
+        // }
+
+        if (respectOperatorPerspective) {
+            if (DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get() == Alliance.Red
+                    && fieldRelative) {
+
+                xSpeed *= -1;
+                ySpeed *= -1;
             }
-
-            this.setControl(
-                    driveRequest
-                            .withVelocityX(velocityX)
-                            .withVelocityY(velocityY)
-                            .withRotationalRate(rotationalVelocity));
-        } else {
-            // Creates robot relative swerve request
-            SwerveRequest.RobotCentric driveRequest = new SwerveRequest.RobotCentric()
-                    // .withDeadband(2) //TODO: set these
-                    // .withRotationalDeadband(3)
-                    .withDriveRequestType(DriveRequestType.Velocity) // Velocity is closed-loop velocity control
-                    .withSteerRequestType(SteerRequestType.Position)
-                    .withDesaturateWheelSpeeds(true); // TODO check
-
-            // sets the control for the drivetrain
-            this.setControl(
-                    driveRequest
-                            .withVelocityX(velocityX)
-                            .withVelocityY(velocityY)
-                            .withRotationalRate(rotationalVelocity));
-
         }
+        ChassisSpeeds speeds = new ChassisSpeeds(xSpeed, ySpeed, thetaSpeed);
+
+        if (fieldRelative) {
+            speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds, getWrappedHeading());
+        }
+
+        // speeds = getMaxSpeedsNoTip(speeds);
+        // System.out.println(getMaxSpeedsNoTip(speeds));
+
+        SwerveRequest req = new SwerveRequest.ApplyRobotSpeeds()
+                .withSpeeds(speeds)
+                .withDriveRequestType(DriveRequestType.Velocity)
+                .withSteerRequestType(SteerRequestType.Position)
+                .withWheelForceFeedforwardsX(prevSetpoint.feedforwards().robotRelativeForcesXNewtons())
+                .withWheelForceFeedforwardsY(prevSetpoint.feedforwards().robotRelativeForcesYNewtons());
+
+        setControl(req);
+
     }
 
     public void driveWithSetpoint(double xSpeed, double ySpeed, double thetaSpeed, boolean fieldRelative,
@@ -889,8 +927,6 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     public Optional<Pose2d> getPoseAtTime(double time) {
         return poseBuffer.getSample(time);
     }
-    
-
 
     @Override
     public void periodic() {

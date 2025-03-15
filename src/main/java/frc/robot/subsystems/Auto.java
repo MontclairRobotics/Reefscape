@@ -453,7 +453,7 @@ public class Auto extends SubsystemBase {
 
                         double pathTime = traj.getTotalTimeSeconds(); //time path will take
                         double raiseTime = RobotContainer.elevator.getRaiseTime(mechState);
-                        raiseTime = 0.5; //time elevator will take to rise
+                        raiseTime = 1.15; //time elevator will take to rise
                         double waitTime = pathTime - raiseTime; //how much time we should wait before raising elevator
                         timeSeconds += pathTime; //adds how long the path will take to the estimated time
                        // System.out.println("Path 1 Arm height: " + mechState.getHeight());
@@ -467,8 +467,8 @@ public class Auto extends SubsystemBase {
                                     Commands.print("After waiting"),
                                     Commands.parallel(
                                         //Commands.print("Starting elevator command path 1"),
-                                        RobotContainer.elevator.setState(mechState).withTimeout(raiseTime), // TODO I removed this timeout. You'd rather wait then score at wrong height
-                                        RobotContainer.arm.goToAngleCommand(mechState.getAngle()).withTimeout(raiseTime)
+                                       RobotContainer.elevator.setState(RobotState.L3),// TODO I removed this timeout. You'd rather wait then score at wrong height
+                                       RobotContainer.arm.setState(RobotState.L4)
                                     )
                                     ,Commands.print("Finished elevator command path 1")
                                 )    
@@ -483,6 +483,7 @@ public class Auto extends SubsystemBase {
                             .alongWith(RobotContainer.elevator.setState(mechState))
                             .alongWith(RobotContainer.arm.setState(mechState)));
                         }
+                        autoCommand.addCommands(Commands.print("Align Finished"));
                         
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -529,7 +530,7 @@ public class Auto extends SubsystemBase {
             }
 
             /* ADDS AN INTAKING COMMAND */
-            autoCommand.addCommands(RobotContainer.rollers.intakeCoralJiggleCommand().withTimeout(2));
+            autoCommand.addCommands(RobotContainer.rollers.intakeCoralJiggleCommand().withTimeout(1.1));
             timeSeconds += INTAKE_PREDICTED_TIME;
             // Bring elevator and arm to default position after scoring last coral
 

@@ -88,7 +88,7 @@ public class Elevator extends SubsystemBase {
                                                      // and is trying to go farther but has not yet hit the limit switch
                                                      // during manual control
     public static final double MAX_VELOCITY_RPS = 100;
-    public static final double MAX_ACCEL_RPS = 500;
+    public static final double MAX_ACCEL_RPS = 350;
 
     public static final double ELEVATOR_PULLEY_RADIUS = Units.inchesToMeters(0.9175);
 
@@ -636,7 +636,7 @@ public class Elevator extends SubsystemBase {
             Commands.run(() -> {
                 setExtension(state.getHeight());
                 elevatorState = state;
-            }, this).until(() -> atSetpoint()));
+            }, this).until(() -> atSetpoint()).finallyDo(leftTalonFX::stopMotor));
     }
 
     public Command setTargetState(RobotState state) {
