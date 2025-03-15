@@ -153,7 +153,7 @@ public class GoToReefCommand extends Command {
 
         // TODO I think I need to log the 1st pose2d in disabled to prevent overruns
         Logger.recordOutput("PoseCommand/TargetPose", targetPose);
-        Logger.recordOutput("PoseCommand/TargetPose", RobotContainer.drivetrain.getRobotPose());
+        Logger.recordOutput("PoseCommand/CurrentPose", RobotContainer.drivetrain.getRobotPose());
     }
 
     @Override
@@ -172,7 +172,7 @@ public class GoToReefCommand extends Command {
         double omegaSpeed = thetaController.calculate(currentPose.getRotation().getRadians());
 
         //sets control output to the drivetrain
-        RobotContainer.drivetrain.drive(xSpeed, ySpeed, omegaSpeed, true, false);
+        RobotContainer.drivetrain.driveWithSetpoint(xSpeed, ySpeed, omegaSpeed, true, false);
     }
 
     @Override
