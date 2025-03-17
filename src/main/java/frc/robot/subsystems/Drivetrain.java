@@ -73,6 +73,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.util.DynamicSlewRateLimiter;
+import frc.robot.util.FieldPositionUtils;
 
 public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
@@ -408,6 +409,13 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
                 respectOperatorPerspective);
     }
 
+
+    public void pointAt(Rotation2d direction) {
+        SwerveRequest.PointWheelsAt request = new SwerveRequest.PointWheelsAt()
+                .withModuleDirection(direction);
+
+        this.setControl(request);
+    }
     /*
      * DRIVES USING CLOSED LOOP VELOCITY CONTROL
      * 
@@ -935,6 +943,11 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         odometryHeading = getRobotPose().getRotation();
         isRobotAtAngleSetPoint = thetaController.atSetpoint();
         fieldRelative = !RobotContainer.driverController.L2().getAsBoolean();
+
+        // This keeps the robot on the field even if odometry is driving it off the field
+        Pose2d robotPose = getRobotPose();
+        robotPose = FieldPositionUtils.getNearestPositionOnField(robotPose);
+        resetPose(robotPose);
 
         strafeLimiter.setLimit(getMaxHorizontalAccel());
         forwardLimiter.setLimit(getMaxForwardAccel());
