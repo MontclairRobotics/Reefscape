@@ -61,6 +61,7 @@ import frc.robot.commands.AlignToAprilTagCommandOffset;
 import frc.robot.commands.AlignToTagCommand;
 import frc.robot.commands.GoToPoseCommand;
 import frc.robot.commands.GoToReefCommand;
+import frc.robot.commands.PointWheelsAtCommand;
 import frc.robot.commands.GoToPoseInputCommand;
 import frc.robot.util.RobotState;
 import frc.robot.util.TagOffset;
@@ -475,20 +476,19 @@ public class Auto extends SubsystemBase {
                                 )    
                         ));
                         
-                        final Rotation2d heading = traj.getEndState().heading;
-                        autoCommand.addCommands(Commands.run(() -> RobotContainer.drivetrain.alignWheels(heading)).withTimeout(0.15));
+                        // autoCommand.addCommands(Commands.run(() -> RobotContainer.drivetrain.alignWheels(heading)).withTimeout(0.15));
+                        // autoCommand.addCommands(new PointWheelsAtCommand(traj.getEndState().heading));
                         autoCommand.addCommands(new AlignToTagCommand(second, false, false)
-                        );
-                            // .alongWith(RobotContainer.elevator.setState(mechState))
-                            // .alongWith(RobotContainer.arm.setState(mechState)));
+                            .alongWith(RobotContainer.elevator.setState(mechState).withTimeout(1))
+                            .alongWith(RobotContainer.arm.setState(mechState).withTimeout(1)));
                         // if (Character.isLowerCase(first.charAt(0)) || Character.isLowerCase(second.charAt(0))) {
                         //     autoCommand.addCommands(new GoToReefCommand(TagOffset.RIGHT, false)
-                        //     .alongWith(RobotContainer.elevator.setState(mechState))
-                        //     .alongWith(RobotContainer.arm.setState(mechState)));
+                        //     .alongWith(RobotContainer.elevator.setState(mechState).withTimeout(1))
+                        //     .alongWith(RobotContainer.arm.setState(mechState).withTimeout(1)));
                         // } else {
                         //     autoCommand.addCommands(new GoToReefCommand(TagOffset.LEFT, false)
-                        //     .alongWith(RobotContainer.elevator.setState(mechState))
-                        //     .alongWith(RobotContainer.arm.setState(mechState)));
+                        //     .alongWith(RobotContainer.elevator.setState(mechState).withTimeout(1))
+                        //     .alongWith(RobotContainer.arm.setState(mechState).withTimeout(1)));
                         // }
                         autoCommand.addCommands(Commands.print("Align Finished"));
                         
