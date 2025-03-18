@@ -3,9 +3,9 @@ package frc.robot.util;
 import edu.wpi.first.math.util.Units;
 
 public enum TagOffset {
-    LEFT(-5.5, 10.5, Units.inchesToMeters(35.5/2), 0.165), //TODO: SET
-    RIGHT(5.5, 10.5, Units.inchesToMeters(35.5/2), -0.165),
-    CENTER(0, 10.5, Units.inchesToMeters(35.5/2), 0),
+    LEFT(0, 0, -0.165, 0), //TODO: SET
+    RIGHT(0, 0, 0.165, 0),
+    CENTER(0, 0, 0, 0),
     LEFT_INTAKE(0, 0, 0, 0),
     RIGHT_INTAKE(0, 0, 0, 0),
     CENTER_INTAKE(0, 0, 0, 0);

@@ -162,8 +162,8 @@ public class AlignToTagCommand extends Command {
         camera.setPriorityTagID(tagId);
 
         // x is forward and back, y is side to side
-        double xSetpoint = tagOffset.getForwardOffsetM() - camera.getCameraOffsetX() + (isOffset ? 0.3 : 0.0);
-        double ySetpoint = camera.getCameraOffsetY() + tagOffset.getHorizontalOffsetM();
+        double xSetpoint = Units.inchesToMeters(35.5/2) - camera.getCameraOffsetX() + (isOffset ? 0.3 : 0.0);
+        double ySetpoint = camera.getCameraOffsetY() - tagOffset.getHorizontalOffsetM();
         double thetaSetpoint = targetRotation.getRadians();
         xController.setSetpoint(xSetpoint);
         yController.setSetpoint(ySetpoint);

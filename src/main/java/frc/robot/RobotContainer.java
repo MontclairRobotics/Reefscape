@@ -280,16 +280,16 @@ public class RobotContainer {
         .onFalse(drivetrain.toFieldRelativeCommand());
 
     // 90 degree buttons
-    // driverController.triangle()
-    //     .onTrue(
-    //         drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(0)), false));
-    // driverController.square()
-    //     .onTrue(drivetrain.alignToAngleFieldRelativeCommand((Rotation2d.fromDegrees(-54)), false));
-    // driverController.cross()
-    //     .onTrue(
-    //         drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(180)), false));
-    // driverController.circle()
-    //     .onTrue(drivetrain.alignToAngleFieldRelativeCommand(Rotation2d.fromDegrees(54), false));
+    driverController.triangle()
+        .onTrue(
+            drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(0)), false));
+    driverController.square()
+        .onTrue(drivetrain.alignToAngleFieldRelativeCommand((Rotation2d.fromDegrees(-54)), false));
+    driverController.cross()
+        .onTrue(
+            drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(180)), false));
+    driverController.circle()
+        .onTrue(drivetrain.alignToAngleFieldRelativeCommand(Rotation2d.fromDegrees(54), false));
 
     // zeros gyro
     driverController.touchpad().onTrue(drivetrain.zeroGyroCommand());
