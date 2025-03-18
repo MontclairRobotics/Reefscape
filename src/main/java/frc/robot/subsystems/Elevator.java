@@ -131,7 +131,7 @@ public class Elevator extends SubsystemBase {
     private LimitSwitch bottomLimit;
     private LimitSwitch topLimit;
 
-    private RobotState elevatorState;
+    private RobotState elevatorTargetState = RobotState.DrivingNone;
 
     // Logging to NT
     DoublePublisher heightPub;
@@ -635,16 +635,16 @@ public class Elevator extends SubsystemBase {
             RobotContainer.ratchet.disengageServos().onlyIf(() -> RobotContainer.ratchet.ratchetEngaged && state != RobotState.ClimbDown).withTimeout(0.1),
             Commands.run(() -> {
                 setExtension(state.getHeight());
-                elevatorState = state;
+                // elevatorTargetState = state;
             }, this).until(() -> atSetpoint()).finallyDo(leftTalonFX::stopMotor));
     }
 
     public Command setTargetState(RobotState state) {
-        return Commands.runOnce(() -> elevatorState = state);
+        return Commands.runOnce(() -> elevatorTargetState = state);
     }
 
-    public RobotState getState() {
-        return elevatorState;
+    public RobotState getTargetState() {
+        return elevatorTargetState;
     }
 
     @AutoLogOutput

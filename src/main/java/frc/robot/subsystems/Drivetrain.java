@@ -357,12 +357,14 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
     public Command driveToReefCommandFast(TagOffset direction) {
         BooleanSupplier isL4 = () -> {
-            return RobotContainer.elevator.getState() == RobotState.L4;
+            return RobotContainer.elevator.getTargetState() == RobotState.L4;
         };
         return Commands.sequence(
+                Commands.print("IsL4: " + isL4.getAsBoolean()),
                 Commands.parallel(
-                        Commands.defer(() -> new GoToReefCommand(direction, !isL4.getAsBoolean()), Set.of(this)),
-                        RobotContainer.elevator.setState(RobotContainer.elevator.getState())),
+                        Commands.defer(() -> new GoToReefCommand(direction, !isL4.getAsBoolean()), Set.of(this)).andThen(Commands.print("Driving over")),
+                        Commands.waitSeconds(0).andThen(Commands.defer(() -> RobotContainer.elevator.setState(RobotContainer.elevator.getTargetState()), Set.of(RobotContainer.elevator)).andThen(Commands.print("Elevator over")))),
+                        Commands.print("Deferred BS over"),
                 new GoToReefCommand(direction, false).unless(isL4));
     }
 

@@ -30,7 +30,7 @@ public class Rollers extends SubsystemBase {
     public final double CORAL_OUTTAKE_SPEED = -1;
     public final double ALGAE_INTAKE_SPEED = 0.2;
     public final double ALGAE_OUTTAKE_SPEED = -1;
-    public final double ROLLER_STALL_CURRENT = 20; // TODO check/tune
+    public final double ROLLER_STALL_CURRENT = 22; // TODO check/tune
     public final double CORAL_HOLDING_SPEED = 0.1;
     public final double ALGAE_HOLDING_SPEED = 0.1;
 
@@ -45,7 +45,7 @@ public class Rollers extends SubsystemBase {
         leftMotor = new SparkMax(30, MotorType.kBrushless);
 
         var config = new SparkMaxConfig();
-        config.smartCurrentLimit(40).idleMode(IdleMode.kBrake);
+        config.smartCurrentLimit(20).idleMode(IdleMode.kBrake);
         rightMotor.configure(config.inverted(true), ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
         leftMotor.configure(config.inverted(false), ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
         NetworkTableInstance nt = NetworkTableInstance.getDefault();
