@@ -478,7 +478,7 @@ public class Auto extends SubsystemBase {
                         
                         // autoCommand.addCommands(Commands.run(() -> RobotContainer.drivetrain.alignWheels(heading)).withTimeout(0.15));
                         // autoCommand.addCommands(new PointWheelsAtCommand(traj.getEndState().heading));
-                        autoCommand.addCommands(new AlignToTagCommand(second, false, false)
+                        autoCommand.addCommands(new AlignToTagCommand(second, false)
                             .alongWith(RobotContainer.elevator.setState(mechState).withTimeout(1))
                             .alongWith(RobotContainer.arm.setState(mechState).withTimeout(1)));
                         // if (Character.isLowerCase(first.charAt(0)) || Character.isLowerCase(second.charAt(0))) {

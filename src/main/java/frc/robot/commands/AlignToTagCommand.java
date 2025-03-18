@@ -99,6 +99,9 @@ public class AlignToTagCommand extends Command {
 
         addRequirements(RobotContainer.drivetrain);
     }
+    public AlignToTagCommand(TagOffset offset, boolean isOffset) {
+        this(offset, isOffset, false);
+    }
 
     /**
      * Aligns to the given tag
@@ -111,6 +114,9 @@ public class AlignToTagCommand extends Command {
         this(offset, useTagSize, isOffset);
         this.assignedTagId = tagId;
     }
+    public AlignToTagCommand(int tagId, TagOffset offset, boolean isOffset) {
+        this(tagId, offset, isOffset, false);
+    }
     /**
      * Aligns to the given tag
      * @param camera The limelight to use
@@ -122,7 +128,10 @@ public class AlignToTagCommand extends Command {
         this(Character.isLowerCase(autoCoralPosition.charAt(0)) ? TagOffset.RIGHT : TagOffset.LEFT, useTagSize, isOffset);
         this.autoCoralPosition = autoCoralPosition;
     }
-
+    public AlignToTagCommand(String autoCoralPosition, boolean isOffset) {
+        this(autoCoralPosition, isOffset, false);
+    }
+    
     /**
      * Finds tag to go to and sets the setpoints for the PID controllers
      */

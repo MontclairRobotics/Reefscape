@@ -361,52 +361,6 @@ public class LimelightSim extends SubsystemBase {
                     // Assuming the best is the main one of multi-tag
                     tid.set(bestTarget.getFiducialId());
 
-                    Optional<Pose2d> odometryRobotPoseOption = limelightSim.robotPoseBuffer.getSample(Timer.getFPGATimestamp() - latency);
-                    if (odometryRobotPoseOption.isPresent()) {
-                        Pose2d odometryRobotPose = odometryRobotPoseOption.get();
-                        odometryPosePublisher.set(odometryRobotPose);
-
-                        if (result.getMultiTagResult().isPresent()) {
-                            MultiTargetPNPResult multiTagResult = result.getMultiTagResult().get();
-                            PnpResult pnpResult = multiTagResult.estimatedPose;
-                            
-                            Transform3d fieldToCamera = pnpResult.best;
-                            Transform3d blueRobotTransform = fieldToCamera.plus(robotToCamera.inverse());
-                            
-                            Pose3d blueRobotPose = Pose3d.kZero.plus(blueRobotTransform);
-
-                            double diff = odometryRobotPose.getTranslation().getDistance(blueRobotPose.getTranslation().toTranslation2d());
-                            if (diff < 0.1) {
-                                publishRobotPose(blueRobotPose, latency, tagCount, tagAverageArea, tagAverageDistance);
-
-                                stddevs.set(new double[]{0.1, 0.1, 1000.0});
-                            }
-                        } else {
-                            Pose3d bestBlueRobotPose = PhotonUtils.estimateFieldToRobotAprilTag(bestTarget.getBestCameraToTarget(), limelightSim.fieldLayout.getTagPose(bestTarget.getFiducialId()).get(), robotToCamera.inverse());
-                            Pose3d altBlueRobotPose = PhotonUtils.estimateFieldToRobotAprilTag(bestTarget.getAlternateCameraToTarget(), limelightSim.fieldLayout.getTagPose(bestTarget.getFiducialId()).get(), robotToCamera.inverse());
-                            
-                            double bestDiff = odometryRobotPose.getTranslation().getDistance(bestBlueRobotPose.getTranslation().toTranslation2d());
-                            double altDiff = odometryRobotPose.getTranslation().getDistance(altBlueRobotPose.getTranslation().toTranslation2d());
-
-                            if (bestDiff < altDiff) {
-                                if (bestDiff < 0.1) {
-                                    publishRobotPose(bestBlueRobotPose, latency, tagCount, tagAverageArea, tagAverageDistance);
-                                    
-                                    // Higher stddevs for the non multi-tag case
-                                    stddevs.set(new double[]{0.5, 0.5, 1000.0});
-                                }
-                            } else {
-                                if (altDiff < 0.1) {
-                                    publishRobotPose(altBlueRobotPose, latency, tagCount, tagAverageArea, tagAverageDistance);
-
-                                    // Higher stddevs for the non multi-tag case
-                                    stddevs.set(new double[]{0.5, 0.5, 1000.0});
-                                }
-                            }
-                        }
-                    }
-
-
                     double[] rawfiducialsArray = new double[result.getTargets().size() * 7];
                     double[] tcornxyArray = new double[result.getTargets().size() * 8];
                     for (var i=0; i<result.getTargets().size(); i++) {
@@ -437,6 +391,50 @@ public class LimelightSim extends SubsystemBase {
                     tcornxy.set(tcornxyArray);
                     rawfiducials.set(rawfiducialsArray);
 
+                    Optional<Pose2d> odometryRobotPoseOption = limelightSim.robotPoseBuffer.getSample(Timer.getFPGATimestamp() - latency);
+                    if (odometryRobotPoseOption.isPresent()) {
+                        Pose2d odometryRobotPose = odometryRobotPoseOption.get();
+                        odometryPosePublisher.set(odometryRobotPose);
+
+                        if (result.getMultiTagResult().isPresent()) {
+                            MultiTargetPNPResult multiTagResult = result.getMultiTagResult().get();
+                            PnpResult pnpResult = multiTagResult.estimatedPose;
+                            
+                            Transform3d fieldToCamera = pnpResult.best;
+                            Transform3d blueRobotTransform = fieldToCamera.plus(robotToCamera.inverse());
+                            
+                            Pose3d blueRobotPose = Pose3d.kZero.plus(blueRobotTransform);
+
+                            double diff = odometryRobotPose.getTranslation().getDistance(blueRobotPose.getTranslation().toTranslation2d());
+                            if (diff < 0.1) {
+                                publishRobotPose(blueRobotPose, latency, tagCount, tagAverageArea, tagAverageDistance, rawfiducialsArray);
+
+                                stddevs.set(new double[]{0.1, 0.1, 1000.0});
+                            }
+                        } else {
+                            Pose3d bestBlueRobotPose = PhotonUtils.estimateFieldToRobotAprilTag(bestTarget.getBestCameraToTarget(), limelightSim.fieldLayout.getTagPose(bestTarget.getFiducialId()).get(), robotToCamera.inverse());
+                            Pose3d altBlueRobotPose = PhotonUtils.estimateFieldToRobotAprilTag(bestTarget.getAlternateCameraToTarget(), limelightSim.fieldLayout.getTagPose(bestTarget.getFiducialId()).get(), robotToCamera.inverse());
+                            
+                            double bestDiff = odometryRobotPose.getTranslation().getDistance(bestBlueRobotPose.getTranslation().toTranslation2d());
+                            double altDiff = odometryRobotPose.getTranslation().getDistance(altBlueRobotPose.getTranslation().toTranslation2d());
+
+                            if (bestDiff < altDiff) {
+                                if (bestDiff < 0.1) {
+                                    publishRobotPose(bestBlueRobotPose, latency, tagCount, tagAverageArea, tagAverageDistance, rawfiducialsArray);
+                                    
+                                    // Higher stddevs for the non multi-tag case
+                                    stddevs.set(new double[]{0.5, 0.5, 1000.0});
+                                }
+                            } else {
+                                if (altDiff < 0.1) {
+                                    publishRobotPose(altBlueRobotPose, latency, tagCount, tagAverageArea, tagAverageDistance, rawfiducialsArray);
+
+                                    // Higher stddevs for the non multi-tag case
+                                    stddevs.set(new double[]{0.5, 0.5, 1000.0});
+                                }
+                            }
+                        }
+                    }
 
                 } else {
                     tv.set(0);
@@ -447,7 +445,7 @@ public class LimelightSim extends SubsystemBase {
         /**
          * Publish pose of robot to NT Tables
          */
-        public void publishRobotPose(Pose3d bluePose3d, double latency, int tagCount, double tagAverageArea, double tagAverageDistance) {
+        public void publishRobotPose(Pose3d bluePose3d, double latency, int tagCount, double tagAverageArea, double tagAverageDistance, double[] rawfiducials) {
             // System.out.println("publishRobotPose: " + bluePose3d.getX() + " " + bluePose3d.getY());
             Translation3d blueRobotTranslation = bluePose3d.getTranslation();
             Rotation3d blueRobotRotation = bluePose3d.getRotation();
@@ -458,24 +456,37 @@ public class LimelightSim extends SubsystemBase {
             Translation3d redRobotTranslation = redRobotTransform.getTranslation();
             Rotation3d redRobotRotation = redRobotTransform.getRotation();
 
-            double[] bluePose = new double[]{ 
-                blueRobotTranslation.getX(), blueRobotTranslation.getY(), blueRobotTranslation.getZ(), 
-                Units.radiansToDegrees(blueRobotRotation.getX()), Units.radiansToDegrees(blueRobotRotation.getY()), Units.radiansToDegrees(blueRobotRotation.getZ()),
-                latency,
-                tagCount,
-                0.0, // Tag span?
-                tagAverageArea,
-                tagAverageDistance  
-            };
-            double[] redPose = new double[]{ 
-                redRobotTranslation.getX(), redRobotTranslation.getY(), redRobotTranslation.getZ(), 
-                Units.radiansToDegrees(redRobotRotation.getX()), Units.radiansToDegrees(redRobotRotation.getY()), Units.radiansToDegrees(redRobotRotation.getZ()),
-                latency,
-                tagCount,
-                0.0, // Tag span?
-                tagAverageArea,
-                tagAverageDistance  
-            };
+            double[] bluePose = new double[11 + rawfiducials.length];
+            bluePose[0] = blueRobotTranslation.getX();
+            bluePose[1] = blueRobotTranslation.getY();
+            bluePose[2] = blueRobotTranslation.getZ();
+            bluePose[3] = Units.radiansToDegrees(blueRobotRotation.getX());
+            bluePose[4] = Units.radiansToDegrees(blueRobotRotation.getY());
+            bluePose[5] = Units.radiansToDegrees(blueRobotRotation.getZ());
+            bluePose[6] = latency;
+            bluePose[7] = tagCount;
+            bluePose[8] = 0.0; // Tag span?
+            bluePose[9] = tagAverageArea;
+            bluePose[10] = tagAverageDistance;
+            for (int i=0; i<rawfiducials.length; i++) {
+                bluePose[11+i] = rawfiducials[i];
+            }
+
+            double[] redPose = new double[11 + rawfiducials.length];
+            redPose[0] = redRobotTranslation.getX();
+            redPose[1] = redRobotTranslation.getY();
+            redPose[2] = redRobotTranslation.getZ();
+            redPose[3] = Units.radiansToDegrees(redRobotRotation.getX());
+            redPose[4] = Units.radiansToDegrees(redRobotRotation.getY());
+            redPose[5] = Units.radiansToDegrees(redRobotRotation.getZ());
+            redPose[6] = latency;
+            redPose[7] = tagCount;
+            redPose[8] = 0.0; // Tag span?
+            redPose[9] = tagAverageArea;
+            redPose[10] = tagAverageDistance;
+            for (int i=0; i<rawfiducials.length; i++) {
+                redPose[11+i] = rawfiducials[i];
+            }
             botpose.set(bluePose);
             botpose_wpiblue.set(bluePose);
             botpose_wpired.set(redPose);
