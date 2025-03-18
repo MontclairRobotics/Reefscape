@@ -955,11 +955,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         fieldRelative = !RobotContainer.driverController.L2().getAsBoolean();
         fieldRelative = false;
 
-        Pose2d robotPose = getRobotPose();
-        Logger.recordOutput("Drive/robotPose", robotPose);
-        robotPose = FieldPositionUtils.getNearestPositionOnField(robotPose);
-        Logger.recordOutput("Drive/onFieldRobotPose", robotPose);
-        resetPose(robotPose);
+        resetPose(FieldPositionUtils.getNearestPositionOnField(getRobotPose()));
 
         strafeLimiter.setLimit(getMaxHorizontalAccel());
         forwardLimiter.setLimit(getMaxForwardAccel());
