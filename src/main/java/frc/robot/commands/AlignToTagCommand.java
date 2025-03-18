@@ -1,6 +1,7 @@
 package frc.robot.commands;
 
 import java.util.HashMap;
+import java.util.Optional;
 
 import org.littletonrobotics.junction.Logger;
 
@@ -9,8 +10,11 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.RobotContainer;
+import frc.robot.subsystems.Auto;
 import frc.robot.util.TagOffset;
 import frc.robot.vision.Limelight;
 
@@ -19,6 +23,39 @@ import frc.robot.vision.Limelight;
  */
 public class AlignToTagCommand extends Command {
     
+    public static HashMap<String, Integer> redCoralToTagMap = new HashMap<String, Integer>() {
+        {
+            put("A", 7);
+            put("a", 7);
+            put("B", 6);
+            put("b", 6);
+            put("C", 11);
+            put("c", 11);
+            put("D", 10);
+            put("d", 10);
+            put("E", 9);
+            put("e", 9);
+            put("F", 8);
+            put("f", 8);
+        }
+    };
+    public static HashMap<String, Integer> blueCoralToTagMap = new HashMap<String, Integer>() {
+        {
+            put("A", 18);
+            put("a", 18);
+            put("B", 19);
+            put("b", 19);
+            put("C", 20);
+            put("c", 20);
+            put("D", 21);
+            put("d", 21);
+            put("E", 22);
+            put("e", 22);
+            put("F", 17);
+            put("f", 17);
+        }
+    };
+
     // Focal lengths in pixels
     // Assumes resolution of 1280x800 and Limelight 4 with FOV of 82 horizonatl and 52.8 vertical
     public static final double HORIZONTAL_FOCAL_LENGTH = (1280.0 / 2.0) / Math.tan(Units.degreesToRadians(82.0 / 2.0));
@@ -33,6 +70,7 @@ public class AlignToTagCommand extends Command {
     private Limelight camera;
     private int assignedTagId = -1;
     private int tagId = -1;
+    private String autoCoralPosition = null;
     private TagOffset tagOffset;
     private Rotation2d targetRotation;
     private boolean isOffset;
@@ -44,6 +82,7 @@ public class AlignToTagCommand extends Command {
      * @param useTagSize If true, uses the size of the tag to determine distance, otherwise uses the height of the tag
      */
     public AlignToTagCommand(TagOffset offset, boolean isOffset, boolean useTagSize) {
+        System.out.println("AlignToTagCommand constructor");
         if (offset == TagOffset.LEFT) {
             this.camera = RobotContainer.rightLimelight;
         } else {
@@ -73,16 +112,34 @@ public class AlignToTagCommand extends Command {
         this(offset, useTagSize, isOffset);
         this.assignedTagId = tagId;
     }
+    /**
+     * Aligns to the given tag
+     * @param camera The limelight to use
+     * @param tagId The ID of the tag to align to
+     * @param offset The offset to align to
+     * @param useTagSize If true, uses the size of the tag to determine distance, otherwise uses the height of the tag
+     */
+    public AlignToTagCommand(String autoCoralPosition, boolean isOffset, boolean useTagSize) {
+        this(Character.isLowerCase(autoCoralPosition.charAt(0)) ? TagOffset.RIGHT : TagOffset.LEFT, useTagSize, isOffset);
+        this.autoCoralPosition = autoCoralPosition;
+    }
 
     /**
      * Finds tag to go to and sets the setpoints for the PID controllers
      */
     @Override
     public void initialize() {
-        // System.out.println("AlignToTagCommand initialize");
+        System.out.println("AlignToTagCommand initialize");
         // Find largest tag
         if (assignedTagId != -1) {
             tagId = assignedTagId;
+        } else if (autoCoralPosition != null) {
+            Optional<Alliance> alliance = DriverStation.getAlliance();
+            if (alliance.isPresent() && alliance.get() == Alliance.Blue) {
+                tagId = blueCoralToTagMap.get(autoCoralPosition);
+            } else {
+                tagId = redCoralToTagMap.get(autoCoralPosition);
+            }
         } else {
             tagId = camera.getLargestAprilTag(Limelight.tagRotationsMap.keySet());
         }
@@ -184,6 +241,7 @@ public class AlignToTagCommand extends Command {
 
     @Override
     public void execute() {
+        System.out.println("AlignToTagCommand execute");
         if (tagId == -1) {
             return;
         }
@@ -206,62 +264,19 @@ public class AlignToTagCommand extends Command {
         Translation2d position = useTagSize ? getXYFromCorners(tx, ty) : getXYFromTxTy(tx, ty);
         double x = position.getX();
         double y = position.getY();
-        Logger.recordOutput("AlignToTag/x", x);
-        Logger.recordOutput("AlignToTag/y", y);
-
-        // Total distance (this isn't 100% correct because x and y are not perpendicular all the time)
-        // But close enough for what we need
-        double distance = Math.hypot(x, y);
-        Logger.recordOutput("AlignToTag/distance", Units.radiansToDegrees(distance));
-
-        double robotToTagAngle = robotPose.getRotation().getRadians() - targetRotation.getRadians();
-        Logger.recordOutput("AlignToTag/robotToTagAngle", Units.radiansToDegrees(robotToTagAngle));
-
-        // Get sideways (relative to tag) distance
-        double sidewaysDistance = Math.abs(Math.sin(robotToTagAngle) * x - Math.cos(robotToTagAngle) * y);
-        Logger.recordOutput("AlignToTag/sidewaysDistance", sidewaysDistance);
-
-        // Get ratio to use for x and y setpoints
-        // This will curve the path to make robot face tag as it comes towards it
-        double ratio = isOffset ? Math.min(sidewaysDistance, 1) : 0.0;
-        Logger.recordOutput("AlignToTag/ratio", ratio);
-
-        // Set x and y setpoints
-        // PID for x and y speeds
-        double xSetpoint = tagOffset.getXOffsetM() - camera.getCameraOffsetX() + (isOffset ? 0.3 : 0.0);
-        double ySetpoint = camera.getCameraOffsetY() + tagOffset.getYOffsetM();
-        double dynamicXSetpoint = xSetpoint + Math.cos(robotToTagAngle) * ratio * distance * 0.5;
-        double dynamicYSetpoint = ySetpoint + Math.sin(robotToTagAngle) * ratio * distance * 0.5;
-        xController.setSetpoint(dynamicXSetpoint);
-        yController.setSetpoint(dynamicYSetpoint);
         double xSpeed = xController.calculate(x);
         double ySpeed = yController.calculate(y);
+        Logger.recordOutput("AlignToTag/x", x);
+        Logger.recordOutput("AlignToTag/y", y);
         Logger.recordOutput("AlignToTag/xSpeed", xSpeed);
         Logger.recordOutput("AlignToTag/ySpeed", ySpeed);
-        Logger.recordOutput("AlignToTag/dynamicXSetpoint", dynamicXSetpoint);
-        Logger.recordOutput("AlignToTag/dynamicYSetpoint", dynamicYSetpoint);
 
 
         // Get current rotation and PID for it
         double currentTheta = robotPose.getRotation().getRadians();
-        // But if tag is off to the side and we are turning away from it, we need to correct
-        // So we don't lose sight of tag
-        double txError = 0;
-        if ((tx - 4.135) > 0) {
-            txError = Math.max((tx - 4.135) - 10, 0);
-        } else {
-            txError = Math.min((tx - 4.135) + 10, 0);
-        }
-        if (Math.signum(currentTheta - targetRotation.getRadians()) == Math.signum(txError)) {
-            txError = 0;
-        }
-        double dynamicThetaSetpoint = targetRotation.getRadians() - Units.degreesToRadians(txError);
-        thetaController.setSetpoint(dynamicThetaSetpoint);
         double thetaSpeed = thetaController.calculate(currentTheta);
         Logger.recordOutput("AlignToTag/currentTheta", Units.radiansToDegrees(currentTheta));
-        Logger.recordOutput("AlignToTag/dynamicThetaSetpoint", Units.radiansToDegrees(dynamicThetaSetpoint));
         Logger.recordOutput("AlignToTag/thetaSpeed", Units.radiansToDegrees(thetaSpeed));
-
 
 
         // We do this robot relative instead of field relative
@@ -294,6 +309,10 @@ public class AlignToTagCommand extends Command {
         boolean atSetPoint = xController.atSetpoint() && yController.atSetpoint() && atAngle;
         boolean cameraSeesTag = camera.hasValidTarget() && camera.getTagID() == tagId;
         boolean isFinished =  atSetPoint || !cameraSeesTag;
+        Logger.recordOutput("AlignToTag/atAngle", atAngle);
+        Logger.recordOutput("AlignToTag/atSetPoint", atSetPoint);
+        Logger.recordOutput("AlignToTag/cameraSeesTag", cameraSeesTag);
+        Logger.recordOutput("AlignToTag/isFinished", isFinished);
         return isFinished;
     }
 }

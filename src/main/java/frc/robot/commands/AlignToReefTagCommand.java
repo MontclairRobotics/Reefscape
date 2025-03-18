@@ -37,6 +37,7 @@ public class AlignToReefTagCommand extends Command {
         //TODO: does PIDing to a tx setpoint actually work?
         xController.setSetpoint(direction.getTxTargetError());
         yController.setSetpoint(direction.getTyTargetError());
+        addRequirements(RobotContainer.drivetrain);
     }
 
     @Override

@@ -70,7 +70,7 @@ import frc.robot.util.Tunable;
 public class Elevator extends SubsystemBase {
     // Subsystems
     // Constants
-    private static final double METERS_PER_ROTATION = 36 * 5 / 1000.0 * (1.0 / 12.0);
+    private static final double METERS_PER_ROTATION = 36 * 5 / 1000.0 * (1.0 / 9);
     private static final double ROTATIONS_PER_METER = 1.0 / METERS_PER_ROTATION;
     public static final double STARTING_HEIGHT = 0.98;// 0.9718607; // (meters) - distance between top bar and ground
                                                       // (no
@@ -88,7 +88,7 @@ public class Elevator extends SubsystemBase {
                                                      // and is trying to go farther but has not yet hit the limit switch
                                                      // during manual control
     public static final double MAX_VELOCITY_RPS = 100;
-    public static final double MAX_ACCEL_RPS = 200;
+    public static final double MAX_ACCEL_RPS = 350;
 
     public static final double ELEVATOR_PULLEY_RADIUS = Units.inchesToMeters(0.9175);
 
@@ -131,6 +131,8 @@ public class Elevator extends SubsystemBase {
     private LimitSwitch bottomLimit;
     private LimitSwitch topLimit;
 
+    private RobotState elevatorState;
+
     // Logging to NT
     DoublePublisher heightPub;
     DoublePublisher percentHeightPub;
@@ -159,7 +161,7 @@ public class Elevator extends SubsystemBase {
     private Mechanism2d mechanism;
     private MechanismRoot2d rootMechanism;
     private MechanismLigament2d elevatorMechanism;
-
+    
     public Elevator() {
 
         // Tunable kP = new Tunable("kP", 1.5, (val) -> slot0Configs.withKP(val));
@@ -395,12 +397,12 @@ public class Elevator extends SubsystemBase {
     public double getExtensionRotations() {
         double leftDisplacement = (leftTalonFX.getPosition().getValueAsDouble());
         double rightDisplacement = (rightTalonFX.getPosition().getValueAsDouble());
-        if (Math.abs(leftDisplacement - rightDisplacement) > 0.2) { // TODO: lower
-            // when things get more reliable
-            Elastic.sendNotification(new Notification(
-                    NotificationLevel.WARNING, "Elevator Height Mismatch",
-                    "The two elevator encoders give different values :(", 5000));
-        }
+        // if (Math.abs(leftDisplacement - rightDisplacement) > 0.2) { // TODO: lower
+        //     // when things get more reliable
+        //     Elastic.sendNotification(new Notification(
+        //             NotificationLevel.WARNING, "Elevator Height Mismatch",
+        //             "The two elevator encoders give different values :(", 5000));
+        // }
 
         return (leftDisplacement + rightDisplacement) / 2.0;
     }
@@ -631,7 +633,18 @@ public class Elevator extends SubsystemBase {
     public Command setState(RobotState state) {
         return Commands.sequence(
             RobotContainer.ratchet.disengageServos().onlyIf(() -> RobotContainer.ratchet.ratchetEngaged && state != RobotState.ClimbDown).withTimeout(0.1),
-            Commands.run(() -> setExtension(state.getHeight()), this).until(() -> atSetpoint()));
+            Commands.run(() -> {
+                setExtension(state.getHeight());
+                elevatorState = state;
+            }, this).until(() -> atSetpoint()).finallyDo(leftTalonFX::stopMotor));
+    }
+
+    public Command setTargetState(RobotState state) {
+        return Commands.runOnce(() -> elevatorState = state);
+    }
+
+    public RobotState getState() {
+        return elevatorState;
     }
 
     @AutoLogOutput
@@ -686,7 +699,7 @@ public class Elevator extends SubsystemBase {
         // Read their actual voltage (simulated)
         var leftMotorVoltage = leftTalonFXSim.getMotorVoltage();
         var rightMotorVoltage = rightTalonFXSim.getMotorVoltage();
-        var voltage = (leftMotorVoltage + rightMotorVoltage) / 2;
+        var voltage = 2 *(leftMotorVoltage + rightMotorVoltage) / 2;
 
         simVoltagePub.set(voltage);
         // System.out.println("simVoltage: " + leftMotorVoltage);

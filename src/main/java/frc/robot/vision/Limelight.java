@@ -181,9 +181,14 @@ public class Limelight extends SubsystemBase {
         LimelightHelpers.SetRobotOrientation(cameraName, angle, 0, 0, 0, 0, 0);
         LimelightHelpers.PoseEstimate mt2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(cameraName);
         // System.out.println(Utils.getCurrentTimeSeconds());
-
         boolean shouldRejectUpdate = false;
-        if (mt2 != null) { 
+        if (mt2 != null) {
+            RawFiducial[] tags = mt2.rawFiducials;
+            int[] ids = new int[tags.length];
+            for (int i = 0; i < tags.length; i++) {
+                ids[i] = tags[i].id;
+            }
+            Logger.recordOutput(cameraName + "/SeenTags", ids); 
             if (mt2.tagCount == 0) {
                 //rejects current measurement if there are no aprilTags
                 shouldRejectUpdate = true;
@@ -199,7 +204,7 @@ public class Limelight extends SubsystemBase {
             }
             if (mt2.avgTagDist > 4) {
                 shouldRejectUpdate = true;
-            }
+            } 
             //adds vision measurement if conditions are met
             if (!shouldRejectUpdate) {
                 Logger.recordOutput(cameraName + "/mt2Pose", mt2.pose);
@@ -331,9 +336,27 @@ public class Limelight extends SubsystemBase {
     private double startTime = -1;
     public void periodic() {
         // tagID = (int) Limetable.getEntry("tid").getDouble(-1);
+        // TODO if you get a pose estimate in the frame before this is applied it may not work
         tx = LimelightHelpers.getTX(cameraName);
         ty = LimelightHelpers.getTY(cameraName);
-        poseEstimationMegatag2();
+        RawFiducial[] allTags = LimelightHelpers.getRawFiducials(cameraName);
+        int numValidTags = 0;
+        for(LimelightHelpers.RawFiducial t : allTags) {
+            if(t.distToCamera < 4.0) {
+                numValidTags++;
+            }
+        }
+
+        int[] validTags = new int[numValidTags];
+        int counter = 0;
+        for(RawFiducial t : allTags) {
+            if(t.distToCamera < 4.0) {
+                validTags[counter] = t.id;
+                counter++;
+            }
+        }
+     //   LimelightHelpers.SetFiducialIDFiltersOverride(cameraName, validTags);
+        // poseEstimationMegatag2();
         xDistPub.set(getHorizontalDistanceToReef());
         yDistPub.set(getStraightDistanceToReef());
         horizontalDistPub.set(getDistanceToReef());

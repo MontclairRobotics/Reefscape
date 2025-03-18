@@ -58,6 +58,7 @@ import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.RobotContainer;
 import frc.robot.commands.AlignToAprilTagCommandOffset;
+import frc.robot.commands.AlignToTagCommand;
 import frc.robot.commands.GoToPoseCommand;
 import frc.robot.commands.GoToReefCommand;
 import frc.robot.commands.GoToPoseInputCommand;
@@ -319,7 +320,7 @@ public class Auto extends SubsystemBase {
 
             // }
 
-            String pathName; //String name so that you can access the path file
+            String pathName = ""; //String name so that you can access the path file
             String middleChar = "-"; //Stores the character connecting the two waypoints
             boolean firstPath = false; //If its the first path in auto
             PathPlannerPath path1 = null;
@@ -453,7 +454,7 @@ public class Auto extends SubsystemBase {
 
                         double pathTime = traj.getTotalTimeSeconds(); //time path will take
                         double raiseTime = RobotContainer.elevator.getRaiseTime(mechState);
-                        raiseTime = 1.6; //time elevator will take to rise
+                        raiseTime = 1.15; //time elevator will take to rise
                         double waitTime = pathTime - raiseTime; //how much time we should wait before raising elevator
                         timeSeconds += pathTime; //adds how long the path will take to the estimated time
                        // System.out.println("Path 1 Arm height: " + mechState.getHeight());
@@ -467,17 +468,29 @@ public class Auto extends SubsystemBase {
                                     Commands.print("After waiting"),
                                     Commands.parallel(
                                         //Commands.print("Starting elevator command path 1"),
-                                        RobotContainer.elevator.setState(mechState), // TODO I removed this timeout. You'd rather wait then score at wrong height
-                                        RobotContainer.arm.goToAngleCommand(mechState.getAngle())
+                                       RobotContainer.elevator.setState(RobotState.L3).withTimeout(1),// TODO I removed this timeout. You'd rather wait then score at wrong height
+                                       RobotContainer.arm.setState(RobotState.L4).withTimeout(1)
                                     )
                                     ,Commands.print("Finished elevator command path 1")
                                 )    
                         ));
-                        // List<Pose2d> pts = path1.getPathPoses();
-                        // Pose2d lastPathPose = pts.get(pts.size() - 1);
-                        // Pose2d targetPose = new Pose2d(lastPathPose.getX(), lastPathPose.getY(), path1.getGoalEndState().rotation());
-                        // System.out.println(pts.get(pts.size() - 1));
                         
+                        final Rotation2d heading = traj.getEndState().heading;
+                        autoCommand.addCommands(Commands.run(() -> RobotContainer.drivetrain.alignWheels(heading)).withTimeout(0.15));
+                        autoCommand.addCommands(new AlignToTagCommand(second, false, false)
+                        );
+                            // .alongWith(RobotContainer.elevator.setState(mechState))
+                            // .alongWith(RobotContainer.arm.setState(mechState)));
+                        // if (Character.isLowerCase(first.charAt(0)) || Character.isLowerCase(second.charAt(0))) {
+                        //     autoCommand.addCommands(new GoToReefCommand(TagOffset.RIGHT, false)
+                        //     .alongWith(RobotContainer.elevator.setState(mechState))
+                        //     .alongWith(RobotContainer.arm.setState(mechState)));
+                        // } else {
+                        //     autoCommand.addCommands(new GoToReefCommand(TagOffset.LEFT, false)
+                        //     .alongWith(RobotContainer.elevator.setState(mechState))
+                        //     .alongWith(RobotContainer.arm.setState(mechState)));
+                        // }
+                        autoCommand.addCommands(Commands.print("Align Finished"));
                         
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -524,7 +537,7 @@ public class Auto extends SubsystemBase {
             }
 
             /* ADDS AN INTAKING COMMAND */
-            autoCommand.addCommands(RobotContainer.rollers.intakeCoralJiggleCommand().withTimeout(1));
+            autoCommand.addCommands(RobotContainer.rollers.intakeCoralJiggleCommand().withTimeout(1.1));
             timeSeconds += INTAKE_PREDICTED_TIME;
             // Bring elevator and arm to default position after scoring last coral
 

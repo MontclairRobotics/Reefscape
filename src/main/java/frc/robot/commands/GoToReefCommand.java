@@ -39,6 +39,7 @@ public class GoToReefCommand extends Command {
  
     double targetHeading;
     double offset = .3;
+    double otherOffset = -.03;
     boolean isOffset;
 
     DoublePublisher xOutputPub;
@@ -81,6 +82,19 @@ public class GoToReefCommand extends Command {
             //same thing for sin(x)
             double updatedX = targetPose.getX() + (-1 * offset * Math.cos(targetHeading));
             double updatedY = targetPose.getY() + (-1 * offset * Math.sin(targetHeading));
+            //creates new updated pose
+            targetPose = new Pose2d(new Translation2d(updatedX, updatedY), Rotation2d.fromRadians(targetHeading));
+        } else {
+            //flips the angle if we are on red, so that the trig functions will work properly
+            //On red, the pose for POINT A on RED ALLIANCE has a heading of 180 (I think), 
+            //but the pose for POINT A on BLUE ALLIANCE has a heading of 0 (I think), so we 
+            //just have to make them the same again
+            targetHeading = targetPose.getRotation().getRadians();
+            //when target heading is zero, we want the offset to be backwards but cos(0) 
+            //is positive, so we multiply by negative 1
+            //same thing for sin(x)
+            double updatedX = targetPose.getX() + (-1 * otherOffset * Math.cos(targetHeading));
+            double updatedY = targetPose.getY() + (-1 * otherOffset * Math.sin(targetHeading));
             //creates new updated pose
             targetPose = new Pose2d(new Translation2d(updatedX, updatedY), Rotation2d.fromRadians(targetHeading));
         }
@@ -139,7 +153,7 @@ public class GoToReefCommand extends Command {
 
         // TODO I think I need to log the 1st pose2d in disabled to prevent overruns
         Logger.recordOutput("PoseCommand/TargetPose", targetPose);
-        Logger.recordOutput("PoseCommand/TargetPose", RobotContainer.drivetrain.getRobotPose());
+        Logger.recordOutput("PoseCommand/CurrentPose", RobotContainer.drivetrain.getRobotPose());
     }
 
     @Override
@@ -158,7 +172,7 @@ public class GoToReefCommand extends Command {
         double omegaSpeed = thetaController.calculate(currentPose.getRotation().getRadians());
 
         //sets control output to the drivetrain
-        RobotContainer.drivetrain.drive(xSpeed, ySpeed, omegaSpeed, true, false);
+        RobotContainer.drivetrain.driveWithSetpoint(xSpeed, ySpeed, omegaSpeed, true, false);
     }
 
     @Override
