@@ -34,7 +34,7 @@ public class AlignToClosestReefTagOffset extends Command {
             camera = RobotContainer.rightLimelight;
         }
 
-        xOffset = offset.getXOffsetM();
+        xOffset = offset.getHorizontalOffsetM();
         if (isOffset) {
             yOffset = 0.3;
         } else {

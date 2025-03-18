@@ -30,11 +30,11 @@ public enum TagOffset {
         return tyTargetError;
     }
 
-    public double getYOffsetM() {
+    public double getForwardOffsetM() {
         return yOffsetM;
     }
 
-    public double getXOffsetM() {
+    public double getHorizontalOffsetM() {
         return xOffsetM;
     }
 
