@@ -154,6 +154,8 @@ public class GoToReefCommand extends Command {
         // TODO I think I need to log the 1st pose2d in disabled to prevent overruns
         Logger.recordOutput("PoseCommand/TargetPose", targetPose);
         Logger.recordOutput("PoseCommand/CurrentPose", RobotContainer.drivetrain.getRobotPose());
+
+        System.out.println(isOffset);
     }
 
     @Override
