@@ -1,5 +1,7 @@
 package frc.robot.commands;
 
+import org.littletonrobotics.junction.Logger;
+
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -15,10 +17,13 @@ public class DistanceAlign extends Command{
     private PIDController yController;
     private PIDController thetaController;
     private TagOffset direction;
+    private boolean isOffset;
+    private double offset = .3; //meters
 
     private Limelight camera;
 
-    public DistanceAlign(TagOffset direction) {
+    public DistanceAlign(TagOffset direction, boolean isOffset) {
+        this.isOffset = isOffset;
         this.direction = direction; //left or right for coral, center for grabbing algae
         this.camera = direction == TagOffset.LEFT ? RobotContainer.rightLimelight : RobotContainer.leftLimelight;
         xController = new PIDController(5, 0, 0);
@@ -31,10 +36,13 @@ public class DistanceAlign extends Command{
     @Override
     public void initialize(){
         addRequirements(RobotContainer.drivetrain);
-        xController.setSetpoint(direction.getXOffsetM());
-        System.out.println("X setpoint " + xController.getSetpoint());
-        yController.setSetpoint(direction.getYOffsetM());
-        System.out.println("Y setpoint " + yController.getSetpoint());
+        xController.setSetpoint(direction.getForwardOffsetM());
+        if(isOffset) xController.setSetpoint(direction.getForwardOffsetM() + offset);
+        Logger.recordOutput("X Setpoint (forward) - Distance Align", xController.getSetpoint());
+        // System.out.println("X setpoint " + xController.getSetpoint());
+        yController.setSetpoint(direction.getHorizontalOffsetM());
+        Logger.recordOutput("Y Setpoint (horizontal) - Distance Align", yController.getSetpoint());
+        // System.out.println("Y setpoint " + yController.getSetpoint());
         double wrappedSetPoint = Drivetrain.wrapAngle(RobotContainer.drivetrain.odometryHeading.plus(Rotation2d.fromDegrees(camera.getTX()))).getRadians();
         thetaController.setSetpoint(wrappedSetPoint);
     }
@@ -43,10 +51,13 @@ public class DistanceAlign extends Command{
     public void execute() {
 
         //PID calculated outputs
-        double xSpeed = xController.calculate(camera.getStrafeDistanceToReef());
-        System.out.println("X speed " + xSpeed);
-        double ySpeed = yController.calculate(camera.getStraightDistanceToReef());
-        System.out.println("Y speed " + ySpeed);
+        double xSpeed = xController.calculate(camera.getStraightDistanceToReef());
+        Logger.recordOutput("Current X Distance (forward) - Distance Align", camera.getStraightDistanceToReef());
+        // System.out.println("X speed " + xSpeed);
+        double ySpeed = yController.calculate(camera.getStrafeDistanceToReef());
+        Logger.recordOutput("Current Y Distance (horizontal) - Distance Align", camera.getStrafeDistanceToReef());
+
+        // System.out.println("Y speed " + ySpeed);
         double thetaSpeed = thetaController.calculate(RobotContainer.drivetrain.odometryHeading.getRadians());
 
         //drives robot relative because tx and ty are robot relative

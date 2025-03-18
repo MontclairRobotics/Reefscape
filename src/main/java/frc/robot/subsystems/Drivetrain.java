@@ -3,6 +3,7 @@ package frc.robot.subsystems;
 import frc.robot.Robot;
 import frc.robot.RobotContainer;
 import frc.robot.commands.AlignToAprilTagCommandOffset;
+import frc.robot.commands.DistanceAlign;
 import frc.robot.commands.GoToPoseCommand;
 import frc.robot.commands.GoToReefCommand;
 import frc.robot.util.TunerConstants;
@@ -11,7 +12,7 @@ import frc.robot.util.simulation.MapleSimSwerveDrivetrain;
 import frc.robot.vision.Limelight;
 import frc.robot.vision.LimelightHelpers;
 import static edu.wpi.first.math.util.Units.*;
-
+import static edu.wpi.first.units.Units.Rotation;
 import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Volts;
 
@@ -363,6 +364,21 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
                         Commands.waitSeconds(0).andThen(Commands.defer(() -> RobotContainer.elevator.setState(RobotContainer.elevator.getTargetState()), Set.of(RobotContainer.elevator)).andThen(Commands.print("Elevator over")))),
                         Commands.print("Deferred BS over"),
                 new GoToReefCommand(direction, false).unless(isL4));
+    }
+
+    public Command driveToReefCommandDistanceFast(TagOffset direction) {
+        BooleanSupplier isL4 = () -> {
+            return RobotContainer.elevator.getTargetState() == RobotState.L4;
+        };
+        Rotation2d targetRotation = getClosestScoringPose(BLUE_SCORING_POSES).getRotation();
+        return Commands.sequence(
+                Commands.print("IsL4: " + isL4.getAsBoolean()),
+                alignToAngleFieldRelativeCommand(targetRotation, false),
+                Commands.parallel(
+                        Commands.defer(() -> new DistanceAlign(direction, !isL4.getAsBoolean()), Set.of(this)).andThen(Commands.print("Driving over")),
+                        Commands.waitSeconds(0).andThen(Commands.defer(() -> RobotContainer.elevator.setState(RobotContainer.elevator.getTargetState()), Set.of(RobotContainer.elevator)).andThen(Commands.print("Elevator over")))),
+                        Commands.print("Deferred BS over"),
+                new DistanceAlign(direction, false).unless(isL4));
     }
 
     double ROBOT_COM_NO_ELEVATOR = inchesToMeters(5.8); // the COM of the robot and stage 1 of the elevator

@@ -60,7 +60,7 @@ public class GoToReefCameraSpace extends Command {
         //defaults to center
         // if(direction == ScoreDirection.CENTER) {
         Pose3d currentPose = LimelightHelpers.getBotPose3d_TargetSpace(camera.cameraName);
-        targetPose = new Pose2d(direction.getYOffsetM(), direction.getXOffsetM(), Rotation2d.fromRadians(currentPose.getRotation().getZ()));
+        targetPose = new Pose2d(direction.getForwardOffsetM(), direction.getHorizontalOffsetM(), Rotation2d.fromRadians(currentPose.getRotation().getZ()));
 
         if(isOffset) {
             //flips the angle if we are on red, so that the trig functions will work properly
