@@ -29,12 +29,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 // import frc.robot.commands.AlignToClosestReefTagOffset;
-import frc.robot.commands.AlignToReefTagCommand2;
-import frc.robot.commands.AlignToReefTagCommand3;
-import frc.robot.commands.AlignToReefTagCommand4;
 import frc.robot.commands.AlignToTagCommand;
-import frc.robot.commands.AlignToTagCommand2;
-import frc.robot.commands.AlignToTagCommand4;
 import frc.robot.commands.DistanceAlign;
 // import frc.robot.commands.GoToReefCameraSpace;
 import frc.robot.commands.GoToReefCommand;
@@ -242,19 +237,19 @@ public class RobotContainer {
     // alignment buttons
     driverController.R2()
         .whileTrue(new GoToReefCommand(TagOffset.CENTER, true))
-        .onFalse(new GoToReefCommand(TagOffset.CENTER, false).until(() -> drivetrain.joystickInputDetected()));
+        .onFalse(new AlignToTagCommand(TagOffset.CENTER, false, false).until(() -> drivetrain.joystickInputDetected()));
     // .whileTrue(new DistanceAlign(TagOffset.CENTER));
     // .onFalse(new GoToReefCommand(TagOffset.CENTER, false).until(() ->
     // drivetrain.joystickInputDetected()));
 
     driverController.L1()
         .whileTrue(new GoToReefCommand(TagOffset.LEFT, true))
-        .onFalse(new GoToReefCommand(TagOffset.LEFT, false).until(() -> drivetrain.joystickInputDetected()));
+        .onFalse(new AlignToTagCommand(TagOffset.LEFT, false, false).until(() -> drivetrain.joystickInputDetected()));
     // .whileTrue(new DistanceAlign(TagOffset.LEFT));
 
     driverController.R1()
         .whileTrue(new GoToReefCommand(TagOffset.RIGHT, true))
-        .onFalse(new GoToReefCommand(TagOffset.RIGHT, false).until(() -> drivetrain.joystickInputDetected()));
+        .onFalse(new AlignToTagCommand(TagOffset.RIGHT, false, false).until(() -> drivetrain.joystickInputDetected()));
     // .whileTrue(new DistanceAlign(TagOffset.RIGHT));
 
     driverController.povRight()
@@ -284,16 +279,16 @@ public class RobotContainer {
         .onFalse(drivetrain.toFieldRelativeCommand());
 
     // 90 degree buttons
-    driverController.triangle()
-        .onTrue(
-            drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(0)), false));
-    driverController.square()
-        .onTrue(drivetrain.alignToAngleFieldRelativeCommand((Rotation2d.fromDegrees(-54)), false));
-    driverController.cross()
-        .onTrue(
-            drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(180)), false));
-    driverController.circle()
-        .onTrue(drivetrain.alignToAngleFieldRelativeCommand(Rotation2d.fromDegrees(54), false));
+    // driverController.triangle()
+    //     .onTrue(
+    //         drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(0)), false));
+    // driverController.square()
+    //     .onTrue(drivetrain.alignToAngleFieldRelativeCommand((Rotation2d.fromDegrees(-54)), false));
+    // driverController.cross()
+    //     .onTrue(
+    //         drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(180)), false));
+    // driverController.circle()
+    //     .onTrue(drivetrain.alignToAngleFieldRelativeCommand(Rotation2d.fromDegrees(54), false));
 
     // zeros gyro
     driverController.touchpad().onTrue(drivetrain.zeroGyroCommand());
