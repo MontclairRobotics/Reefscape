@@ -151,7 +151,14 @@ public class RobotContainer {
 
     // L4 Automatic
     operatorController.circle().and(operatorController.L2().negate())
-        .onTrue(arm.holdState(RobotState.L4).alongWith(elevator.setTargetState(RobotState.L4)));
+        .onTrue(arm.holdState(RobotState.L4).alongWith(elevator.setState(RobotState.L3)).alongWith(elevator.setTargetState(RobotState.L4)));
+
+    // operatorController.circle().and(operatorController.L2().negate())
+    // .whileTrue(arm.holdState(RobotState.L4).alongWith(elevator.setState(RobotState.L3)))
+    // .onFalse(
+    //     elevator.setState(RobotState.L4)
+    //         // .onlyIf(autoAligning.negate()).alongWith(elevator.setTargetState(RobotState.L4))
+    //         .alongWith(arm.holdState(RobotState.L4)));
 
     // Lower algae
     operatorController.cross().and(operatorController.L2())

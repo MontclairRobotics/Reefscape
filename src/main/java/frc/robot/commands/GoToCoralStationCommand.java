@@ -4,6 +4,8 @@ import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.Drivetrain;
@@ -16,6 +18,8 @@ public class GoToCoralStationCommand extends Command {
     private PIDController thetaController;
     private Pose2d targetPose;
     private TagOffset direction;
+    double targetHeading;
+    double otherOffset = .05;
 
     public void initialize() {
         targetPose = new Pose2d();
@@ -29,6 +33,19 @@ public class GoToCoralStationCommand extends Command {
         if(targetPose == null) {
             cancel();
         }
+        //flips the angle if we are on red, so that the trig functions will work properly
+            //On red, the pose for POINT A on RED ALLIANCE has a heading of 180 (I think), 
+            //but the pose for POINT A on BLUE ALLIANCE has a heading of 0 (I think), so we 
+            //just have to make them the same again
+            targetHeading = targetPose.getRotation().getRadians();
+            //when target heading is zero, we want the offset to be backwards but cos(0) 
+            //is positive, so we multiply by negative 1
+            //same thing for sin(x)
+            double updatedX = targetPose.getX() + (-1 * otherOffset * Math.cos(targetHeading));
+            double updatedY = targetPose.getY() + (-1 * otherOffset * Math.sin(targetHeading));
+            //creates new updated pose
+            targetPose = new Pose2d(new Translation2d(updatedX, updatedY), Rotation2d.fromRadians(targetHeading));
+
         xController.setTolerance(0.02);
         yController.setTolerance(0.02);
         xController.setSetpoint(targetPose.getX());
