@@ -35,6 +35,8 @@ import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.trajectory.Trajectory.State;
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator;
+import edu.wpi.first.networktables.BooleanEntry;
+import edu.wpi.first.networktables.BooleanTopic;
 import edu.wpi.first.networktables.DoubleEntry;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.DoubleTopic;
@@ -77,7 +79,9 @@ public class Auto extends SubsystemBase {
     private final double SCORING_TIMEOUT = 0.13;
     private final double INTAKE_PREDICTED_TIME = 0.3;
 
+    private boolean prevIsPushAuto;
     public int estimatedScore = 3; //Starts at 3 because of the leave bonus!
+    private boolean stupid;
     private String prevAutoString = "";
     private double prevProgressBar = 0;
     private ArrayList<PathPlannerPath> pathList = new ArrayList<PathPlannerPath>();
@@ -89,12 +93,15 @@ public class Auto extends SubsystemBase {
     private double timeSeconds = 0; //*ESTIMATED* time the auto routine will take
 
     private boolean isUsingProgressBar;
+    private boolean isPushAuto;
 
     NetworkTableInstance inst = NetworkTableInstance.getDefault();
     NetworkTable auto = inst.getTable("Auto");
     TagOffset autoOffset = TagOffset.CENTER;
 
     StringTopic autoTopic = auto.getStringTopic("Auto String");
+    BooleanTopic pushAutoTopic = auto.getBooleanTopic("Push Auto");
+    BooleanEntry pushAutoEntry = pushAutoTopic.getEntry(false);
     StringEntry stringEnt = autoTopic.getEntry("");
     DoubleTopic progressBarTopic = auto.getDoubleTopic("Progress Bar");
     DoubleEntry progressBarEnt = progressBarTopic.getEntry(0);
@@ -137,6 +144,8 @@ public class Auto extends SubsystemBase {
     public Auto() {
 
         autoTopic.setRetained(true); // Should be retained?
+        pushAutoTopic.setRetained(true);
+        pushAutoEntry.set(false);
         stringEnt.set("");
         progressBarEnt.set(0);
         progressBarTopic.setRetained(true);
@@ -330,6 +339,7 @@ public class Auto extends SubsystemBase {
 
             boolean path1Exists = first != null && second != null; //Whether or not we have a valid path
             System.out.println("----------------------------------------------------" + path1Exists);
+            double multiplier = 1;
             if (path1Exists) {
                 //If either character is lowercase, the character connecting them will be a "_"
                 if (Character.isLowerCase(first.charAt(0)) || Character.isLowerCase(second.charAt(0))) {
@@ -346,9 +356,10 @@ public class Auto extends SubsystemBase {
 
                 //creates the path name!
                 pathName = i == 1 ? "S" + first + middleChar + second : first + middleChar + second; 
-
+                
 
                 try {
+                    
                     // Load the path you want to follow using its name in the GUI
                     path1 = PathPlannerPath.fromPathFile(pathName);
 
@@ -356,15 +367,48 @@ public class Auto extends SubsystemBase {
                     // Create a path following command using AutoBuilder. This will also trigger
                     // event markers.
                     path1Cmd = Commands.parallel(Commands.print("Running path 1"), AutoBuilder.followPath(path1));
-
+                
                     //resets pose to the starting pose if we are at the first path!
                     if (firstPath) { //TODO reset to something better? vision pose?
                         Optional<Pose2d> opPose = path1.getStartingHolonomicPose();
                         System.out.println(opPose.get() + "-------------POOOOOOSSEEEE----------");
                         Pose2d pose = opPose.isPresent() ? PoseUtils.flipPoseAlliance(opPose.get()) : new Pose2d();
+                        Pose2d thePushPose;
+                        System.out.println("is push auto" + isPushAuto);
+
+                        if(isPushAuto) {
+                            double x = 7.578;
+                            double y = 0;
+                            Rotation2d rot = new Rotation2d();
+                            thePushPose = new Pose2d();
+                            if(pathName.charAt(1) == '4') {
+                                System.out.println("S4 rufrewr");
+                                multiplier = -1;
+                                y = 1.846;
+                                rot = Rotation2d.fromDegrees(135);
+                                thePushPose = PoseUtils.flipPoseAlliance(new Pose2d(x, y, rot));
+                            } else if(pathName.charAt(1) == '2') {
+                                y = 6.154;
+                                rot = Rotation2d.fromDegrees(-135);
+                                System.out.println("S222222222222 rufrewr");
+                                thePushPose = PoseUtils.flipPoseAlliance(new Pose2d(x, y, rot));
+                            } else {
+                                isPushAuto = false;
+                            }
+                             
+                        } else {
+                             thePushPose = new Pose2d();
+                        }
+                        Pose2d pushPose = thePushPose;
                         autoCommand.addCommands(Commands.runOnce(() -> {
-                            System.out.println("resetting auto pose" + pose);
-                            RobotContainer.drivetrain.resetPose(pose);
+                            if(isPushAuto) {
+                                stupid = true;
+                                System.out.println("Reseting to the push pose: " + pushPose);
+                                RobotContainer.drivetrain.resetPose(pushPose);
+                            } else {
+                                stupid = false;
+                                RobotContainer.drivetrain.resetPose(pose);
+                            }
                         }).andThen(Commands.sequence(
                             Commands.runOnce(() -> {
                                 RobotContainer.leftLimelight.setGyroMode(1);
@@ -378,9 +422,13 @@ public class Auto extends SubsystemBase {
                         )));
 
                         // TODO this can be deleted, is here for testing purposes
-                        RobotContainer.drivetrain.resetPose(pose);
+                        //RobotContainer.drivetrain.resetPose(pose);
                     }
 
+                    if(isPushAuto && firstPath) {
+                        double theMultiplier = multiplier * -1;
+                        autoCommand.addCommands(Commands.run(() -> RobotContainer.drivetrain.drive(0, 1*theMultiplier, 0, false, false)).withTimeout(1));
+                    }
                     // TODO needs to be .generateTrajectory()? maybe only if the ideal one doesn't
                     // exist?
                     pathList.add(path1);
@@ -441,6 +489,8 @@ public class Auto extends SubsystemBase {
                 Optional<PathPlannerTrajectory> opTraj;
                 try {
                     opTraj = path1.getIdealTrajectory(RobotConfig.fromGUISettings());
+                    System.out.println("First path in here: " + (i == 1));
+                
                     PathPlannerTrajectory traj = null;
                     if (opTraj.isPresent()) {
                         traj = opTraj.get();
@@ -459,6 +509,12 @@ public class Auto extends SubsystemBase {
                        // System.out.println("Path 1 Arm height: " + mechState.getHeight());
                        // System.out.println("Path 1 Raise Time: " + raiseTime);
                         //runs the path command along with a command that waits to raise the elevator
+                        if(pathName.charAt(0) == 'S' && stupid) {
+                            System.out.println("Trying to repath to pose: " + opTraj.get().getEndState().pose );
+                            path1Cmd = AutoBuilder.pathfindToPose(opTraj.get().getEndState().pose, Drivetrain.DEFAULT_CONSTRAINTS);
+                            opTraj = null;
+                            stupid = false;
+                        }
                         autoCommand.addCommands(Commands.parallel(
                             Commands.deadline(path1Cmd, RobotContainer.rollers.holdCoralCommand()).andThen(Commands.print("Path Over")),
                                 Commands.sequence(
@@ -667,6 +723,7 @@ public class Auto extends SubsystemBase {
             SmartDashboard.putNumber("Score", calculateEstimatedScore(estimatedScore));
             SmartDashboard.putData(field);
 
+            isPushAuto = pushAutoEntry.get(); 
             // String autoString = str.replace(' ', Character.MIN_VALUE); // check
             String autoString = "";
             Optional<Alliance> alliance = DriverStation.getAlliance();
@@ -675,9 +732,10 @@ public class Auto extends SubsystemBase {
                     autoString += a;
                 }
             }
-            if (!autoString.equals(prevAutoString)) {
+            if (!autoString.equals(prevAutoString) || isPushAuto != prevIsPushAuto) {
                 System.out.println("Running auto sequencer & Command Builder");
                 prevAutoString = autoString;
+                prevIsPushAuto = isPushAuto;
                 validateAndCreatePaths(autoString);
                 addRobotPoseProgressBar();
                 displayTimestampSeconds();

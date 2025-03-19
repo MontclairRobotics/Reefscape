@@ -131,8 +131,8 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     // });
 
     public static final Pose2d[] BLUE_SCORING_POSES = {
-            new Pose2d(new Translation2d(1.091, 1.060), new Rotation2d(Math.toRadians(-127.000))), // top coral station
-            new Pose2d(new Translation2d(1.091, 7.000), new Rotation2d(Math.toRadians(127.000))), // bottom coral
+            // new Pose2d(new Translation2d(1.091, 1.060), new Rotation2d(Math.toRadians(-127.000))), // top coral station
+            // new Pose2d(new Translation2d(1.091, 7.000), new Rotation2d(Math.toRadians(127.000))), // bottom coral
                                                                                                   // station
             new Pose2d(new Translation2d(3.16, 4.04), new Rotation2d(Math.toRadians(0))),
             new Pose2d(new Translation2d(5.81, 4.04), new Rotation2d(Math.toRadians(180))),
@@ -143,8 +143,8 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     };
 
     public static final Pose2d[] LEFT_BLUE_SCORING_POSES = {
-        new Pose2d(new Translation2d(1.66, .67), new Rotation2d(Math.toRadians(-127.000))), // top coral station
-            new Pose2d(new Translation2d(.67, 6.65), new Rotation2d(Math.toRadians(127.000))), // bottom coral
+            // new Pose2d(new Translation2d(1.66, .67), new Rotation2d(Math.toRadians(-127.000))), // top coral station
+            // new Pose2d(new Translation2d(.67, 6.65), new Rotation2d(Math.toRadians(127.000))), // bottom coral
              
             new Pose2d(new Translation2d(3.17, 4.19), new Rotation2d(Math.toRadians(0))),
             new Pose2d(new Translation2d(3.98, 5.25), new Rotation2d(Math.toRadians(-60))),
@@ -155,8 +155,8 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     };
 
     public static final Pose2d[] RIGHT_BLUE_SCORING_POSES = {
-        new Pose2d(new Translation2d(.67, 1.39), new Rotation2d(Math.toRadians(-127.000))), // top coral station
-            new Pose2d(new Translation2d(1.66, 7.36), new Rotation2d(Math.toRadians(127.000))), // bottom coral
+            // new Pose2d(new Translation2d(.67, 1.39), new Rotation2d(Math.toRadians(-127.000))), // top coral station
+            // new Pose2d(new Translation2d(1.66, 7.36), new Rotation2d(Math.toRadians(127.000))), // bottom coral
              
             new Pose2d(new Translation2d(3.17, 3.86), new Rotation2d(Math.toRadians(0))),
             new Pose2d(new Translation2d(3.69, 5.09), new Rotation2d(Math.toRadians(-60))),
@@ -164,6 +164,21 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
             new Pose2d(new Translation2d(5.8, 4.19), new Rotation2d(Math.toRadians(180))),
             new Pose2d(new Translation2d(5.3, 2.97), new Rotation2d(Math.toRadians(120))),
             new Pose2d(new Translation2d(3.98, 2.8), new Rotation2d(Math.toRadians(60))),
+    };
+
+    public static final Pose2d[] BLUE_INTAKE_POSES = {
+        new Pose2d(new Translation2d(1.091, 1.060), new Rotation2d(Math.toRadians(-127.000))), // top coral station
+        new Pose2d(new Translation2d(1.091, 7.000), new Rotation2d(Math.toRadians(127.000))), // bottom coral
+    };
+
+    public static final Pose2d[] LEFT_BLUE_INTAKE_POSES = {
+        new Pose2d(new Translation2d(1.66, .67), new Rotation2d(Math.toRadians(-127.000))), // top coral station
+        new Pose2d(new Translation2d(.67, 6.65), new Rotation2d(Math.toRadians(127.000))), // bottom coral
+    };
+
+    public static final Pose2d[] RIGHT_BLUE_INTAKE_POSES = {
+        new Pose2d(new Translation2d(.67, 1.39), new Rotation2d(Math.toRadians(-127.000))), // top coral station
+        new Pose2d(new Translation2d(1.66, 7.36), new Rotation2d(Math.toRadians(127.000))), // bottom coral
     };
 
     private ProfiledPIDController xController;
@@ -370,7 +385,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         BooleanSupplier isL4 = () -> {
             return RobotContainer.elevator.getTargetState() == RobotState.L4;
         };
-        Rotation2d targetRotation = getClosestScoringPose(BLUE_SCORING_POSES).getRotation();
+        Rotation2d targetRotation = getClosestTargetPose(BLUE_SCORING_POSES).getRotation();
         return Commands.sequence(
                 Commands.print("IsL4: " + isL4.getAsBoolean()),
                 alignToAngleFieldRelativeCommand(targetRotation, false),
@@ -689,7 +704,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
                                 (pos1.getY() - pos2.getY()), 2));
     }
 
-    public Pose2d getClosestScoringPose(Pose2d[] posArr) {
+    public Pose2d getClosestTargetPose(Pose2d[] posArr) {
         Pose2d closestPose;
         Pose2d currentPose;
         currentPose = this.getRobotPose();
