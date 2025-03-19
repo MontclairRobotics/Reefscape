@@ -215,7 +215,7 @@ public class Elevator extends SubsystemBase {
          */
         accelerationLimiter = new SlewRateLimiter(5); // TODO: actually set this
 
-        CurrentLimitsConfigs currentLimitConfigs = new CurrentLimitsConfigs().withStatorCurrentLimit(80)
+        CurrentLimitsConfigs currentLimitConfigs = new CurrentLimitsConfigs().withStatorCurrentLimit(110)
                 .withSupplyCurrentLimit(40);
         // Configures Elevator with Slot 0 Configs ^^
         TalonFXConfiguration leftElevatorConfigs = new TalonFXConfiguration().withSlot0(slot0Configs)

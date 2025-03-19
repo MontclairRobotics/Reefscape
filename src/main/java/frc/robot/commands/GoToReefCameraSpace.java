@@ -59,8 +59,8 @@ public class GoToReefCameraSpace extends Command {
 
         //defaults to center
         // if(direction == ScoreDirection.CENTER) {
-        Pose3d currentPose = LimelightHelpers.getBotPose3d_TargetSpace(camera.cameraName);
-        targetPose = new Pose2d(direction.getForwardOffsetM(), direction.getHorizontalOffsetM(), Rotation2d.fromRadians(currentPose.getRotation().getZ()));
+        // Pose3d currentPose = LimelightHelpers.getBotPose3d_TargetSpace(camera.cameraName);
+        targetPose = new Pose2d(direction.getHorizontalOffsetM(), direction.getForwardOffsetM(), Rotation2d.kZero);
 
         if(isOffset) {
             //flips the angle if we are on red, so that the trig functions will work properly
@@ -84,7 +84,7 @@ public class GoToReefCameraSpace extends Command {
         }
 
         Logger.recordOutput("CameraSpacePoseCommand/TargetPose", targetPose);
-        //Logger.recordOutput("PoseCommand/TargetPose", RobotContainer.drivetrain.getRobotPose());
+        // Logger.recordOutput("CameraSpacePoseCommand/CurrentPose", RobotContainer.drivetrain.getRobotPose());
 
         // NetworkTableInstance inst = NetworkTableInstance.getDefault();
         // NetworkTable poseCommandTable = inst.getTable("Pose Command");
@@ -136,8 +136,8 @@ public class GoToReefCameraSpace extends Command {
         }
 
         // TODO I think I need to log the 1st pose2d in disabled to prevent overruns
-        Logger.recordOutput("PoseCommand/TargetPose", targetPose);
-        // Logger.recordOutput("PoseCommand/TargetPose", RobotContainer.drivetrain.getRobotPose());
+        Logger.recordOutput("CameraSpacePoseCommand/TargetPose", targetPose);
+        Logger.recordOutput("CameraSpacePoseCommand/CurrentPose", RobotContainer.drivetrain.getRobotPose());
     }
 
     @Override
@@ -162,6 +162,7 @@ public class GoToReefCameraSpace extends Command {
 
         //sets control output to the drivetrain
         RobotContainer.drivetrain.drive(ySpeed, -xSpeed, omegaSpeed, false, false);
+        Logger.recordOutput("CameraSpacePoseCommand/CurrentPose", currentPose);
     }
 
     @Override
