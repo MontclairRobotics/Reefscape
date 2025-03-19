@@ -336,7 +336,14 @@ public class Limelight extends SubsystemBase {
         yDistPub.set(getStraightDistanceToReef());
         horizontalDistPub.set(getDistanceToReef());
 
+        double[] poseArr = LimelightHelpers.getBotPose_TargetSpace(cameraName);
+        Pose2d botPose = new Pose2d();
+        if (poseArr.length >= 6) {
+            botPose = new Pose2d(poseArr[0], poseArr[2], Rotation2d.fromDegrees(poseArr[4]));
+        }
         Logger.recordOutput(cameraName + "/IMUYaw", LimelightHelpers.getIMUData(cameraName).robotYaw * (Math.PI / 180.0)); //TODO should be yaw?
+        Logger.recordOutput(cameraName + "/BotPoseTargetSpace", botPose);
+        Logger.recordOutput(cameraName + "/BotPose3dTargetSpace", LimelightHelpers.getBotPose3d_TargetSpace(cameraName));
     }
 
     public Command ifHasTarget(Command cmd) {

@@ -1,8 +1,8 @@
 package frc.robot.util;
 
 public enum TagOffset {
-    LEFT(0, 0, -0.165, 0), //TODO: SET
-    RIGHT(0, 0, 0.165, 0),
+    LEFT(0, 0, -0.165, -0.5), //TODO: SET
+    RIGHT(0, 0, 0.165, -0.5),
     CENTER(0, 0, 0, 0),
     LEFT_INTAKE(0, 0, 0, 0),
     RIGHT_INTAKE(0, 0, 0, 0),
@@ -16,6 +16,8 @@ public enum TagOffset {
     private TagOffset(double txTargetError, double tyTargetError, double xOffsetM, double yOffsetM) {
         this.txTargetError = txTargetError;
         this.tyTargetError = tyTargetError;
+        this.xOffsetM = xOffsetM;
+        this.yOffsetM = yOffsetM;
     }
 
     public double getTxTargetError() {

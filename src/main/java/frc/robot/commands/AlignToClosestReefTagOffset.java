@@ -29,9 +29,9 @@ public class AlignToClosestReefTagOffset extends Command {
 
     public AlignToClosestReefTagOffset(TagOffset offset, boolean isOffset) {
         if (offset.isLeft()) {
-            camera = RobotContainer.leftLimelight;
-        } else {
             camera = RobotContainer.rightLimelight;
+        } else {
+            camera = RobotContainer.leftLimelight;
         }
 
         xOffset = offset.getHorizontalOffsetM();
@@ -99,7 +99,7 @@ public class AlignToClosestReefTagOffset extends Command {
         //no rotation input, we assume this is being used when robot is aligned heading-wise, but not translationally
         //can add one to also move rotationally then translate later
         //doesn't respect operator persective (this doesn't matter because its robot relative anyways)
-        RobotContainer.drivetrain.driveWithSetpoint(0, -xSpeed, thetaSpeed, false, false, false);
+        RobotContainer.drivetrain.drive(ySpeed, -xSpeed, thetaSpeed, false, false);
     }
 
     @Override

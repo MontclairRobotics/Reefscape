@@ -114,8 +114,8 @@ public class GoToReefCameraSpace extends Command {
         // yPosePub = yPoseTopic.publish();
         // DoubleTopic rotPoseTopic = poseCommandTable.getDoubleTopic("Rot Pose");
         // rotPosePub = rotPoseTopic.publish();
-        xController.setTolerance(0.02);
-        yController.setTolerance(0.02);
+        xController.setTolerance(0.01);
+        yController.setTolerance(0.01);
         xController.setSetpoint(targetPose.getX());
         yController.setSetpoint(targetPose.getY());
         thetaController.setSetpoint(targetPose.getRotation().getRadians());
@@ -137,15 +137,16 @@ public class GoToReefCameraSpace extends Command {
 
         // TODO I think I need to log the 1st pose2d in disabled to prevent overruns
         Logger.recordOutput("PoseCommand/TargetPose", targetPose);
-        Logger.recordOutput("PoseCommand/TargetPose", RobotContainer.drivetrain.getRobotPose());
+        // Logger.recordOutput("PoseCommand/TargetPose", RobotContainer.drivetrain.getRobotPose());
     }
 
     @Override
     public void execute() {
         //current pose to PID from
         Pose3d currentPose3d = LimelightHelpers.getBotPose3d_TargetSpace(camera.cameraName);
+        // System.out.println(LimelightHelpers.getBotPose3d_TargetSpace(camera.cameraName));
 
-        Pose2d currentPose = new Pose2d(currentPose3d.getX(), currentPose3d.getY(), Rotation2d.fromRadians(currentPose3d.getRotation().getZ()));
+        Pose2d currentPose = new Pose2d(currentPose3d.getX(), currentPose3d.getZ(), Rotation2d.fromRadians(currentPose3d.getRotation().getZ()));
 
         System.out.println(currentPose);
 
@@ -160,7 +161,7 @@ public class GoToReefCameraSpace extends Command {
         double omegaSpeed = thetaController.calculate(currentPose.getRotation().getRadians());
 
         //sets control output to the drivetrain
-        // RobotContainer.drivetrain.drive(xSpeed, ySpeed, omegaSpeed, true, false);
+        RobotContainer.drivetrain.drive(ySpeed, -xSpeed, omegaSpeed, false, false);
     }
 
     @Override

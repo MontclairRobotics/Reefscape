@@ -38,7 +38,7 @@ public class Rollers extends SubsystemBase {
 
     private Debouncer isStalledDebouncer = new Debouncer(0.05, DebounceType.kRising);
 
-    private GamePiece heldPiece = GamePiece.None; // TODO init to Coral for auton? not needed?
+    private GamePiece heldPiece = GamePiece.Coral; // TODO init to Coral for auton? not needed?
 
     public Rollers() {
         rightMotor = new SparkMax(31, MotorType.kBrushless);

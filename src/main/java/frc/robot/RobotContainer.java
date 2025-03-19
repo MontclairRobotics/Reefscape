@@ -29,6 +29,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.commands.AlignToClosestReefTagOffset;
 import frc.robot.commands.DistanceAlign;
+import frc.robot.commands.GoToReefCameraSpace;
 import frc.robot.commands.GoToCoralStationCommand;
 // import frc.robot.commands.GoToReefCameraSpace;
 import frc.robot.commands.GoToReefCommand;
@@ -129,7 +130,9 @@ public class RobotContainer {
         .whileTrue(rollers.scoreL1())
         .onFalse(rollers.stopCommand());
 
-    
+    testingController.R1()
+        .whileTrue(new DistanceAlign(TagOffset.LEFT, false))
+        .onFalse(Commands.run(() -> drivetrain.drive(0, 0, 0, false, false)));
 
     Trigger autoAligning = RobotContainer.driverController.L1().or(RobotContainer.driverController.R1())
         .or(RobotContainer.driverController.R2());
