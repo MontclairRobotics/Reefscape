@@ -31,7 +31,7 @@ import frc.robot.util.TunerConstants;
 import frc.robot.vision.Limelight;
 import frc.robot.vision.LimelightHelpers;
 
-public class GoToReefCameraSpace extends Command {
+public class GoToReefCommandAngle extends Command {
 
     private PIDController xController;
     private PIDController yController;
@@ -121,7 +121,7 @@ public class GoToReefCameraSpace extends Command {
         thetaController.setSetpoint(targetPose.getRotation().getRadians());
     }
 
-    public GoToReefCameraSpace(TagOffset direction, boolean isOffset) {
+    public GoToReefCommandAngle(TagOffset direction, boolean isOffset) {
         this.isOffset = isOffset;
         this.direction = direction; //sets the direction
         addRequirements(RobotContainer.drivetrain); //requires the drivetrain
@@ -143,10 +143,9 @@ public class GoToReefCameraSpace extends Command {
     @Override
     public void execute() {
         //current pose to PID from
-        Pose3d currentPose3d = LimelightHelpers.getBotPose3d_TargetSpace(camera.cameraName);
         // System.out.println(LimelightHelpers.getBotPose3d_TargetSpace(camera.cameraName));
 
-        Pose2d currentPose = new Pose2d(currentPose3d.getX(), currentPose3d.getZ(), Rotation2d.fromRadians(currentPose3d.getRotation().getZ()));
+        Pose2d currentPose = new Pose2d(camera.getHorizontalDistanceToReef(), camera.getStraightDistanceToReef(), Rotation2d.fromDegrees(camera.getTX()));
 
         System.out.println(currentPose);
 
