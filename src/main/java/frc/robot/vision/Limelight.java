@@ -76,6 +76,8 @@ public class Limelight extends SubsystemBase {
     public double cameraOffsetX; // right is positive
     public double cameraOffsetY; //forward is positive
     private double angleMult;
+
+    private boolean hasTipped;
     
     private DoublePublisher yDistPub;
     private DoublePublisher xDistPub;
@@ -170,6 +172,12 @@ public class Limelight extends SubsystemBase {
         double angle = (RobotContainer.drivetrain.getWrappedHeading().getDegrees() + 360) % 360;
         LimelightHelpers.SetRobotOrientation(cameraName, angle, 0, 0, 0, 0, 0);
         LimelightHelpers.PoseEstimate mt2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(cameraName);
+
+        boolean overrideReject = false;
+        boolean isTipping = Math.abs(RobotContainer.drivetrain.getPigeon2().getPitch().getValueAsDouble()) > 0.3 || Math.abs(RobotContainer.drivetrain.getPigeon2().getRoll().getValueAsDouble()) > 0.3;
+        if (hasTipped && !isTipping) {
+            overrideReject = true;
+        }
         // System.out.println(Utils.getCurrentTimeSeconds());
         boolean shouldRejectUpdate = false;
         if (mt2 != null) {
@@ -186,7 +194,7 @@ public class Limelight extends SubsystemBase {
             if (Math.abs(RobotContainer.drivetrain.getCurrentSpeeds().omegaRadiansPerSecond) > angleVelocityTolerance) {
                 shouldRejectUpdate = true;
             }
-            if (mt2.pose.getTranslation().getDistance(RobotContainer.drivetrain.getRobotPose().getTranslation()) > 0.3 && !DriverStation.isDisabled() && !DriverStation.isTeleopEnabled()) {
+            if ((mt2.pose.getTranslation().getDistance(RobotContainer.drivetrain.getRobotPose().getTranslation()) > 0.3 && !DriverStation.isDisabled() && !DriverStation.isTeleopEnabled()) || overrideReject) {
                 shouldRejectUpdate = true;
             }
             if (Math.abs(PoseUtils.wrapRotation(mt2.pose.getRotation()).minus(PoseUtils.wrapRotation(RobotContainer.drivetrain.getRobotPose().getRotation())).getDegrees()) > 3) {
@@ -195,6 +203,9 @@ public class Limelight extends SubsystemBase {
             if (mt2.avgTagDist > 4) {
                 shouldRejectUpdate = true;
             } 
+            if (isTipping) {
+                shouldRejectUpdate = true;
+            }
             //adds vision measurement if conditions are met
             if (!shouldRejectUpdate) {
                 Logger.recordOutput(cameraName + "/mt2Pose", mt2.pose);
@@ -310,6 +321,10 @@ public class Limelight extends SubsystemBase {
     }
 
     public void periodic() {
+
+        if (Math.abs(RobotContainer.drivetrain.getPigeon2().getPitch().getValueAsDouble()) > 0.3 || Math.abs(RobotContainer.drivetrain.getPigeon2().getRoll().getValueAsDouble()) > 0.3) {
+            hasTipped = true;
+        }
         // tagID = (int) Limetable.getEntry("tid").getDouble(-1);
         // TODO if you get a pose estimate in the frame before this is applied it may not work
         tx = LimelightHelpers.getTX(cameraName);
