@@ -175,7 +175,7 @@ public class Limelight extends SubsystemBase {
 
         boolean overrideReject = false;
         boolean isTipping = Math.abs(RobotContainer.drivetrain.getPigeon2().getPitch().getValueAsDouble()) > 2 || Math.abs(RobotContainer.drivetrain.getPigeon2().getRoll().getValueAsDouble()) > 2;
-        System.out.println(isTipping);
+        // System.out.println(isTipping);
         if (hasTipped && !isTipping) {
             overrideReject = true;
         }
