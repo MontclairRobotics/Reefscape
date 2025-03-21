@@ -174,7 +174,8 @@ public class Limelight extends SubsystemBase {
         LimelightHelpers.PoseEstimate mt2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(cameraName);
 
         boolean overrideReject = false;
-        boolean isTipping = Math.abs(RobotContainer.drivetrain.getPigeon2().getPitch().getValueAsDouble()) > 0.3 || Math.abs(RobotContainer.drivetrain.getPigeon2().getRoll().getValueAsDouble()) > 0.3;
+        boolean isTipping = Math.abs(RobotContainer.drivetrain.getPigeon2().getPitch().getValueAsDouble()) > 2 || Math.abs(RobotContainer.drivetrain.getPigeon2().getRoll().getValueAsDouble()) > 2;
+        System.out.println(isTipping);
         if (hasTipped && !isTipping) {
             overrideReject = true;
         }
@@ -194,7 +195,7 @@ public class Limelight extends SubsystemBase {
             if (Math.abs(RobotContainer.drivetrain.getCurrentSpeeds().omegaRadiansPerSecond) > angleVelocityTolerance) {
                 shouldRejectUpdate = true;
             }
-            if ((mt2.pose.getTranslation().getDistance(RobotContainer.drivetrain.getRobotPose().getTranslation()) > 0.3 && !DriverStation.isDisabled() && !DriverStation.isTeleopEnabled()) || overrideReject) {
+            if ((mt2.pose.getTranslation().getDistance(RobotContainer.drivetrain.getRobotPose().getTranslation()) > 0.3 && !DriverStation.isDisabled() && !DriverStation.isTeleopEnabled())) {
                 shouldRejectUpdate = true;
             }
             if (Math.abs(PoseUtils.wrapRotation(mt2.pose.getRotation()).minus(PoseUtils.wrapRotation(RobotContainer.drivetrain.getRobotPose().getRotation())).getDegrees()) > 3) {
@@ -203,9 +204,9 @@ public class Limelight extends SubsystemBase {
             if (mt2.avgTagDist > 4) {
                 shouldRejectUpdate = true;
             } 
-            if (isTipping) {
-                shouldRejectUpdate = true;
-            }
+            // if (isTipping) {
+            //     shouldRejectUpdate = true;
+            // }
             //adds vision measurement if conditions are met
             if (!shouldRejectUpdate) {
                 Logger.recordOutput(cameraName + "/mt2Pose", mt2.pose);

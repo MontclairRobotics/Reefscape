@@ -1,8 +1,8 @@
 package frc.robot.util;
 
 public enum TagOffset {
-    LEFT(0, 0, -0.16002, 0.5), //TODO: SET
-    RIGHT(0, 0, 0.16002, 0.5),
+    LEFT(0, 0, -0.14002, 0.62), //TODO: SET
+    RIGHT(0, 0, 0.14002, 0.62),
     CENTER(0, 0, 0, 0),
     LEFT_INTAKE(0, 0, 0, 0),
     RIGHT_INTAKE(0, 0, 0, 0),
@@ -29,7 +29,7 @@ public enum TagOffset {
     }
 
     public double getForwardOffsetM() {
-        return yOffsetM;
+        return -yOffsetM;
     }
 
     public double getHorizontalOffsetM() {

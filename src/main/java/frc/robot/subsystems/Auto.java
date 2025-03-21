@@ -75,13 +75,14 @@ public class Auto extends SubsystemBase {
     // public double autoElevatorHeight = 0;
     // public double autoArmAngle = 0;
 
-    //TODO: probably won't want a INTAKE timeout, we can just wait until piece is intaked
+    // TODO: probably won't want a INTAKE timeout, we can just wait until piece is
+    // intaked
     private final double SCORING_TIMEOUT = 0.13;
     private final double INTAKE_PREDICTED_TIME = 0.3;
 
     private boolean prevIsPushAuto;
-    public int estimatedScore = 3; //Starts at 3 because of the leave bonus!
-    private boolean stupid;
+    public int estimatedScore = 3; // Starts at 3 because of the leave bonus!
+    // private boolean stupid;
     private String prevAutoString = "";
     private double prevProgressBar = 0;
     private ArrayList<PathPlannerPath> pathList = new ArrayList<PathPlannerPath>();
@@ -90,7 +91,7 @@ public class Auto extends SubsystemBase {
 
     private Command autoCmd = Commands.none();
 
-    private double timeSeconds = 0; //*ESTIMATED* time the auto routine will take
+    private double timeSeconds = 0; // *ESTIMATED* time the auto routine will take
 
     private boolean isUsingProgressBar;
     private boolean isPushAuto;
@@ -157,7 +158,8 @@ public class Auto extends SubsystemBase {
 
     /**
      * @param estimatedScore
-     * @return the estimated score for the inputted auto string, if we make all of our shots
+     * @return the estimated score for the inputted auto string, if we make all of
+     *         our shots
      */
     public int calculateEstimatedScore(int estimatedScore) {
         estimatedScore = 3;
@@ -248,16 +250,18 @@ public class Auto extends SubsystemBase {
     public Command alignToScoringPoseAuto(Pose2d targetPose) {
         return (new GoToPoseInputCommand(targetPose, true).andThen(new GoToPoseInputCommand(targetPose, false)))
         // .onlyIf(() ->
-        //     RobotContainer.drivetrain.getState().Pose.getTranslation().getDistance(targetPose.getTranslation()) >.02
+        // RobotContainer.drivetrain.getState().Pose.getTranslation().getDistance(targetPose.getTranslation())
+        // >.02
         // )
         ;
     }
 
     /**
-     * Loops through paths and draws them on the field2d object that is sent to the Auto Dashboard
+     * Loops through paths and draws them on the field2d object that is sent to the
+     * Auto Dashboard
      */
-    public void drawPaths() { //TODO rotate for red alliance?
-        //It does rotate for alliance - rafael
+    public void drawPaths() { // TODO rotate for red alliance?
+        // It does rotate for alliance - rafael
 
         field.setRobotPose(PoseUtils.flipPoseAlliance(pathList.get(0).getPathPoses().get(0)));
         // addAllPaths();
@@ -282,84 +286,86 @@ public class Auto extends SubsystemBase {
     }
 
     public Command buildAutoCommand(String autoString) {
- 
-        timeSeconds = 0; //resets estimated time
+        boolean abePushAuto = true;
+
+        timeSeconds = 0; // resets estimated time
 
         if (!isAutoStringValid(autoString)) {
-            //drives half speed for 1 second
+            // drives half speed for 1 second
             return Commands.run(
-                () -> RobotContainer.drivetrain.drive(Drivetrain.MAX_SPEED/2, 0, 0, false, true)
-            )
-            .withTimeout(1);
-            //TODO: does the above thing drive forwards or sideways? Forget if X is forwards or sideways.
+                    () -> RobotContainer.drivetrain.drive(Drivetrain.MAX_SPEED / 2, 0, 0, false, true))
+                    .withTimeout(1);
+            // TODO: does the above thing drive forwards or sideways? Forget if X is
+            // forwards or sideways.
         }
 
         SequentialCommandGroup autoCommand = new SequentialCommandGroup();
 
         for (int i = 1; i < autoString.length(); i += 3) {
 
-            //checks if its the last iteration, then we want to reset robot state after scoring
-            boolean isLastIteration = i+3 >= autoString.length();
+            // checks if its the last iteration, then we want to reset robot state after
+            // scoring
+            boolean isLastIteration = i + 3 >= autoString.length();
 
             /* Creates strings to store each part of the 3 character interval */
             // pickup location ->
-            String first = autoString.substring(i, i + 1); 
+            String first = autoString.substring(i, i + 1);
             // scoring location ->
-            String second = i < autoString.length() - 1 ? autoString.substring(i + 1, i + 2) : null; 
+            String second = i < autoString.length() - 1 ? autoString.substring(i + 1, i + 2) : null;
             // coral level ->
-            String third = i < autoString.length() - 2 ? autoString.substring(i + 2, i + 3) : null; 
+            String third = i < autoString.length() - 2 ? autoString.substring(i + 2, i + 3) : null;
             // next pickup location ->
-            String fourth = i < autoString.length() - 3 ? autoString.substring(i + 3, i + 4) : null; 
+            String fourth = i < autoString.length() - 3 ? autoString.substring(i + 3, i + 4) : null;
 
             System.out.println("First: " + first);
             System.out.println("Fourth: " + fourth);
-            //driving commands
-            Command path1Cmd = Commands.none(); //path towards scoring location
-            Command path2Cmd = Commands.none(); //path towards intake location
+            // driving commands
+            Command path1Cmd = Commands.none(); // path towards scoring location
+            Command path2Cmd = Commands.none(); // path towards intake location
 
             // try {
-            //     if (autoElevatorHeight == 0 || autoArmAngle == 0) {
-            //         throw new IllegalStateException("Something is null");
-            //     }
-            //     autoElevatorHeight = ArmPosition.fromString(third).getHeight();
-            //     // autoArmAngle = ArmPosition.fromString(third).getAngle(); // TODO: SET
-            //     // THIS!!!!
+            // if (autoElevatorHeight == 0 || autoArmAngle == 0) {
+            // throw new IllegalStateException("Something is null");
+            // }
+            // autoElevatorHeight = ArmPosition.fromString(third).getHeight();
+            // // autoArmAngle = ArmPosition.fromString(third).getAngle(); // TODO: SET
+            // // THIS!!!!
             // } catch (Exception e) {
 
             // }
 
-            String pathName = ""; //String name so that you can access the path file
-            String middleChar = "-"; //Stores the character connecting the two waypoints
-            boolean firstPath = false; //If its the first path in auto
+            String pathName = ""; // String name so that you can access the path file
+            String middleChar = "-"; // Stores the character connecting the two waypoints
+            boolean firstPath = false; // If its the first path in auto
             PathPlannerPath path1 = null;
 
+            /*
+             * ------------------------------- FIRST PATH
+             * -------------------------------------
+             */
 
-            /* ------------------------------- FIRST PATH ------------------------------------- */
-
-
-            boolean path1Exists = first != null && second != null; //Whether or not we have a valid path
+            boolean path1Exists = first != null && second != null; // Whether or not we have a valid path
             System.out.println("----------------------------------------------------" + path1Exists);
             double multiplier = 1;
             if (path1Exists) {
-                //If either character is lowercase, the character connecting them will be a "_"
+                // If either character is lowercase, the character connecting them will be a "_"
                 if (Character.isLowerCase(first.charAt(0)) || Character.isLowerCase(second.charAt(0))) {
                     middleChar = "_";
                 }
-                //Constructing the path string 
+                // Constructing the path string
                 pathName = first + middleChar + second;
-                //Adds an S to denote a starting location, if we are at the first path
+                // Adds an S to denote a starting location, if we are at the first path
                 if (i == 1) {
                     pathName = "S" + pathName;
                     System.out.println("Firsting Path!");
                     firstPath = true;
                 }
 
-                //creates the path name!
-                pathName = i == 1 ? "S" + first + middleChar + second : first + middleChar + second; 
-                
+                // creates the path name!
+                pathName = i == 1 ? "S" + first + middleChar + second : first + middleChar + second;
 
                 try {
-                    
+
                     // Load the path you want to follow using its name in the GUI
                     path1 = PathPlannerPath.fromPathFile(pathName);
 
@@ -367,67 +373,68 @@ public class Auto extends SubsystemBase {
                     // Create a path following command using AutoBuilder. This will also trigger
                     // event markers.
                     path1Cmd = Commands.parallel(Commands.print("Running path 1"), AutoBuilder.followPath(path1));
-                
-                    //resets pose to the starting pose if we are at the first path!
-                    if (firstPath) { //TODO reset to something better? vision pose?
+
+                    // resets pose to the starting pose if we are at the first path!
+                    if (firstPath) { // TODO reset to something better? vision pose?
                         Optional<Pose2d> opPose = path1.getStartingHolonomicPose();
                         System.out.println(opPose.get() + "-------------POOOOOOSSEEEE----------");
                         Pose2d pose = opPose.isPresent() ? PoseUtils.flipPoseAlliance(opPose.get()) : new Pose2d();
-                        Pose2d thePushPose;
-                        System.out.println("is push auto" + isPushAuto);
+                        // Pose2d thePushPose;
+                        // System.out.println("is push auto" + isPushAuto);
 
-                        if(isPushAuto) {
-                            double x = 7.578;
-                            double y = 0;
-                            Rotation2d rot = new Rotation2d();
-                            thePushPose = new Pose2d();
-                            if(pathName.charAt(1) == '4') {
-                                System.out.println("S4 rufrewr");
-                                multiplier = -1;
-                                y = 1.846;
-                                rot = Rotation2d.fromDegrees(135);
-                                thePushPose = PoseUtils.flipPoseAlliance(new Pose2d(x, y, rot));
-                            } else if(pathName.charAt(1) == '2') {
-                                y = 6.154;
-                                rot = Rotation2d.fromDegrees(-135);
-                                System.out.println("S222222222222 rufrewr");
-                                thePushPose = PoseUtils.flipPoseAlliance(new Pose2d(x, y, rot));
-                            } else {
-                                isPushAuto = false;
-                            }
-                             
-                        } else {
-                             thePushPose = new Pose2d();
-                        }
-                        Pose2d pushPose = thePushPose;
+                        // if(isPushAuto) {
+                        // double x = 7.578;
+                        // double y = 0;
+                        // Rotation2d rot = new Rotation2d();
+                        // thePushPose = new Pose2d();
+                        // if(pathName.charAt(1) == '4') {
+                        // System.out.println("S4 rufrewr");
+                        // multiplier = -1;
+                        // y = 1.846;
+                        // rot = Rotation2d.fromDegrees(135);
+                        // thePushPose = PoseUtils.flipPoseAlliance(new Pose2d(x, y, rot));
+                        // } else if(pathName.charAt(1) == '2') {
+                        // y = 6.154;
+                        // rot = Rotation2d.fromDegrees(-135);
+                        // System.out.println("S222222222222 rufrewr");
+                        // thePushPose = PoseUtils.flipPoseAlliance(new Pose2d(x, y, rot));
+                        // } else {
+                        // isPushAuto = false;
+                        // }
+
+                        // } else {
+                        // thePushPose = new Pose2d();
+                        // }
+                        // Pose2d pushPose = thePushPose;
                         autoCommand.addCommands(Commands.runOnce(() -> {
-                            if(isPushAuto) {
-                                stupid = true;
-                                System.out.println("Reseting to the push pose: " + pushPose);
-                                RobotContainer.drivetrain.resetPose(pushPose);
-                            } else {
-                                stupid = false;
-                                RobotContainer.drivetrain.resetPose(pose);
-                            }
+                            // if(isPushAuto) {
+                            // stupid = true;
+                            // System.out.println("Reseting to the push pose: " + pushPose);
+                            // RobotContainer.drivetrain.resetPose(pushPose);
+                            // } else {
+                            // stupid = false;
+                            System.out.println("Resetting Pose to: " + pose);
+                            RobotContainer.drivetrain.resetPose(pose);
+                            // }
                         }).andThen(Commands.sequence(
-                            Commands.runOnce(() -> {
-                                RobotContainer.leftLimelight.setGyroMode(1);
-                                RobotContainer.rightLimelight.setGyroMode(1);
-                            }),
-                            Commands.waitSeconds(0.1), //TODO enough?
-                            Commands.runOnce(() -> {
-                                RobotContainer.leftLimelight.setGyroMode(4);
-                                RobotContainer.rightLimelight.setGyroMode(4);
-                            })
-                        )));
+                                Commands.runOnce(() -> {
+                                    RobotContainer.leftLimelight.setGyroMode(1);
+                                    RobotContainer.rightLimelight.setGyroMode(1);
+                                }),
+                                Commands.waitSeconds(0.1), // TODO enough?
+                                Commands.runOnce(() -> {
+                                    RobotContainer.leftLimelight.setGyroMode(4);
+                                    RobotContainer.rightLimelight.setGyroMode(4);
+                                }))));
+
+                        if (isPushAuto) {
+                            autoCommand.addCommands(Commands.run(() -> {
+                                RobotContainer.drivetrain.drive(-0.3, 0, 0, false, false);
+                            }).withTimeout(0.75));
+                        }
 
                         // TODO this can be deleted, is here for testing purposes
-                        //RobotContainer.drivetrain.resetPose(pose);
-                    }
-
-                    if(isPushAuto && firstPath) {
-                        double theMultiplier = multiplier * -1;
-                        autoCommand.addCommands(Commands.run(() -> RobotContainer.drivetrain.drive(0, 1*theMultiplier, 0, false, false)).withTimeout(1));
+                        // RobotContainer.drivetrain.resetPose(pose);
                     }
                     // TODO needs to be .generateTrajectory()? maybe only if the ideal one doesn't
                     // exist?
@@ -442,7 +449,7 @@ public class Auto extends SubsystemBase {
                 }
             }
 
-            /* -------------------- SECOND PATH ----------------------------  */
+            /* -------------------- SECOND PATH ---------------------------- */
 
             boolean path2Exists = second != null && fourth != null;
             PathPlannerPath path2 = null;
@@ -451,7 +458,8 @@ public class Auto extends SubsystemBase {
                 if (Character.isLowerCase(second.charAt(0)) || Character.isLowerCase(fourth.charAt(0))) {
                     middleChar = "_";
                     autoOffset = TagOffset.RIGHT;
-                } else autoOffset = TagOffset.LEFT;
+                } else
+                    autoOffset = TagOffset.LEFT;
                 pathName = second + middleChar + fourth;
                 try {
                     // Load the 2nd path you want to follow using its name in the GUI
@@ -473,14 +481,15 @@ public class Auto extends SubsystemBase {
                 }
             }
 
-            //Default armPos is none (which is 0)
+            // Default armPos is none (which is 0)
             RobotState mechState = RobotState.Intake;
 
-            //if we have a scoring location, set the arm/elevator state to that scoring location!
+            // if we have a scoring location, set the arm/elevator state to that scoring
+            // location!
             if (third != null) {
-                mechState = RobotState.fromString(third); 
+                mechState = RobotState.fromString(third);
             }
-            
+
             /* adds command form scoring location to next pickup location */
 
             // path 1 mechanism movement
@@ -490,92 +499,95 @@ public class Auto extends SubsystemBase {
                 try {
                     opTraj = path1.getIdealTrajectory(RobotConfig.fromGUISettings());
                     System.out.println("First path in here: " + (i == 1));
-                
+
                     PathPlannerTrajectory traj = null;
                     if (opTraj.isPresent()) {
                         traj = opTraj.get();
 
                     } else {
                         // attempt to run path using nonideal trajectory, may be incorrect
-                        System.out.println("Ideal Trajectory failed to load, skipping path");
-                        traj = path1.generateTrajectory(new ChassisSpeeds(), path1.getInitialHeading(), RobotConfig.fromGUISettings());
+                        System.out.println("Ideal Trajectory failed to load, loading nonideal");
+                        traj = path1.generateTrajectory(new ChassisSpeeds(), path1.getInitialHeading(),
+                                RobotConfig.fromGUISettings());
                     }
 
-                        double pathTime = traj.getTotalTimeSeconds(); //time path will take
-                        double raiseTime = RobotContainer.elevator.getRaiseTime(mechState);
-                        raiseTime = 1.15; //time elevator will take to rise
-                        double waitTime = pathTime - raiseTime; //how much time we should wait before raising elevator
-                        timeSeconds += pathTime; //adds how long the path will take to the estimated time
-                       // System.out.println("Path 1 Arm height: " + mechState.getHeight());
-                       // System.out.println("Path 1 Raise Time: " + raiseTime);
-                        //runs the path command along with a command that waits to raise the elevator
-                        if(pathName.charAt(0) == 'S' && stupid) {
-                            System.out.println("Trying to repath to pose: " + opTraj.get().getEndState().pose );
-                            path1Cmd = AutoBuilder.pathfindToPose(opTraj.get().getEndState().pose, Drivetrain.DEFAULT_CONSTRAINTS);
-                            opTraj = null;
-                            stupid = false;
-                        }
-                        autoCommand.addCommands(Commands.parallel(
-                            Commands.deadline(path1Cmd, RobotContainer.rollers.holdCoralCommand()).andThen(Commands.print("Path Over")),
-                                Commands.sequence(
+                    double pathTime = traj.getTotalTimeSeconds(); // time path will take
+                    double raiseTime = RobotContainer.elevator.getRaiseTime(mechState);
+                    raiseTime = 1.15; // time elevator will take to rise
+                    double waitTime = pathTime - raiseTime; // how much time we should wait before raising elevator
+                    timeSeconds += pathTime; // adds how long the path will take to the estimated time
+                    // System.out.println("Path 1 Arm height: " + mechState.getHeight());
+                    // System.out.println("Path 1 Raise Time: " + raiseTime);
+                    // runs the path command along with a command that waits to raise the elevator
+                    // if (pathName.charAt(0) == 'S') {
+                    //     System.out.println("Trying to repath to pose: " + opTraj.get().getEndState().pose);
+                    //     path1Cmd = AutoBuilder.pathfindToPose(opTraj.get().getEndState().pose,
+                    //             Drivetrain.DEFAULT_CONSTRAINTS);
+                    //     opTraj = null;
+                    // }
+                    autoCommand.addCommands(Commands.parallel(
+                            Commands.deadline(path1Cmd, RobotContainer.rollers.holdCoralCommand())
+                                    .andThen(Commands.print("Path Over")),
+                            Commands.sequence(
                                     Commands.print("Before parallel"),
                                     Commands.waitSeconds(waitTime),
                                     Commands.print("After waiting"),
                                     Commands.parallel(
-                                        //Commands.print("Starting elevator command path 1"),
-                                       RobotContainer.elevator.setState(RobotState.L3),// TODO I removed this timeout. You'd rather wait then score at wrong height
-                                       RobotContainer.arm.setState(RobotState.L4)
-                                    )
-                                    ,Commands.print("Finished elevator command path 1")
-                                )    
-                        ));
-                        
-                        if (Character.isLowerCase(first.charAt(0)) || Character.isLowerCase(second.charAt(0))) {
-                            autoCommand.addCommands(new GoToReefCommand(TagOffset.RIGHT, false)
-                            .alongWith(RobotContainer.elevator.setState(mechState))
-                            .alongWith(RobotContainer.arm.setState(mechState)));
-                        } else {
-                            autoCommand.addCommands(new GoToReefCommand(TagOffset.LEFT, false)
-                            .alongWith(RobotContainer.elevator.setState(mechState))
-                            .alongWith(RobotContainer.arm.setState(mechState)));
-                        }
-                        autoCommand.addCommands(Commands.print("Align Finished"));
-                        
+                                            // Commands.print("Starting elevator command path 1"),
+                                            RobotContainer.elevator.setState(RobotState.L3), // TODO I removed this
+                                                                                             // timeout. You'd rather
+                                                                                             // wait then score at wrong
+                                                                                             // height
+                                            RobotContainer.arm.setState(RobotState.L4)),
+                                    Commands.print("Finished elevator command path 1"))));
+
+                    if (Character.isLowerCase(first.charAt(0)) || Character.isLowerCase(second.charAt(0))) {
+                        autoCommand.addCommands(new GoToReefCommand(TagOffset.RIGHT, false)
+                                .alongWith(RobotContainer.elevator.setState(mechState))
+                                .alongWith(RobotContainer.arm.setState(mechState)));
+                    } else {
+                        autoCommand.addCommands(new GoToReefCommand(TagOffset.LEFT, false)
+                                .alongWith(RobotContainer.elevator.setState(mechState))
+                                .alongWith(RobotContainer.arm.setState(mechState)));
+                    }
+                    autoCommand.addCommands(Commands.print("Align Finished"));
+
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
 
-            //Command to shoot!!!
+            // Command to shoot!!!
             // autoCommand.addCommands(new GoToPoseCommand(autoOffset, true));
             autoCommand.addCommands(RobotContainer.rollers.outtakeCoralCommand().withTimeout(SCORING_TIMEOUT));
-            timeSeconds += SCORING_TIMEOUT; //adds how long it will take to shoot the the estimated time
-            
+            timeSeconds += SCORING_TIMEOUT; // adds how long it will take to shoot the the estimated time
 
-            //Path 2 command group
+            // Path 2 command group
 
             if (path2 != null) {
                 Optional<PathPlannerTrajectory> opTraj;
                 try {
                     opTraj = path2.getIdealTrajectory(RobotConfig.fromGUISettings());
                     if (opTraj.isPresent()) {
-                        double pathTime = opTraj.get().getTotalTimeSeconds(); 
+                        double pathTime = opTraj.get().getTotalTimeSeconds();
                         timeSeconds += pathTime;
-                        // double waitTime = pathTime - Elevator.ELEVATOR_RAISE_TIME; //TODO: not needed, we want to immediately set elevator height
-                        mechState = RobotState.Intake; //SETS ROBOT STATE TO INTAKING
-                        //System.out.println("Path 2 Arm height: " + mechState.getHeight());
-                        double raiseTime = RobotContainer.elevator.getRaiseTime(mechState); //time needed to raise the elevator, for timeout
-                        //System.out.println("Path 2 Raise Time: " + raiseTime);
+                        // double waitTime = pathTime - Elevator.ELEVATOR_RAISE_TIME; //TODO: not
+                        // needed, we want to immediately set elevator height
+                        mechState = RobotState.Intake; // SETS ROBOT STATE TO INTAKING
+                        // System.out.println("Path 2 Arm height: " + mechState.getHeight());
+                        double raiseTime = RobotContainer.elevator.getRaiseTime(mechState); // time needed to raise the
+                                                                                            // elevator, for timeout
+                        // System.out.println("Path 2 Raise Time: " + raiseTime);
                         autoCommand.addCommands(Commands.parallel(
-                            Commands.deadline(path2Cmd, RobotContainer.arm.setState(RobotState.Intake)),
-                            RobotContainer.elevator.setState(mechState).withTimeout(raiseTime)
-                            )
-                        );
+                                Commands.deadline(path2Cmd, RobotContainer.arm.setState(RobotState.Intake)),
+                                RobotContainer.elevator.setState(mechState).withTimeout(raiseTime)));
                         // TagOffset offset = TagOffset.CENTER; //default to 0?
                         // if (fourth == "1") {
-                        //     offset = TagOffset.LEFT_INTAKE;
+                        // offset = TagOffset.LEFT_INTAKE;
                         // } // TODO finish
-                        // autoCommand.addCommands(new AlignToAprilTagCommandOffset(RobotContainer.rightLimelight, raiseTime, pathTime, raiseTime, i));
+                        // autoCommand.addCommands(new
+                        // AlignToAprilTagCommandOffset(RobotContainer.rightLimelight, raiseTime,
+                        // pathTime, raiseTime, i));
 
                     } else {
                         System.out.println("Ideal Trajectory failed to load, skipping path");
@@ -590,13 +602,13 @@ public class Auto extends SubsystemBase {
             timeSeconds += INTAKE_PREDICTED_TIME;
             // Bring elevator and arm to default position after scoring last coral
 
-        //    if(isLastIteration) { //TODO shouldn't need? in theory default command should kick in
-        //     autoCommand.addCommands(Commands.parallel(
-        //             RobotContainer.elevator.setScoringHeightCommand(RobotState.DrivingNone).withTimeout(1),
-        //             RobotContainer.arm.goToLocationCommand(RobotState.DrivingNone)
-        //     ));
-        //    }
-            
+            // if(isLastIteration) { //TODO shouldn't need? in theory default command should
+            // kick in
+            // autoCommand.addCommands(Commands.parallel(
+            // RobotContainer.elevator.setScoringHeightCommand(RobotState.DrivingNone).withTimeout(1),
+            // RobotContainer.arm.goToLocationCommand(RobotState.DrivingNone)
+            // ));
+            // }
 
         }
 
@@ -622,61 +634,64 @@ public class Auto extends SubsystemBase {
     }
 
     // public void addAllPaths() {
-    //     String middle = " ";
+    // String middle = " ";
 
-    //    for(String x: startingLocations) {
-    //         for(String second: scoringLocations) {
-    //            // second = "D";
-    //             middle = "-";
-    //             if (Character.isLowerCase(x.charAt(0)) || Character.isLowerCase(second.charAt(0))) {
-    //                 middle = "_";
-    //             }
-    //             try {
-    //                 if(x.equals("S3") && second.equals("D")) {
+    // for(String x: startingLocations) {
+    // for(String second: scoringLocations) {
+    // // second = "D";
+    // middle = "-";
+    // if (Character.isLowerCase(x.charAt(0)) ||
+    // Character.isLowerCase(second.charAt(0))) {
+    // middle = "_";
+    // }
+    // try {
+    // if(x.equals("S3") && second.equals("D")) {
 
-    //                 } else if(x.equals("S3") && second.equals("d")) {
-                        
-    //                 } else if(x.equals("S4") && second.equals("D")) {
-                        
-    //                 } else {
-    //                 pathList.add(PathPlannerPath.fromPathFile("" + x + middle + second));
-    //                 }
-    //             } catch (FileVersionException | IOException | ParseException e) {
-    //                 // TODO Auto-generated catch block
-    //                 e.printStackTrace();
-    //             }
-    //         }
-    //     }
+    // } else if(x.equals("S3") && second.equals("d")) {
 
-    //     for(String first: pickupLocations) {
-    //         for(String second: scoringLocations) {
-    //             middle = "-";
-    //             if (Character.isLowerCase(first.charAt(0)) || Character.isLowerCase(second.charAt(0))) {
-    //                 middle = "_";
-    //             }
-    //             try {
-    //                 pathList.add(PathPlannerPath.fromPathFile("" + first + middle + second));
-    //             } catch (FileVersionException | IOException | ParseException e) {
-    //                 // TODO Auto-generated catch block
-    //                 e.printStackTrace();
-    //             }
-    //         }
-    //     }
+    // } else if(x.equals("S4") && second.equals("D")) {
 
-    //     for(String first: scoringLocations) {
-    //         for(String second: pickupLocations) {
-    //             middle = "-";
-    //             if (Character.isLowerCase(first.charAt(0)) || Character.isLowerCase(second.charAt(0))) {
-    //                 middle = "_";
-    //             }
-    //             try {
-    //                 pathList.add(PathPlannerPath.fromPathFile("" + first + middle + second));
-    //             } catch (FileVersionException | IOException | ParseException e) {
-    //                 // TODO Auto-generated catch block
-    //                 e.printStackTrace();
-    //             }
-    //         }
-    //     }
+    // } else {
+    // pathList.add(PathPlannerPath.fromPathFile("" + x + middle + second));
+    // }
+    // } catch (FileVersionException | IOException | ParseException e) {
+    // // TODO Auto-generated catch block
+    // e.printStackTrace();
+    // }
+    // }
+    // }
+
+    // for(String first: pickupLocations) {
+    // for(String second: scoringLocations) {
+    // middle = "-";
+    // if (Character.isLowerCase(first.charAt(0)) ||
+    // Character.isLowerCase(second.charAt(0))) {
+    // middle = "_";
+    // }
+    // try {
+    // pathList.add(PathPlannerPath.fromPathFile("" + first + middle + second));
+    // } catch (FileVersionException | IOException | ParseException e) {
+    // // TODO Auto-generated catch block
+    // e.printStackTrace();
+    // }
+    // }
+    // }
+
+    // for(String first: scoringLocations) {
+    // for(String second: pickupLocations) {
+    // middle = "-";
+    // if (Character.isLowerCase(first.charAt(0)) ||
+    // Character.isLowerCase(second.charAt(0))) {
+    // middle = "_";
+    // }
+    // try {
+    // pathList.add(PathPlannerPath.fromPathFile("" + first + middle + second));
+    // } catch (FileVersionException | IOException | ParseException e) {
+    // // TODO Auto-generated catch block
+    // e.printStackTrace();
+    // }
+    // }
+    // }
 
     // }
 
@@ -697,7 +712,7 @@ public class Auto extends SubsystemBase {
         // sets the robotPose on the field to that pose
         if (index >= 0 && allPosesList.size() > 0) {
             Pose2d pose = allPosesList.get(index);
-            //field.setRobotPose(pose);
+            // field.setRobotPose(pose);
             // poseOnField = pose; //TODO check if I can delete this
             // PathPoint point = allPathPoints.get(index);
             // field.setRobotPose(point.position.getX(), point.position.getY(),
@@ -707,7 +722,7 @@ public class Auto extends SubsystemBase {
 
     public void displayTimestampSeconds() {
         double time = timeSeconds;
-        //rounds time to tenth place because it looks nicer
+        // rounds time to tenth place because it looks nicer
         double roundedTime = Math.round(time * 10.0) / 10.0;
         timeStampPub.set(roundedTime);
     }
@@ -723,7 +738,7 @@ public class Auto extends SubsystemBase {
             SmartDashboard.putNumber("Score", calculateEstimatedScore(estimatedScore));
             SmartDashboard.putData(field);
 
-            isPushAuto = pushAutoEntry.get(); 
+            isPushAuto = pushAutoEntry.get();
             // String autoString = str.replace(' ', Character.MIN_VALUE); // check
             String autoString = "";
             Optional<Alliance> alliance = DriverStation.getAlliance();
@@ -759,7 +774,7 @@ public class Auto extends SubsystemBase {
 
         if ((DriverStation.isAutonomous() || DriverStation.isDisabled()) && !isUsingProgressBar) {
             // System.out.println("setting the robot pose auto periodic");
-           // field.setRobotPose(RobotContainer.drivetrain.getRobotPose());
+            // field.setRobotPose(RobotContainer.drivetrain.getRobotPose());
         }
     }
 }

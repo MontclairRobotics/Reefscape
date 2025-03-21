@@ -14,7 +14,9 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 import com.ctre.phoenix6.SignalLogger;
 import com.pathplanner.lib.commands.FollowPathCommand;
 import com.pathplanner.lib.commands.PathfindingCommand;
+import com.pathplanner.lib.util.PathPlannerLogging;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
@@ -45,7 +47,16 @@ public class Robot extends LoggedRobot {
       // Logger.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath,
       // "_sim"))); // Save outputs to a new log
       // }
+      PathPlannerLogging.setLogActivePathCallback(
+        (activePath) -> {
+          Logger.recordOutput(
+              "Auto/ActivePath", activePath.toArray(new Pose2d[activePath.size()]));
+        });
 
+    PathPlannerLogging.setLogTargetPoseCallback(
+        (targetPose) -> {
+          Logger.recordOutput("Auto/TargetPose", targetPose);
+        });
       Logger.recordMetadata("GitSHA", BuildConstants.GIT_SHA);
       Logger.start(); // Start logging! No more data receivers, replay sources, or
       // SignalLogger.start(); // CTRE logs
@@ -94,7 +105,7 @@ public class Robot extends LoggedRobot {
       m_autonomousCommand.schedule();
     }
 
-    Elastic.selectTab("Autonomous");
+    // Elastic.selectTab("Autonomous");
   }
 
   @Override

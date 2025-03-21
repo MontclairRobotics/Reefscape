@@ -95,7 +95,7 @@ public class TunerConstants {
 
     private static final double kDriveGearRatio = 6.122448979591837;
     private static final double kSteerGearRatio = 21.428571428571427;
-    private static final Distance kWheelRadius = Meters.of(.048);
+    private static final Distance kWheelRadius = Meters.of(.0485);
 
     private static final boolean kInvertLeftSide = false;
     private static final boolean kInvertRightSide = true;
@@ -158,8 +158,8 @@ public class TunerConstants {
     private static final boolean kFrontRightSteerMotorInverted = true;
     private static final boolean kFrontRightEncoderInverted = false;
 
-    private static final Distance kFrontRightXPos = Inches.of(12);
-    private static final Distance kFrontRightYPos = Inches.of(-12);
+    private static final Distance kFrontRightXPos = Inches.of(12.11);
+    private static final Distance kFrontRightYPos = Inches.of(-12.11);
 
     // Back Left
     private static final int kBackLeftDriveMotorId = 5;
@@ -169,8 +169,8 @@ public class TunerConstants {
     private static final boolean kBackLeftSteerMotorInverted = true;
     private static final boolean kBackLeftEncoderInverted = false;
 
-    private static final Distance kBackLeftXPos = Inches.of(-12);
-    private static final Distance kBackLeftYPos = Inches.of(12);
+    private static final Distance kBackLeftXPos = Inches.of(-12.11);
+    private static final Distance kBackLeftYPos = Inches.of(12.11);
 
     // Back Right
     private static final int kBackRightDriveMotorId = 7;
@@ -180,8 +180,8 @@ public class TunerConstants {
     private static final boolean kBackRightSteerMotorInverted = true;
     private static final boolean kBackRightEncoderInverted = false;
 
-    private static final Distance kBackRightXPos = Inches.of(-12);
-    private static final Distance kBackRightYPos = Inches.of(-12);
+    private static final Distance kBackRightXPos = Inches.of(-12.11);
+    private static final Distance kBackRightYPos = Inches.of(-12.11);
 
 
     public static final SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> FrontLeft =

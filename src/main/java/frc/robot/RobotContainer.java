@@ -33,6 +33,7 @@ import frc.robot.commands.GoToReefCameraSpace;
 import frc.robot.commands.GoToCoralStationCommand;
 // import frc.robot.commands.GoToReefCameraSpace;
 import frc.robot.commands.GoToReefCommand;
+import frc.robot.commands.WheelRadiusCharacterization;
 import frc.robot.leds.LEDs;
 import frc.robot.subsystems.Ratchet;
 import frc.robot.subsystems.Arm;
@@ -107,11 +108,13 @@ public class RobotContainer {
 
     // arm.setDefaultCommand(arm.joystickControlCommand());
 
+    leds.setDefaultCommand(elevator.isVelociatated() ? leds.playPatternCommand(LEDs.progress()) : rollers.getHeldPiece() == GamePiece.Algae ? leds.playPatternCommand(LEDs.holding(GamePiece.Algae.getColor())) : rollers.getHeldPiece() == GamePiece.Coral ? leds.playPatternCommand(LEDs.holding(GamePiece.Coral.getColor())) : leds.playPatternCommand(LEDs.breathingPattern()));
+
     // Intake
     operatorController.L1()
         .whileTrue(
             rollers.intakeCoralJiggleCommand()
-                .alongWith(arm.holdState(RobotState.Intake))
+                .alongWith(arm.setState(RobotState.Intake))
                 .alongWith(elevator.setState(RobotState.Intake)))
         .onFalse(
             rollers.stopCommand()
@@ -130,28 +133,28 @@ public class RobotContainer {
         .whileTrue(rollers.scoreL1())
         .onFalse(rollers.stopCommand());
 
-    testingController.R1()
-        .whileTrue(new DistanceAlign(TagOffset.LEFT, false))
-        .onFalse(Commands.run(() -> drivetrain.drive(0, 0, 0, false, false)));
+    // testingController.R1()
+    //     .whileTrue(new DistanceAlign(TagOffset.LEFT, false))
+    //     .onFalse(Commands.run(() -> drivetrain.drive(0, 0, 0, false, false)));
 
-    Trigger autoAligning = RobotContainer.driverController.L1().or(RobotContainer.driverController.R1())
-        .or(RobotContainer.driverController.R2());
+    // Trigger autoAligning = RobotContainer.driverController.L1().or(RobotContainer.driverController.R1())
+    //     .or(RobotContainer.driverController.R2());
 
     // L1 Automatic
-    operatorController.cross().and(operatorController.L2().negate())
-        .onTrue(arm.holdState(RobotState.L1).alongWith(elevator.setTargetState(RobotState.L1)));
+    // operatorController.cross().and(operatorController.L2().negate())
+    //     .onTrue(arm.holdState(RobotState.L1).alongWith(elevator.setTargetState(RobotState.L1)));
 
     // L2 Automatic
-    operatorController.square().and(operatorController.L2().negate())
-        .onTrue(arm.holdState(RobotState.L2).alongWith(elevator.setTargetState(RobotState.L2)));
+    // operatorController.square().and(operatorController.L2().negate())
+    //     .onTrue(arm.holdState(RobotState.L2).alongWith(elevator.setTargetState(RobotState.L2)));
 
     // L2 Automatic
-    operatorController.triangle().and(operatorController.L2().negate())
-        .onTrue(arm.holdState(RobotState.L3).alongWith(elevator.setTargetState(RobotState.L3)));
+    // operatorController.triangle().and(operatorController.L2().negate())
+    //     .onTrue(arm.holdState(RobotState.L3).alongWith(elevator.setTargetState(RobotState.L3)));
 
     // L4 Automatic
-    operatorController.circle().and(operatorController.L2().negate())
-        .onTrue(arm.holdState(RobotState.L4).alongWith(elevator.setState(RobotState.L3)).alongWith(elevator.setTargetState(RobotState.L4)));
+    // operatorController.circle().and(operatorController.L2().negate())
+    //     .onTrue(arm.setState(RobotState.L4).alongWith(elevator.setState(RobotState.L3)).alongWith(elevator.setTargetState(RobotState.L4)));
 
     // operatorController.circle().and(operatorController.L2().negate())
     // .whileTrue(arm.holdState(RobotState.L4).alongWith(elevator.setState(RobotState.L3)))
@@ -176,7 +179,7 @@ public class RobotContainer {
 
     // Climb
     operatorController.circle().and(operatorController.L2())
-        .whileTrue(elevator.climbUpCommand())
+        .whileTrue(Commands.runOnce(() -> {Elastic.selectTab(2);}).andThen(elevator.setCurrentLimitCommand(110)).andThen(elevator.climbUpCommand()))
         .onFalse(elevator.climbDownCommand());
 
     // Ratchets
@@ -192,8 +195,8 @@ public class RobotContainer {
 
     drivetrain.setDefaultCommand(drivetrain.driveJoystickInputCommand());
 
-    driverController.L1().whileTrue(drivetrain.driveToReefCommandFast(TagOffset.LEFT));
-    driverController.R1().whileTrue(drivetrain.driveToReefCommandFast(TagOffset.RIGHT));
+    driverController.L1().whileTrue(new GoToReefCommand(TagOffset.LEFT, true)).onFalse(new GoToReefCommand(TagOffset.LEFT, false));
+    driverController.R1().whileTrue(new GoToReefCommand(TagOffset.RIGHT, true)).onFalse(new GoToReefCommand(TagOffset.RIGHT, false));
     driverController.R2().whileTrue(new GoToCoralStationCommand(TagOffset.CENTER));
     
     //Fine tuning buttons
@@ -245,55 +248,54 @@ public class RobotContainer {
 
     // alignment buttons
     testingController.R2()
-        .whileTrue(new GoToReefCommand(TagOffset.CENTER, true))
-        .onFalse(new GoToReefCommand(TagOffset.CENTER, false).until(() -> drivetrain.joystickInputDetected()));
+        .whileTrue(new GoToReefCameraSpace(TagOffset.CENTER, true))
+        .onFalse(new GoToReefCameraSpace(TagOffset.CENTER, false).until(() -> drivetrain.joystickInputDetected()));
 
     testingController.L1()
-        .whileTrue(new GoToReefCommand(TagOffset.LEFT, true))
-        .onFalse(new GoToReefCommand(TagOffset.LEFT, false).until(() -> drivetrain.joystickInputDetected()));
+        .whileTrue(new GoToReefCameraSpace(TagOffset.LEFT, true))
+        .onFalse(new GoToReefCameraSpace(TagOffset.LEFT, false).until(() -> drivetrain.joystickInputDetected()));
 
     testingController.R1()
-        .whileTrue(new GoToReefCommand(TagOffset.RIGHT, true))
-        .onFalse(new GoToReefCommand(TagOffset.RIGHT, false).until(() -> drivetrain.joystickInputDetected()));
+        .whileTrue(new GoToReefCameraSpace(TagOffset.RIGHT, true))
+        .onFalse(new GoToReefCameraSpace(TagOffset.RIGHT, false).until(() -> drivetrain.joystickInputDetected()));
 
     testingController.touchpad().onTrue(Commands.runOnce(() -> elevator.resetEncoders(0)).ignoringDisable(true));
     
     // L1 Manual
-    testingController.cross().and(operatorController.L2().negate())
+    operatorController.cross().and(operatorController.L2().negate())
         .whileTrue(arm.holdState(RobotState.L1))
         .onFalse(
-            elevator.setState(RobotState.L1).onlyIf(autoAligning.negate())
+            elevator.setState(RobotState.L1)
                 .alongWith(elevator.setTargetState(RobotState.L1))
                 .alongWith(arm.holdState(RobotState.L1)));
 
     // L2 Manual
-    testingController.square().and(operatorController.L2().negate())
+    operatorController.square().and(operatorController.L2().negate())
     .whileTrue(arm.holdState(RobotState.L2))
     .onFalse(
-        elevator.setState(RobotState.L2).onlyIf(autoAligning.negate())
+        elevator.setState(RobotState.L2)
             .alongWith(elevator.setTargetState(RobotState.L2))
             .alongWith(arm.holdState(RobotState.L2)));
     // L3 Manual
-    testingController.triangle().and(operatorController.L2().negate())
+   operatorController.triangle().and(operatorController.L2().negate())
     .whileTrue((arm.holdState(RobotState.L3)))
     .onFalse(
         elevator.setState(RobotState.L3)
-            // .onlyIf(autoAligning.negate()).alongWith(elevator.setTargetState(RobotState.L3))
+            .alongWith(elevator.setTargetState(RobotState.L3))
             .alongWith(arm.holdState(RobotState.L3)));
 
     // L4 Manual
-    testingController.circle().and(operatorController.L2().negate())
+    operatorController.circle().and(operatorController.L2().negate())
     .whileTrue(arm.holdState(RobotState.L4).alongWith(elevator.setState(RobotState.L3)))
     .onFalse(
         elevator.setState(RobotState.L4)
-            // .onlyIf(autoAligning.negate()).alongWith(elevator.setTargetState(RobotState.L4))
             .alongWith(arm.holdState(RobotState.L4)));
 
     // Elevator down
-    testingController.R2()
-        .onTrue(elevator.setState(RobotState.getDefaultForPiece(rollers.getHeldPiece())))
-        .onTrue(arm.holdState(RobotState.getDefaultForPiece(rollers.getHeldPiece())))
-        .onTrue(rollers.stopCommand());
+    // testingController.R2()
+    //     .onTrue(elevator.setState(RobotState.getDefaultForPiece(rollers.getHeldPiece())))
+    //     .onTrue(arm.holdState(RobotState.getDefaultForPiece(rollers.getHeldPiece())))
+    //     .onTrue(rollers.stopCommand());
 
     //Coast mode 
     testingController.cross()
@@ -321,12 +323,12 @@ public class RobotContainer {
     // );
     // testingController.circle().onTrue(ratchet.engageServos()).onFalse(ratchet.disengageServos());
 
-    // testingController.triangle().whileTrue(new
-    // WheelRadiusCharacterization(WheelRadiusCharacterization.Direction.CLOCKWISE,
-    // drivetrain));
-    // testingController.circle().whileTrue(new
-    // WheelRadiusCharacterization(WheelRadiusCharacterization.Direction.COUNTER_CLOCKWISE,
-    // drivetrain));
+    testingController.triangle().whileTrue(new
+    WheelRadiusCharacterization(WheelRadiusCharacterization.Direction.CLOCKWISE,
+    drivetrain));
+    testingController.circle().whileTrue(new
+    WheelRadiusCharacterization(WheelRadiusCharacterization.Direction.COUNTER_CLOCKWISE,
+    drivetrain));
     
 }
 

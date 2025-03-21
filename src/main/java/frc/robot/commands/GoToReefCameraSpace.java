@@ -72,7 +72,7 @@ public class GoToReefCameraSpace extends Command {
             //is positive, so we multiply by negative 1
             //same thing for sin(x)
             double updatedX = targetPose.getX();// + (-1 * offset * Math.cos(targetHeading));
-            double updatedY = targetPose.getY() + offset;//+ (-1 * offset * Math.sin(targetHeading));
+            double updatedY = targetPose.getY() - offset;//+ (-1 * offset * Math.sin(targetHeading));
             //creates new updated pose
             targetPose = new Pose2d(new Translation2d(updatedX, updatedY), Rotation2d.fromRadians(targetHeading));
         }

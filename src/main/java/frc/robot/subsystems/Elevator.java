@@ -21,6 +21,7 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
 import com.ctre.phoenix6.sim.ChassisReference;
 
+import edu.wpi.first.epilogue.logging.errors.CrashOnError;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.controller.ElevatorFeedforward;
@@ -215,7 +216,7 @@ public class Elevator extends SubsystemBase {
          */
         accelerationLimiter = new SlewRateLimiter(5); // TODO: actually set this
 
-        CurrentLimitsConfigs currentLimitConfigs = new CurrentLimitsConfigs().withStatorCurrentLimit(110)
+        CurrentLimitsConfigs currentLimitConfigs = new CurrentLimitsConfigs().withStatorCurrentLimit(80)
                 .withSupplyCurrentLimit(40);
         // Configures Elevator with Slot 0 Configs ^^
         TalonFXConfiguration leftElevatorConfigs = new TalonFXConfiguration().withSlot0(slot0Configs)
@@ -313,6 +314,19 @@ public class Elevator extends SubsystemBase {
      */
     public void setHeightProfiledPID(double height) {
         setExtensionProfiledPID(height - STARTING_HEIGHT);
+    }
+
+    public void setCurrentLimit(double limit) {
+        leftTalonFX.getConfigurator().apply(new CurrentLimitsConfigs().withStatorCurrentLimit(limit)
+        .withSupplyCurrentLimit(40));
+        rightTalonFX.getConfigurator().apply(new CurrentLimitsConfigs().withStatorCurrentLimit(limit)
+        .withSupplyCurrentLimit(40));
+    }
+
+    public Command setCurrentLimitCommand(double limit) {
+        return Commands.runOnce(() -> {
+            setCurrentLimit(limit);
+        });
     }
 
     /*

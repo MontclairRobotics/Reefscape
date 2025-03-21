@@ -27,10 +27,8 @@ import frc.robot.RobotContainer;
 import frc.robot.subsystems.Elevator;
 
 public class LEDs extends SubsystemBase {
-    public static final int kPORT = -1;
-    public static final int kLENGTH = -1; 
-    public static final int PORT = 9;
-    public static final int LENGTH =  100;
+    public static final int PORT = 4;
+    public static final int LENGTH =  14;
     public static final LEDPattern m_rainbow = LEDPattern.rainbow(255, 128);
     public static final Distance kLedSpacing = Units.Meters.of(1 / 100.0);
     public static final LEDPattern m_scrollingRainbow = m_rainbow.scrollAtAbsoluteSpeed(Units.MetersPerSecond.of(1), kLedSpacing);

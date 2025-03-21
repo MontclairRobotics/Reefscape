@@ -47,7 +47,7 @@ import frc.robot.util.simulation.DoubleJointedArmModel;
 
 public class Arm extends SubsystemBase {
 
-    public double armLimitVoltage = 2.1;
+    public double armLimitVoltage = 1.80555;
     public final double MAX_VELOCITY = 60.0 / 360.0; // rotations per sec
     public final double MAX_ACCELERATION = 20.0 / 360.0; // rotations per sec per sec
     
