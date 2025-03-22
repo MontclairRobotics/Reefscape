@@ -976,7 +976,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         // Not sure if this is correct at all
         odometryHeading = getRobotPose().getRotation();
         isRobotAtAngleSetPoint = thetaController.atSetpoint();
-        fieldRelative = !RobotContainer.driverController.L2().getAsBoolean();
+        // fieldRelative = !RobotContainer.driverController.L2().getAsBoolean();
 
         strafeLimiter.setLimit(getMaxHorizontalAccel());
         forwardLimiter.setLimit(getMaxForwardAccel());
