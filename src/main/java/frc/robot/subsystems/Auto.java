@@ -413,6 +413,7 @@ public class Auto extends SubsystemBase {
                             // RobotContainer.drivetrain.resetPose(pushPose);
                             // } else {
                             // stupid = false;
+                            RobotContainer.drivetrain.poseBuffer.clear();
                             System.out.println("Resetting Pose to: " + pose);
                             RobotContainer.drivetrain.resetPose(pose);
                             // }
@@ -532,9 +533,9 @@ public class Auto extends SubsystemBase {
                             .andThen(Commands.print("Path Over")));
 
                     if (Character.isLowerCase(first.charAt(0)) || Character.isLowerCase(second.charAt(0))) {
-                        path1Group.addCommands(new GoToReefCommand(TagOffset.RIGHT, false));
+                        path1Group.addCommands(new GoToReefCommand(TagOffset.RIGHT, false).withTimeout(3));
                     } else {
-                        path1Group.addCommands(new GoToReefCommand(TagOffset.LEFT, false));
+                        path1Group.addCommands(new GoToReefCommand(TagOffset.LEFT, false).withTimeout(3));
                     }
 
                     path1Group.addCommands(Commands.print("Align Finished"));
@@ -553,6 +554,7 @@ public class Auto extends SubsystemBase {
 
             // Command to shoot!!!
             // autoCommand.addCommands(new GoToPoseCommand(autoOffset, true));
+            autoCommand.addCommands(RobotContainer.arm.setState(mechState).withTimeout(1));
             autoCommand.addCommands(RobotContainer.rollers.outtakeCoralCommand().withTimeout(SCORING_TIMEOUT));
             timeSeconds += SCORING_TIMEOUT; // adds how long it will take to shoot the the estimated time
 
@@ -592,7 +594,7 @@ public class Auto extends SubsystemBase {
             }
 
             /* ADDS AN INTAKING COMMAND */
-            autoCommand.addCommands(Commands.deadline(RobotContainer.rollers.intakeCoralJiggleCommand().withTimeout(1.1), Commands.run(() -> RobotContainer.drivetrain.drive(.2,0,0,false,false))));
+            autoCommand.addCommands(Commands.deadline(RobotContainer.rollers.intakeCoralJiggleCommand().withTimeout(1.1), Commands.run(() -> RobotContainer.drivetrain.drive(0.6,0,0,false,false))));
             timeSeconds += INTAKE_PREDICTED_TIME;
             // Bring elevator and arm to default position after scoring last coral
 

@@ -136,14 +136,15 @@ public class Rollers extends SubsystemBase {
     }
 
     public Command outtakeCoralCommand() {
-        return Commands.run(() -> {
-          
+        return Commands.sequence(
+        // 
+        Commands.run(() -> {
                 setSpeed(CORAL_OUTTAKE_SPEED);
         }, this)
                 .finallyDo(() -> {
                     stopMotors();
                     this.heldPiece = GamePiece.None;
-                }).withTimeout(2); // TODO find timeout
+                }).withTimeout(2)); // TODO find timeout
     }
 
     public Command intakeCoralJiggleCommand() {

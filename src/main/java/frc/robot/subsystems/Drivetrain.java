@@ -95,7 +95,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     public static double MIN_ROT_ACCEL = 1.5;
     public static boolean IS_LIMITING_ACCEL = true; // TODO remove this, not needed w/ driveWithSetpoint
 
-    private TimeInterpolatableBuffer<Pose2d> poseBuffer = TimeInterpolatableBuffer.createBuffer(3);
+    public TimeInterpolatableBuffer<Pose2d> poseBuffer = TimeInterpolatableBuffer.createBuffer(3);
 
     DoublePublisher driveCurrentPub;
     DoublePublisher driveVelocityPub;
@@ -169,8 +169,8 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     };
 
     public static final Pose2d[] BLUE_INTAKE_POSES = {
-        new Pose2d(new Translation2d(1.05, 1.05), new Rotation2d(Math.toRadians(-127.000))), // top coral station
-        new Pose2d(new Translation2d(1.14, 7.05), new Rotation2d(Math.toRadians(127.000))), // bottom coral
+        new Pose2d(new Translation2d(0.985, 0.977), new Rotation2d(Math.toRadians(-127.000))), // top coral station
+        new Pose2d(new Translation2d(1.06, 7.11), new Rotation2d(Math.toRadians(127.000))), // bottom coral
     };
 
     public static final Pose2d[] LEFT_BLUE_INTAKE_POSES = {
@@ -974,25 +974,28 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     public void periodic() {
         // System.out.println(forwardAccelTunable.getValue());
         // Not sure if this is correct at all
+
         odometryHeading = getRobotPose().getRotation();
         isRobotAtAngleSetPoint = thetaController.atSetpoint();
-        // fieldRelative = !RobotContainer.driverController.L2().getAsBoolean();
+        fieldRelative = !RobotContainer.driverController.L2().getAsBoolean();
 
         strafeLimiter.setLimit(getMaxHorizontalAccel());
         forwardLimiter.setLimit(getMaxForwardAccel());
         rotationLimiter.setLimit(getMaxRotAccel());
 
-        poseBuffer.addSample(Timer.getFPGATimestamp(), getRobotPose());
+        if (DriverStation.isEnabled()) {
+            poseBuffer.addSample(Timer.getFPGATimestamp(), getRobotPose());
+        }
 
         if (DriverStation.isTeleopEnabled()) {
             Auto.field.setRobotPose(getRobotPose());
         }
 
-        Pose2d botPose = getRobotPose();
-        Logger.recordOutput("Drivetrain/PoseBeforeMoved", botPose);
-        Pose2d newPose = FieldPositionUtils.getNearestPositionOnField(botPose);
-        resetPose(newPose);
-        Logger.recordOutput("Drivetrain/PoseAfterReset", newPose);
+        // Pose2d botPose = getRobotPose();
+        // Logger.recordOutput("Drivetrain/PoseBeforeMoved", botPose);
+        // Pose2d newPose = FieldPositionUtils.getNearestPositionOnField(botPose);
+        // resetPose(newPose);
+        // Logger.recordOutput("Drivetrain/PoseAfterReset", newPose);
 
         Logger.recordOutput("Drivetrain/isFieldRelative", fieldRelative);
 

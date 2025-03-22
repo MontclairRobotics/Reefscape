@@ -109,6 +109,8 @@ public class Arm extends SubsystemBase {
     // public double smallWristAngle;
     // public double largeWristAngle;
 
+    public RobotState targetState;
+
     private DoublePublisher voltagePub;
     private DoublePublisher largeRotPub;
     private DoublePublisher smallRotPub;
@@ -163,7 +165,7 @@ public class Arm extends SubsystemBase {
         // pidController = new PIDController(35, 0, 0);
         relativeEncoder = armMotor.getEncoder();
         relativeEncoder.setPosition((getElbowAngle().getRotations() * ELBOW_TO_MOTOR)); 
-        pidController.setTolerance(3 / 360.0);
+        pidController.setTolerance(2 / 360.0);
         pidController.enableContinuousInput(-0.5, 0.5);
 
         encoderConnected = elbowEncoder.isConnected();
@@ -221,6 +223,14 @@ public class Arm extends SubsystemBase {
 
     public void stopMotor(){
         armMotor.stopMotor();
+    }
+
+    public void setTargetState(RobotState state) {
+        this.targetState = state;
+    }
+
+    public RobotState getTargetState() {
+        return this.targetState;
     }
 
     @AutoLogOutput
@@ -409,7 +419,7 @@ public class Arm extends SubsystemBase {
             relativeEncoder.setPosition(getElbowAngle().getRotations() * ELBOW_TO_MOTOR);
         } else {
             System.out.println("Arm Encoder not connected! Using relative encoder only!");
-            Elastic.sendNotification(new Notification(NotificationLevel.ERROR, "Arm Encoder", "Arm Encoder Disconnected! Using relative encoder only"));
+            // Elastic.sendNotification(new Notification(NotificationLevel.ERROR, "Arm Encoder", "Arm Encoder Disconnected! Using relative encoder only"));
         }
         Logger.recordOutput("Arm/Endpoint Degrees", getEndpointAngle().getDegrees());
         Logger.recordOutput("Arm/Encoder Connected", encoderConnected);
@@ -529,10 +539,12 @@ public class Arm extends SubsystemBase {
     }
 
     public Command setState(RobotState state) {
+        //setTargetState(state);
         return goToAngleCommand(state.getAngle());
     }
 
     public Command holdState(RobotState state) {
+      //  setTargetState(state);
         return goToAngleContinuousCommand(state.getAngle());
     }
 

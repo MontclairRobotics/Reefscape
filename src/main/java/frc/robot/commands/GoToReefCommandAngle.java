@@ -147,7 +147,7 @@ public class GoToReefCommandAngle extends Command {
 
         Pose2d currentPose = new Pose2d(camera.getHorizontalDistanceToReef(), camera.getStraightDistanceToReef(), Rotation2d.fromDegrees(camera.getTX()));
 
-        System.out.println(currentPose);
+        // System.out.println(currentPose);
 
         // //logging
         // xPosePub.set(currentPose.getX());

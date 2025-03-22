@@ -108,8 +108,9 @@ public class RobotContainer {
 
     // arm.setDefaultCommand(arm.joystickControlCommand());
 
-    leds.setDefaultCommand(elevator.isVelociatated() ? leds.playPatternCommand(LEDs.progress()) : rollers.getHeldPiece() == GamePiece.Algae ? leds.playPatternCommand(LEDs.holding(GamePiece.Algae.getColor())) : rollers.getHeldPiece() == GamePiece.Coral ? leds.playPatternCommand(LEDs.holding(GamePiece.Coral.getColor())) : leds.playPatternCommand(LEDs.breathingPattern()));
+    // leds.setDefaultCommand(elevator.isVelociatated() ? leds.playPatternCommand(LEDs.progress()) : rollers.getHeldPiece() == GamePiece.Algae ? leds.playPatternCommand(LEDs.holding(GamePiece.Algae.getColor())) : rollers.getHeldPiece() == GamePiece.Coral ? leds.playPatternCommand(LEDs.holding(GamePiece.Coral.getColor())) : leds.playPatternCommand(LEDs.breathingPattern()));
 
+    leds.setDefaultCommand(leds.playPatternCommand(LEDs.m_scrollingRainbow));
     // Intake
     operatorController.L1()
         .whileTrue(
@@ -179,7 +180,7 @@ public class RobotContainer {
 
     // Climb
     operatorController.circle().and(operatorController.L2())
-        .whileTrue(Commands.runOnce(() -> {Elastic.selectTab(2);}).andThen(elevator.setCurrentLimitCommand(110)).andThen(elevator.climbUpCommand()))
+        .whileTrue(Commands.runOnce(() -> {Elastic.selectTab(2);}).andThen(elevator.setCurrentLimitCommand(125)).andThen(elevator.climbUpCommand()))
         .onFalse(elevator.climbDownCommand());
 
     // Ratchets
@@ -289,7 +290,7 @@ public class RobotContainer {
             .alongWith(arm.holdState(RobotState.L3)));
     
     operatorController.touchpad().onTrue(Commands.runOnce(() -> {
-        elevator.setDefaultCommand(elevator.joystickControlCommand());
+        // elevator.setDefaultCommand(elevator.joystickControlCommand());
         arm.setDefaultCommand(arm.joystickControlCommand());
     }));
 

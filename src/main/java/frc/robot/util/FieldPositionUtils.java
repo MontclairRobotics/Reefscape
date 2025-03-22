@@ -6,8 +6,8 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 
 public class FieldPositionUtils {
-    public static final double ROBOT_X_SIZE = Units.inchesToMeters(35.5);
-    public static final double ROBOT_Y_SIZE = Units.inchesToMeters(35.5);
+    public static final double ROBOT_X_SIZE = Units.inchesToMeters(32);
+    public static final double ROBOT_Y_SIZE = Units.inchesToMeters(32);
 
     public static final double FIELD_X_SIZE = 17.548;
     public static final double FIELD_Y_SIZE = 8.052;

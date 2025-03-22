@@ -32,8 +32,8 @@ public class Limelight extends SubsystemBase {
     /* CONSTANTS */
     public static final double coralStationTagHeightMeters = 1.35255; // make sure these two are correct
     // does it need to be to the center of the tag?
-    public static final double reefTagHeightMeters = //0.174625; 
-    0.3;
+    public static final double reefTagHeightMeters = // 0.174625;
+            0.3;
     public static final double reefOffsetFromCenterOfTag = 0;
 
     public static final int[] reefIDsRed = { 6, 7, 8, 9, 10, 11 };
@@ -75,18 +75,19 @@ public class Limelight extends SubsystemBase {
     private double cameraHeightMeters;
     public double cameraAngle;
     public double cameraOffsetX; // right is positive
-    public double cameraOffsetY; //forward is positive
+    public double cameraOffsetY; // forward is positive
     private double angleMult;
 
     private boolean hasTipped;
-    
+
     private DoublePublisher yDistPub;
     private DoublePublisher xDistPub;
     private DoublePublisher horizontalDistPub;
 
     // TODO setup camera IPs?
     // https://docs.limelightvision.io/docs/docs-limelight/getting-started/FRC/best-practices
-    public Limelight(String cameraName, double cameraHeightMeters, double cameraAngle, double cameraOffsetX, double cameraOffsetY, boolean cameraUpsideDown) {
+    public Limelight(String cameraName, double cameraHeightMeters, double cameraAngle, double cameraOffsetX,
+            double cameraOffsetY, boolean cameraUpsideDown) {
         this.cameraName = cameraName;
         this.cameraHeightMeters = cameraHeightMeters;
         this.cameraAngle = cameraAngle;
@@ -101,7 +102,7 @@ public class Limelight extends SubsystemBase {
 
         NetworkTableInstance inst = NetworkTableInstance.getDefault();
         NetworkTable lightTable = inst.getTable(cameraName);
-        
+
         yDistPub = lightTable.getDoubleTopic("Y Distance").publish();
         xDistPub = lightTable.getDoubleTopic("X Distance").publish();
         horizontalDistPub = lightTable.getDoubleTopic("Horizontal Distance").publish();
@@ -134,8 +135,9 @@ public class Limelight extends SubsystemBase {
     public void disable() {
         // https://docs.limelightvision.io/docs/docs-limelight/pipeline-apriltag/apriltag-robot-localization-megatag2#using-limelight-4s-built-in-imu-with-imumode_set--setimumode
         // https://docs.limelightvision.io/docs/docs-limelight/software-change-log#limelight-os-20251-final-release---22425-test-release---21825
-        LimelightHelpers.SetIMUMode(cameraName, 1); // If not moving reset internal IMU       
-        // LimelightHelpers.setLimelightNTDouble(cameraName, "throttle_set", 200); // manage thermals
+        LimelightHelpers.SetIMUMode(cameraName, 1); // If not moving reset internal IMU
+        // LimelightHelpers.setLimelightNTDouble(cameraName, "throttle_set", 200); //
+        // manage thermals
     }
 
     public void setGyroMode(int mode) {
@@ -144,7 +146,8 @@ public class Limelight extends SubsystemBase {
 
     public void enable() {
         LimelightHelpers.SetIMUMode(cameraName, 4); // if moving use builtin, maybe change to 4
-        // LimelightHelpers.setLimelightNTDouble(cameraName, "throttle_set", 0); //TODO check needs to be 1? // manage thermals
+        // LimelightHelpers.setLimelightNTDouble(cameraName, "throttle_set", 0); //TODO
+        // check needs to be 1? // manage thermals
     }
 
     public RawFiducial getClosestTag() {
@@ -168,22 +171,15 @@ public class Limelight extends SubsystemBase {
 
     public void poseEstimationMegatag2() {
 
-
         // System.out.println(RobotContainer.drivetrain.getWrappedHeading().getDegrees());
         double angle = (RobotContainer.drivetrain.getWrappedHeading().getDegrees() + 360) % 360;
         LimelightHelpers.SetRobotOrientation(cameraName, angle, 0, 0, 0, 0, 0);
         LimelightHelpers.PoseEstimate mt2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(cameraName);
 
-        Logger.recordOutput(cameraName + "/timestampSeconds", mt2.timestampSeconds);
-        Optional<Pose2d> optPastRobotPose = RobotContainer.drivetrain.getPoseAtTime(mt2.timestampSeconds);
-        if (optPastRobotPose.isPresent()) {
-            Logger.recordOutput(cameraName + "/PastRobotPose", optPastRobotPose.get());
-        }
-        Pose2d pastRobotPose = optPastRobotPose.orElseGet(() -> RobotContainer.drivetrain.getRobotPose());
-
         boolean overrideReject = false;
-        boolean isTipping = Math.abs(RobotContainer.drivetrain.getPigeon2().getPitch().getValueAsDouble()) > 2 || Math.abs(RobotContainer.drivetrain.getPigeon2().getRoll().getValueAsDouble()) > 2;
-        Logger.recordOutput(cameraName + "/isTipping", isTipping);  
+        boolean isTipping = Math.abs(RobotContainer.drivetrain.getPigeon2().getPitch().getValueAsDouble()) > 2
+                || Math.abs(RobotContainer.drivetrain.getPigeon2().getRoll().getValueAsDouble()) > 2;
+        Logger.recordOutput(cameraName + "/isTipping", isTipping);
 
         // System.out.println(isTipping);
         if (hasTipped && !isTipping) {
@@ -193,6 +189,12 @@ public class Limelight extends SubsystemBase {
         boolean shouldRejectUpdate = false;
         int rejectReason = 0;
         if (mt2 != null) {
+            Optional<Pose2d> optPastRobotPose = RobotContainer.drivetrain.getPoseAtTime(mt2.timestampSeconds);
+            if (optPastRobotPose.isPresent()) {
+                Logger.recordOutput(cameraName + "/PastRobotPose", optPastRobotPose.get());
+            }
+            Pose2d pastRobotPose = RobotContainer.drivetrain.getRobotPose();//optPastRobotPose.orElseGet(() -> RobotContainer.drivetrain.getRobotPose());
+            Logger.recordOutput(cameraName + "/timestampSeconds", mt2.timestampSeconds);
             RawFiducial[] tags = mt2.rawFiducials;
             int[] ids = new int[tags.length];
             for (int i = 0; i < tags.length; i++) {
@@ -201,7 +203,7 @@ public class Limelight extends SubsystemBase {
             Logger.recordOutput(cameraName + "/SeenTags", ids);
             Logger.recordOutput(cameraName + "/PoseLatency", mt2.timestampSeconds - Timer.getFPGATimestamp());
             if (mt2.tagCount == 0) {
-                //rejects current measurement if there are no aprilTags
+                // rejects current measurement if there are no aprilTags
                 shouldRejectUpdate = true;
                 rejectReason = 1;
             }
@@ -209,32 +211,35 @@ public class Limelight extends SubsystemBase {
                 shouldRejectUpdate = true;
                 rejectReason = 2;
             }
-            if ((mt2.pose.getTranslation().getDistance(pastRobotPose.getTranslation()) > 0.3 && !DriverStation.isDisabled() && !DriverStation.isTeleopEnabled())) {
+            if ((mt2.pose.getTranslation().getDistance(pastRobotPose.getTranslation()) > 0.9
+                    && !DriverStation.isDisabled() && !DriverStation.isTeleopEnabled())) {
                 shouldRejectUpdate = true;
                 rejectReason = 3;
             }
-            if (Math.abs(PoseUtils.wrapRotation(mt2.pose.getRotation()).minus(PoseUtils.wrapRotation(pastRobotPose.getRotation())).getDegrees()) > 3) {
+            if (Math.abs(PoseUtils.wrapRotation(mt2.pose.getRotation())
+                    .minus(PoseUtils.wrapRotation(pastRobotPose.getRotation())).getDegrees()) > 3) {
                 shouldRejectUpdate = true;
                 rejectReason = 4;
             }
             if (mt2.avgTagDist > 4) {
                 shouldRejectUpdate = true;
                 rejectReason = 5;
-            } 
+            }
             // if (isTipping) {
-            //     shouldRejectUpdate = true;
+            // shouldRejectUpdate = true;
             // }
-            //adds vision measurement if conditions are met
+            // adds vision measurement if conditions are met
             if (!shouldRejectUpdate) {
                 Logger.recordOutput(cameraName + "/mt2Pose", mt2.pose);
-                Logger.recordOutput(cameraName + "/Calculated stdevs", Math.pow(0.5, mt2.tagCount) * 2 * mt2.avgTagDist);
+                Logger.recordOutput(cameraName + "/Calculated stdevs",
+                        Math.pow(0.5, mt2.tagCount) * 2 * mt2.avgTagDist);
                 // Vector<N3> = VecBuilder.fill
                 RobotContainer.drivetrain.addVisionMeasurement(
-                    mt2.pose,
-                    Utils.fpgaToCurrentTime(mt2.timestampSeconds),
-                    // VecBuilder.fill(0.000716, 0.0003, Double.POSITIVE_INFINITY));
-                    VecBuilder.fill(Math.pow(0.5, mt2.tagCount) * 2 * mt2.avgTagDist, Math.pow(0.5, mt2.tagCount) * 2 * mt2.avgTagDist, Double.POSITIVE_INFINITY)
-                );
+                        mt2.pose,
+                        Utils.fpgaToCurrentTime(mt2.timestampSeconds),
+                        // VecBuilder.fill(0.000716, 0.0003, Double.POSITIVE_INFINITY));
+                        VecBuilder.fill(Math.pow(0.5, mt2.tagCount) * 2 * mt2.avgTagDist,
+                                Math.pow(0.5, mt2.tagCount) * 2 * mt2.avgTagDist, Double.POSITIVE_INFINITY));
             } else {
                 Logger.recordOutput(cameraName + "/mt2PoseRejected", mt2.pose);
                 Logger.recordOutput(cameraName + "/rejectReason", rejectReason);
@@ -242,8 +247,7 @@ public class Limelight extends SubsystemBase {
         }
     }
 
-    //TODO: Do we need these / check if the trig is right
-    
+    // TODO: Do we need these / check if the trig is right
 
     public double getDistanceToTag(double tagHeightMeters) {
         if (hasValidTarget()) {
@@ -267,7 +271,7 @@ public class Limelight extends SubsystemBase {
     public double getHorizontalDistanceToTag(double tagHeightMeters) {
         if (hasValidTarget()) {
             double distance = getStraightDistanceToTag(tagHeightMeters) - cameraOffsetY;
-            
+
             distance = distance * Math.tan(getTX() * (Math.PI / 180.0));
             return distance + cameraOffsetX;
         }
@@ -291,12 +295,11 @@ public class Limelight extends SubsystemBase {
     public double getDistanceToReef() {
         return getDistanceToTag(reefTagHeightMeters);
     }
-   
-    //TODO: Do we need these / check if the trig is right
+
+    // TODO: Do we need these / check if the trig is right
     public double getStraightDistanceToReef() {
         return getStraightDistanceToTag(reefTagHeightMeters);
     }
-
 
     public double getHorizontalDistanceToReef() {
         return getHorizontalDistanceToTag(reefTagHeightMeters);
@@ -320,14 +323,15 @@ public class Limelight extends SubsystemBase {
         return () -> getTX();
     }
 
-    //TODO: Do we need these / check if the trig is right
+    // TODO: Do we need these / check if the trig is right
     // public double getStraightDistanceToTag() {
-    //     if (hasValidTarget())
-    //         return goalHeightReef / (Math.tan(Math.toRadians(getTY() + limelightOffsetAngleVertical)));
-    //     return 0;
+    // if (hasValidTarget())
+    // return goalHeightReef / (Math.tan(Math.toRadians(getTY() +
+    // limelightOffsetAngleVertical)));
+    // return 0;
     // }
 
-    //TODO: Do we need these / check if the trig is right
+    // TODO: Do we need these / check if the trig is right
     public double getStrafeDistanceToReef() {
         if (isCorrectID(getTagID(), reefIDs)) {
             return (Math.tan(Math.toRadians(getTX()))) * getStraightDistanceToReef();
@@ -341,30 +345,32 @@ public class Limelight extends SubsystemBase {
 
     public void periodic() {
 
-        if (Math.abs(RobotContainer.drivetrain.getPigeon2().getPitch().getValueAsDouble()) > 0.3 || Math.abs(RobotContainer.drivetrain.getPigeon2().getRoll().getValueAsDouble()) > 0.3) {
+        if (Math.abs(RobotContainer.drivetrain.getPigeon2().getPitch().getValueAsDouble()) > 0.3
+                || Math.abs(RobotContainer.drivetrain.getPigeon2().getRoll().getValueAsDouble()) > 0.3) {
             hasTipped = true;
         }
         // tagID = (int) Limetable.getEntry("tid").getDouble(-1);
-        // TODO if you get a pose estimate in the frame before this is applied it may not work
+        // TODO if you get a pose estimate in the frame before this is applied it may
+        // not work
         tx = LimelightHelpers.getTX(cameraName);
         ty = LimelightHelpers.getTY(cameraName);
         RawFiducial[] allTags = LimelightHelpers.getRawFiducials(cameraName);
         int numValidTags = 0;
-        for(LimelightHelpers.RawFiducial t : allTags) {
-            if(t.distToCamera < 4.0) {
+        for (LimelightHelpers.RawFiducial t : allTags) {
+            if (t.distToCamera < 4.0) {
                 numValidTags++;
             }
         }
 
         int[] validTags = new int[numValidTags];
         int counter = 0;
-        for(RawFiducial t : allTags) {
-            if(t.distToCamera < 4.0) {
+        for (RawFiducial t : allTags) {
+            if (t.distToCamera < 4.0) {
                 validTags[counter] = t.id;
                 counter++;
             }
         }
-     //   LimelightHelpers.SetFiducialIDFiltersOverride(cameraName, validTags);
+        // LimelightHelpers.SetFiducialIDFiltersOverride(cameraName, validTags);
         poseEstimationMegatag2();
         xDistPub.set(getHorizontalDistanceToReef());
         yDistPub.set(getStraightDistanceToReef());
@@ -375,14 +381,16 @@ public class Limelight extends SubsystemBase {
         if (poseArr.length >= 6) {
             botPose = new Pose2d(poseArr[0], poseArr[2], Rotation2d.fromDegrees(poseArr[4]));
         }
-        Logger.recordOutput(cameraName + "/IMUYaw", LimelightHelpers.getIMUData(cameraName).robotYaw * (Math.PI / 180.0)); //TODO should be yaw?
+        Logger.recordOutput(cameraName + "/IMUYaw",
+                LimelightHelpers.getIMUData(cameraName).robotYaw * (Math.PI / 180.0)); // TODO should be yaw?
         Logger.recordOutput(cameraName + "/BotPoseTargetSpace", botPose);
-        Logger.recordOutput(cameraName + "/BotPose3dTargetSpace", LimelightHelpers.getBotPose3d_TargetSpace(cameraName));
+        Logger.recordOutput(cameraName + "/BotPose3dTargetSpace",
+                LimelightHelpers.getBotPose3d_TargetSpace(cameraName));
 
         var entry = LimelightHelpers.getLimelightNTTableEntry(cameraName, "tcornxy");
         if (entry != null) {
             var tcornxy = entry.getDoubleArray(new double[0]);
-            if (tcornxy != null && tcornxy.length>0) {
+            if (tcornxy != null && tcornxy.length > 0) {
                 Logger.recordOutput(cameraName + "/tcornxy", tcornxy);
             }
         }

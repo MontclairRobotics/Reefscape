@@ -10,6 +10,7 @@ import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.configs.SlotConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.ControlRequest;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
@@ -323,6 +324,15 @@ public class Elevator extends SubsystemBase {
         .withSupplyCurrentLimit(40));
     }
 
+    public void setElevatorController() {
+        leftTalonFX.getConfigurator().apply(new Slot0Configs().withKP(1.4973 * 3).withKI(0).withKD(0.098147)
+        .withKS(0.058548).withKV(0.10758).withKA(0.0013553).withKG(0.22)
+        .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign));
+        rightTalonFX.getConfigurator().apply(new Slot0Configs().withKP(1.4973 * 3).withKI(0).withKD(0.098147)
+        .withKS(0.058548).withKV(0.10758).withKA(0.0013553).withKG(0.22)
+        .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign));
+    }
+
     public Command setCurrentLimitCommand(double limit) {
         return Commands.runOnce(() -> {
             setCurrentLimit(limit);
@@ -614,6 +624,8 @@ public class Elevator extends SubsystemBase {
     public Command climbUpCommand() {
         return Commands.runOnce(() -> {
            // RobotContainer.ratchet.disengageServos();
+           setElevatorController();
+           
         }, this)
         .andThen(setState(RobotState.ClimbUp)).alongWith(RobotContainer.arm.setState(RobotState.ClimbUp));
     }
