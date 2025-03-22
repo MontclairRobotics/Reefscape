@@ -155,7 +155,7 @@ public class GoToReefCommand extends Command {
         Logger.recordOutput("PoseCommand/TargetPose", targetPose);
         Logger.recordOutput("PoseCommand/CurrentPose", RobotContainer.drivetrain.getRobotPose());
 
-        System.out.println(isOffset);
+        // System.out.println(isOffset);
     }
 
     @Override

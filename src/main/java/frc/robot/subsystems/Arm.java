@@ -6,6 +6,7 @@ import com.revrobotics.spark.SparkMax;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
+import com.revrobotics.RelativeEncoder;
 import com.revrobotics.sim.SparkMaxSim;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
@@ -22,6 +23,7 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -50,6 +52,8 @@ public class Arm extends SubsystemBase {
     public double armLimitVoltage = 1.80555;
     public final double MAX_VELOCITY = 60.0 / 360.0; // rotations per sec
     public final double MAX_ACCELERATION = 20.0 / 360.0; // rotations per sec per sec
+
+    public static final double ELBOW_TO_MOTOR = 25 * 1.5; //for every rotation of the shoulder the motor moves this much
     
     private static final Rotation2d ELBOW_ENCODER_OFFSET = Rotation2d.fromDegrees(-83+3.5);
     private static final Rotation2d ELBOW_MAX_ANGLE = Rotation2d.fromDegrees(34); //TODO: use protractor to get this for the real robot
@@ -63,6 +67,8 @@ public class Arm extends SubsystemBase {
 
     // Angle of endpoint is -37.8
     private static final double ELBOW_ANGLE_TO_WRIST = 30.0 / 14.0; // TODO check
+
+    public boolean encoderConnected;
 
     // TODO: grab value from real robot using protractor
     private static final Rotation2d WRIST_ANGLE_WHEN_ELBOW_IS_HORIZONTAL = Rotation2d.fromDegrees(-34.903); 
@@ -81,6 +87,8 @@ public class Arm extends SubsystemBase {
     private double j1Velocity = 0;
     private double j2Velocity = 0;
     private double prevLoopTime = Timer.getFPGATimestamp();
+
+    private RelativeEncoder relativeEncoder;
     
     private SlewRateLimiter accelLimiter = new SlewRateLimiter(8); // accelerate fully in ~1.5 seconds (can tune value)
 
@@ -108,6 +116,7 @@ public class Arm extends SubsystemBase {
     private DoublePublisher setpointPub;
     private DoublePublisher endPointAnglePub;
     private DoublePublisher percentRotPub;
+    private BooleanPublisher encoderConnectedPub;
 
     private StructPublisher<Pose3d> elbowPosePub;
     private StructPublisher<Pose3d> wristPosePub;
@@ -152,12 +161,16 @@ public class Arm extends SubsystemBase {
                                                                   // (1 here), 3rd is initial offset (TODO to be
                                                                   // measured)
         // pidController = new PIDController(35, 0, 0);
-        pidController.setTolerance(3 / 360.0, 1.0 / 360.0);
+        relativeEncoder = armMotor.getEncoder();
+        relativeEncoder.setPosition((getElbowAngle().getRotations() * ELBOW_TO_MOTOR)); 
+        pidController.setTolerance(3 / 360.0);
         pidController.enableContinuousInput(-0.5, 0.5);
 
-        if (!elbowEncoder.isConnected()) {
+        encoderConnected = elbowEncoder.isConnected();
+        if (!encoderConnected) {
             Elastic.sendNotification(new Notification(NotificationLevel.ERROR, "Encoder disconnected!",
                     "J1 arm encoder not connected!"));
+            relativeEncoder.setPosition((-63.2 / 360.0) * ELBOW_TO_MOTOR); // assume start at min angle
         }
 
         // if (!wristEncoder.isConnected()) {
@@ -196,6 +209,7 @@ public class Arm extends SubsystemBase {
         setpointPub = armTable.getDoubleTopic("PID Setpoint - Small Angle Desgrees").publish();
         endPointAnglePub = armTable.getDoubleTopic("Endpoint Degrees").publish();
         percentRotPub = armTable.getDoubleTopic("Arm Percent Rotation").publish();
+        encoderConnectedPub = armTable.getBooleanTopic("Encoder Connected").publish();
 
         elbowPosePub = armTable.getStructTopic("Joint1Pose", Pose3d.struct).publish();
         wristPosePub = armTable.getStructTopic("Joint2Pose", Pose3d.struct).publish();
@@ -231,7 +245,11 @@ public class Arm extends SubsystemBase {
      * Returns the angle of the elbow to the horizontal
      */
     public Rotation2d getElbowAngle() {
-        return Drivetrain.wrapAngle(Rotation2d.fromRotations(elbowEncoder.get()));
+        if (elbowEncoder.isConnected()) {
+            return Drivetrain.wrapAngle(Rotation2d.fromRotations(elbowEncoder.get()));
+        } else {
+            return Drivetrain.wrapAngle(Rotation2d.fromRotations((relativeEncoder.getPosition() / ELBOW_TO_MOTOR) % 1));
+        }
     }
 
     /**
@@ -383,9 +401,21 @@ public class Arm extends SubsystemBase {
             smallRotPub.set(getWristAngle().getDegrees());
             endPointAnglePub.set(getEndpointAngle().getDegrees());
         }
+
+        encoderConnected = elbowEncoder.isConnected();
+        encoderConnectedPub.set(encoderConnected);
+
+        if (encoderConnected) {
+            relativeEncoder.setPosition(getElbowAngle().getRotations() * ELBOW_TO_MOTOR);
+        } else {
+            System.out.println("Arm Encoder not connected! Using relative encoder only!");
+            Elastic.sendNotification(new Notification(NotificationLevel.ERROR, "Arm Encoder", "Arm Encoder Disconnected! Using relative encoder only"));
+        }
         Logger.recordOutput("Arm/Endpoint Degrees", getEndpointAngle().getDegrees());
-        Logger.recordOutput("Arm/Encoder Connected", elbowEncoder.isConnected());
+        Logger.recordOutput("Arm/Encoder Connected", encoderConnected);
         Logger.recordOutput("Arm/Motor Applied Outpu", armMotor.getAppliedOutput());
+        Logger.recordOutput("Arm/AtSetpoint", pidController.atSetpoint());
+        Logger.recordOutput("Arm/BackupEncoder", Drivetrain.wrapAngle(Rotation2d.fromRotations(relativeEncoder.getPosition() / ELBOW_TO_MOTOR)).getDegrees());
     }
 
     @Override

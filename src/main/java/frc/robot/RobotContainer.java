@@ -195,9 +195,10 @@ public class RobotContainer {
 
     drivetrain.setDefaultCommand(drivetrain.driveJoystickInputCommand());
 
-    driverController.L1().whileTrue(new GoToReefCommand(TagOffset.LEFT, true)).onFalse(new GoToReefCommand(TagOffset.LEFT, false));
-    driverController.R1().whileTrue(new GoToReefCommand(TagOffset.RIGHT, true)).onFalse(new GoToReefCommand(TagOffset.RIGHT, false));
-    driverController.R2().whileTrue(new GoToCoralStationCommand(TagOffset.CENTER));
+    driverController.L1().whileTrue(new GoToReefCommand(TagOffset.LEFT, true)).onFalse(new GoToReefCommand(TagOffset.LEFT, false).until(() -> drivetrain.joystickInputDetected()));
+    driverController.R1().whileTrue(new GoToReefCommand(TagOffset.RIGHT, true)).onFalse(new GoToReefCommand(TagOffset.RIGHT, false).until(() -> drivetrain.joystickInputDetected()));
+    driverController.circle().whileTrue(new GoToCoralStationCommand(TagOffset.CENTER, false, false)).onFalse(new GoToCoralStationCommand(TagOffset.CENTER, false, true));
+    driverController.square().whileTrue(new GoToCoralStationCommand(TagOffset.CENTER, true, false)).onFalse(new GoToCoralStationCommand(TagOffset.CENTER, true, true));
     
     //Fine tuning buttons
     driverController.povRight()
@@ -229,12 +230,12 @@ public class RobotContainer {
     // 90 degree buttons
     driverController.triangle()
         .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(0)), false));
-    driverController.square()
-        .onTrue(drivetrain.alignToAngleFieldRelativeCommand((Rotation2d.fromDegrees(-54)), false));
+    // driverController.square()
+    //     .onTrue(drivetrain.alignToAngleFieldRelativeCommand((Rotation2d.fromDegrees(-54)), false));
     driverController.cross()
         .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(180)), false));
-    driverController.circle()
-        .onTrue(drivetrain.alignToAngleFieldRelativeCommand(Rotation2d.fromDegrees(54), false));
+    // driverController.circle()
+    //     .onTrue(drivetrain.alignToAngleFieldRelativeCommand(Rotation2d.fromDegrees(54), false));
 
     // zeros gyro
     driverController.touchpad().onTrue(drivetrain.zeroGyroCommand());
@@ -261,6 +262,9 @@ public class RobotContainer {
 
     testingController.touchpad().onTrue(Commands.runOnce(() -> elevator.resetEncoders(0)).ignoringDisable(true));
     
+
+    // TODO check
+    arm.setDefaultCommand(arm.joystickControlCommand().onlyWhile(() -> !arm.encoderConnected));
     // L1 Manual
     operatorController.cross().and(operatorController.L2().negate())
         .whileTrue(arm.holdState(RobotState.L1))
@@ -283,6 +287,11 @@ public class RobotContainer {
         elevator.setState(RobotState.L3)
             .alongWith(elevator.setTargetState(RobotState.L3))
             .alongWith(arm.holdState(RobotState.L3)));
+    
+    operatorController.touchpad().onTrue(Commands.runOnce(() -> {
+        elevator.setDefaultCommand(elevator.joystickControlCommand());
+        arm.setDefaultCommand(arm.joystickControlCommand());
+    }));
 
     // L4 Manual
     operatorController.circle().and(operatorController.L2().negate())

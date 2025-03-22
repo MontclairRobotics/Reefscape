@@ -148,7 +148,7 @@ public class GoToReefCameraSpace extends Command {
 
         Pose2d currentPose = new Pose2d(currentPose3d.getX(), currentPose3d.getZ(), Rotation2d.fromRadians(currentPose3d.getRotation().getZ()));
 
-        System.out.println(currentPose);
+        // System.out.println(currentPose);
 
         // //logging
         // xPosePub.set(currentPose.getX());

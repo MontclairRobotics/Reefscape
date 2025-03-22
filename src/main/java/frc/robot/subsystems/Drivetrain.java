@@ -16,6 +16,7 @@ import static edu.wpi.first.units.Units.Rotation;
 import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Volts;
 
+import java.text.FieldPosition;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
@@ -74,6 +75,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.util.DynamicSlewRateLimiter;
+import frc.robot.util.FieldPositionUtils;
 
 public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
@@ -148,7 +150,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
              
             new Pose2d(new Translation2d(3.17, 4.19), new Rotation2d(Math.toRadians(0))),
             new Pose2d(new Translation2d(3.98, 5.25), new Rotation2d(Math.toRadians(-60))),
-            new Pose2d(new Translation2d(5.3, 5.09), new Rotation2d(Math.toRadians(-120))),
+            new Pose2d(new Translation2d(5.28, 5.09), new Rotation2d(Math.toRadians(-120))),
             new Pose2d(new Translation2d(5.8, 3.86), new Rotation2d(Math.toRadians(180))),
             new Pose2d(new Translation2d(5, 2.8), new Rotation2d(Math.toRadians(120))),
             new Pose2d(new Translation2d(3.69, 2.97), new Rotation2d(Math.toRadians(60))),
@@ -167,8 +169,8 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     };
 
     public static final Pose2d[] BLUE_INTAKE_POSES = {
-        new Pose2d(new Translation2d(1.091, 1.060), new Rotation2d(Math.toRadians(-127.000))), // top coral station
-        new Pose2d(new Translation2d(1.091, 7.000), new Rotation2d(Math.toRadians(127.000))), // bottom coral
+        new Pose2d(new Translation2d(1.05, 1.05), new Rotation2d(Math.toRadians(-127.000))), // top coral station
+        new Pose2d(new Translation2d(1.14, 7.05), new Rotation2d(Math.toRadians(127.000))), // bottom coral
     };
 
     public static final Pose2d[] LEFT_BLUE_INTAKE_POSES = {
@@ -423,7 +425,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
     public boolean joystickInputDetected() {
         if (Math.abs(getVelocityXFromController()) > 0
-                && Math.abs(getVelocityYFromController()) > 0) {
+                || Math.abs(getVelocityYFromController()) > 0) {
             return true;
         } else
             return false;
@@ -985,6 +987,12 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         if (DriverStation.isTeleopEnabled()) {
             Auto.field.setRobotPose(getRobotPose());
         }
+
+        Pose2d botPose = getRobotPose();
+        Logger.recordOutput("Drivetrain/PoseBeforeMoved", botPose);
+        Pose2d newPose = FieldPositionUtils.getNearestPositionOnField(botPose);
+        resetPose(newPose);
+        Logger.recordOutput("Drivetrain/PoseAfterReset", newPose);
 
         Logger.recordOutput("Drivetrain/isFieldRelative", fieldRelative);
 

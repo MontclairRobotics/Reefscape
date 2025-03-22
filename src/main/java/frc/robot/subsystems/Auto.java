@@ -513,7 +513,7 @@ public class Auto extends SubsystemBase {
 
                     double pathTime = traj.getTotalTimeSeconds(); // time path will take
                     double raiseTime = RobotContainer.elevator.getRaiseTime(mechState);
-                    raiseTime = 1; // time elevator will take to rise
+                    raiseTime = 0.5; // time elevator will take to rise
                     double waitTime = pathTime - raiseTime; // how much time we should wait before raising elevator
                     timeSeconds += pathTime; // adds how long the path will take to the estimated time
                     // System.out.println("Path 1 Arm height: " + mechState.getHeight());
@@ -539,12 +539,11 @@ public class Auto extends SubsystemBase {
 
                     path1Group.addCommands(Commands.print("Align Finished"));
 
-                    autoCommand.addCommands(Commands.parallel(path1Group, Commands.sequence(
+                    autoCommand.addCommands(Commands.parallel(path1Group, Commands.waitSeconds(0.5).andThen(RobotContainer.arm.setState(mechState)), Commands.sequence(
                             Commands.waitSeconds(waitTime),
                             Commands.print("Waiting Finished, raising elevator"),
                             RobotContainer.elevator.setState(mechState),
-                            Commands.print("Elevator raised")),
-                            RobotContainer.arm.setState(mechState)));
+                            Commands.print("Elevator raised"))));
                     autoCommand.addCommands(Commands.print("Mechanism Positioned, Robot Aligned"));
 
                 } catch (Exception e) {
@@ -593,7 +592,7 @@ public class Auto extends SubsystemBase {
             }
 
             /* ADDS AN INTAKING COMMAND */
-            autoCommand.addCommands(RobotContainer.rollers.intakeCoralJiggleCommand().withTimeout(1.1));
+            autoCommand.addCommands(Commands.deadline(RobotContainer.rollers.intakeCoralJiggleCommand().withTimeout(1.1), Commands.run(() -> RobotContainer.drivetrain.drive(.2,0,0,false,false))));
             timeSeconds += INTAKE_PREDICTED_TIME;
             // Bring elevator and arm to default position after scoring last coral
 

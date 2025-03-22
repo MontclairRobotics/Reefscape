@@ -18,33 +18,26 @@ public class GoToCoralStationCommand extends Command {
     private PIDController thetaController;
     private Pose2d targetPose;
     private TagOffset direction;
+    private boolean isOffset;
+    boolean isLeft;
+    int rightStation = 0;
+    int leftStation = 1;
     double targetHeading;
-    double otherOffset = .05;
+    double otherOffset = .2;
 
     public void initialize() {
         targetPose = new Pose2d();
-        if(direction.isLeft()) {
-            targetPose = RobotContainer.drivetrain.getClosestTargetPose(Drivetrain.LEFT_BLUE_INTAKE_POSES);
-        } else if(direction.isRight()) {
-            targetPose = RobotContainer.drivetrain.getClosestTargetPose(Drivetrain.RIGHT_BLUE_INTAKE_POSES);
+        if(isLeft) {
+            targetPose = Drivetrain.BLUE_INTAKE_POSES[leftStation];
         } else {
-            targetPose = RobotContainer.drivetrain.getClosestTargetPose(Drivetrain.BLUE_INTAKE_POSES);
+            targetPose = Drivetrain.BLUE_INTAKE_POSES[rightStation];
         }
+
+
         if(targetPose == null) {
             cancel();
         }
-        //flips the angle if we are on red, so that the trig functions will work properly
-            //On red, the pose for POINT A on RED ALLIANCE has a heading of 180 (I think), 
-            //but the pose for POINT A on BLUE ALLIANCE has a heading of 0 (I think), so we 
-            //just have to make them the same again
-            targetHeading = targetPose.getRotation().getRadians();
-            //when target heading is zero, we want the offset to be backwards but cos(0) 
-            //is positive, so we multiply by negative 1
-            //same thing for sin(x)
-            double updatedX = targetPose.getX() + (-1 * otherOffset * Math.cos(targetHeading));
-            double updatedY = targetPose.getY() + (-1 * otherOffset * Math.sin(targetHeading));
-            //creates new updated pose
-            targetPose = new Pose2d(new Translation2d(updatedX, updatedY), Rotation2d.fromRadians(targetHeading));
+      
 
         xController.setTolerance(0.02);
         yController.setTolerance(0.02);
@@ -53,8 +46,10 @@ public class GoToCoralStationCommand extends Command {
         thetaController.setSetpoint(targetPose.getRotation().getRadians());
     }
 
-    public GoToCoralStationCommand(TagOffset direction) {
+    public GoToCoralStationCommand(TagOffset direction, boolean isLeft, boolean isOffset) {
         this.direction = direction; //sets the direction
+        this.isLeft = isLeft;
+        this.isOffset = isOffset;
         addRequirements(RobotContainer.drivetrain); //requires the drivetrain
         xController = new PIDController(3.5, 0, .035); //creates the PIDControllers
         yController = new PIDController(3.5, 0, .035); //TODO tolerances
