@@ -1,6 +1,7 @@
 package frc.robot.vision;
 
 import java.util.HashMap;
+import java.util.Optional;
 import java.util.function.DoubleSupplier;
 
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -173,14 +174,24 @@ public class Limelight extends SubsystemBase {
         LimelightHelpers.SetRobotOrientation(cameraName, angle, 0, 0, 0, 0, 0);
         LimelightHelpers.PoseEstimate mt2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(cameraName);
 
+        Logger.recordOutput(cameraName + "/timestampSeconds", mt2.timestampSeconds);
+        Optional<Pose2d> optPastRobotPose = RobotContainer.drivetrain.getPoseAtTime(mt2.timestampSeconds);
+        if (optPastRobotPose.isPresent()) {
+            Logger.recordOutput(cameraName + "/PastRobotPose", optPastRobotPose.get());
+        }
+        Pose2d pastRobotPose = optPastRobotPose.orElseGet(() -> RobotContainer.drivetrain.getRobotPose());
+
         boolean overrideReject = false;
         boolean isTipping = Math.abs(RobotContainer.drivetrain.getPigeon2().getPitch().getValueAsDouble()) > 2 || Math.abs(RobotContainer.drivetrain.getPigeon2().getRoll().getValueAsDouble()) > 2;
+        Logger.recordOutput(cameraName + "/isTipping", isTipping);  
+
         // System.out.println(isTipping);
         if (hasTipped && !isTipping) {
             overrideReject = true;
         }
         // System.out.println(Utils.getCurrentTimeSeconds());
         boolean shouldRejectUpdate = false;
+        int rejectReason = 0;
         if (mt2 != null) {
             RawFiducial[] tags = mt2.rawFiducials;
             int[] ids = new int[tags.length];
@@ -191,18 +202,23 @@ public class Limelight extends SubsystemBase {
             if (mt2.tagCount == 0) {
                 //rejects current measurement if there are no aprilTags
                 shouldRejectUpdate = true;
+                rejectReason = 1;
             }
             if (Math.abs(RobotContainer.drivetrain.getCurrentSpeeds().omegaRadiansPerSecond) > angleVelocityTolerance) {
                 shouldRejectUpdate = true;
+                rejectReason = 2;
             }
-            if ((mt2.pose.getTranslation().getDistance(RobotContainer.drivetrain.getRobotPose().getTranslation()) > 0.3 && !DriverStation.isDisabled() && !DriverStation.isTeleopEnabled())) {
+            if ((mt2.pose.getTranslation().getDistance(pastRobotPose.getTranslation()) > 0.3 && !DriverStation.isDisabled() && !DriverStation.isTeleopEnabled())) {
                 shouldRejectUpdate = true;
+                rejectReason = 3;
             }
-            if (Math.abs(PoseUtils.wrapRotation(mt2.pose.getRotation()).minus(PoseUtils.wrapRotation(RobotContainer.drivetrain.getRobotPose().getRotation())).getDegrees()) > 3) {
+            if (Math.abs(PoseUtils.wrapRotation(mt2.pose.getRotation()).minus(PoseUtils.wrapRotation(pastRobotPose.getRotation())).getDegrees()) > 3) {
                 shouldRejectUpdate = true;
+                rejectReason = 4;
             }
             if (mt2.avgTagDist > 4) {
                 shouldRejectUpdate = true;
+                rejectReason = 5;
             } 
             // if (isTipping) {
             //     shouldRejectUpdate = true;
@@ -220,6 +236,7 @@ public class Limelight extends SubsystemBase {
                 );
             } else {
                 Logger.recordOutput(cameraName + "/mt2PoseRejected", mt2.pose);
+                Logger.recordOutput(cameraName + "/rejectReason", rejectReason);
             }
         }
     }
@@ -360,6 +377,14 @@ public class Limelight extends SubsystemBase {
         Logger.recordOutput(cameraName + "/IMUYaw", LimelightHelpers.getIMUData(cameraName).robotYaw * (Math.PI / 180.0)); //TODO should be yaw?
         Logger.recordOutput(cameraName + "/BotPoseTargetSpace", botPose);
         Logger.recordOutput(cameraName + "/BotPose3dTargetSpace", LimelightHelpers.getBotPose3d_TargetSpace(cameraName));
+
+        var entry = LimelightHelpers.getLimelightNTTableEntry(cameraName, "tcornxy");
+        if (entry != null) {
+            var tcornxy = entry.getDoubleArray(new double[0]);
+            if (tcornxy != null && tcornxy.length>0) {
+                Logger.recordOutput(cameraName + "/tcornxy", tcornxy);
+            }
+        }
     }
 
     public Command ifHasTarget(Command cmd) {
