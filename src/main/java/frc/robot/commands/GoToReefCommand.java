@@ -180,6 +180,7 @@ public class GoToReefCommand extends Command {
     @Override
     public void end(boolean interrupted) {
         RobotContainer.drivetrain.drive(0, 0, 0, true, false);
+        System.out.println("Align ended, cancelled: " + interrupted + "at setpoint: " + isFinished());
     }
 
     @Override

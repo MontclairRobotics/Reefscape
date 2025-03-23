@@ -152,7 +152,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
             new Pose2d(new Translation2d(3.98, 5.25), new Rotation2d(Math.toRadians(-60))),
             new Pose2d(new Translation2d(5.28, 5.09), new Rotation2d(Math.toRadians(-120))),
             new Pose2d(new Translation2d(5.8, 3.86), new Rotation2d(Math.toRadians(180))),
-            new Pose2d(new Translation2d(5, 2.8), new Rotation2d(Math.toRadians(120))),
+            new Pose2d(new Translation2d(5.01, 2.775), new Rotation2d(Math.toRadians(120))),
             new Pose2d(new Translation2d(3.69, 2.97), new Rotation2d(Math.toRadians(60))),
     };
 

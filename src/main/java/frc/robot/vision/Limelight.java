@@ -145,7 +145,7 @@ public class Limelight extends SubsystemBase {
     }
 
     public void enable() {
-        LimelightHelpers.SetIMUMode(cameraName, 4); // if moving use builtin, maybe change to 4
+        LimelightHelpers.SetIMUMode(cameraName, 1); // if moving use builtin, maybe change to 4
         // LimelightHelpers.setLimelightNTDouble(cameraName, "throttle_set", 0); //TODO
         // check needs to be 1? // manage thermals
     }

@@ -77,7 +77,7 @@ public class Auto extends SubsystemBase {
 
     // TODO: probably won't want a INTAKE timeout, we can just wait until piece is
     // intaked
-    private final double SCORING_TIMEOUT = 0.13;
+    private final double SCORING_TIMEOUT = 0.25;
     private final double INTAKE_PREDICTED_TIME = 0.3;
 
     private boolean prevIsPushAuto;
@@ -372,7 +372,7 @@ public class Auto extends SubsystemBase {
                     // Store path to be drawn on dashboard
                     // Create a path following command using AutoBuilder. This will also trigger
                     // event markers.
-                    path1Cmd = Commands.parallel(Commands.print("Running path 1"), AutoBuilder.followPath(path1));
+                    // path1Cmd = Commands.parallel(Commands.print("Running path 1"), AutoBuilder.followPath(path1));
 
                     // resets pose to the starting pose if we are at the first path!
                     if (firstPath) { // TODO reset to something better? vision pose?
@@ -424,8 +424,8 @@ public class Auto extends SubsystemBase {
                                 }),
                                 Commands.waitSeconds(0.1), // TODO enough?
                                 Commands.runOnce(() -> {
-                                    RobotContainer.leftLimelight.setGyroMode(4);
-                                    RobotContainer.rightLimelight.setGyroMode(4);
+                                    RobotContainer.leftLimelight.setGyroMode(1);
+                                    RobotContainer.rightLimelight.setGyroMode(1);
                                 }))));
 
                         if (isPushAuto) {
@@ -470,7 +470,7 @@ public class Auto extends SubsystemBase {
                     // Store path to be drawn on dashboard
                     // Create a path following command using AutoBuilder. This will also trigger
                     // event markers.
-                    path2Cmd = Commands.parallel(AutoBuilder.followPath(path2), Commands.print("Running path 2"));
+                    // path2Cmd = Commands.parallel(AutoBuilder.followPath(path2), Commands.print("Running path 2"));
 
                     // TODO needs to be .generateTrajectory()? maybe only if the ideal one doesn't
                     // exist?
@@ -532,10 +532,11 @@ public class Auto extends SubsystemBase {
                             path1Cmd, RobotContainer.rollers.holdCoralCommand())
                             .andThen(Commands.print("Path Over")));
 
+                    path1Group.addCommands(Commands.waitSeconds(0.3));
                     if (Character.isLowerCase(first.charAt(0)) || Character.isLowerCase(second.charAt(0))) {
-                        path1Group.addCommands(new GoToReefCommand(TagOffset.RIGHT, false).withTimeout(3));
+                        // path1Group.addCommands(new GoToReefCommand(TagOffset.RIGHT, false).withTimeout(3));
                     } else {
-                        path1Group.addCommands(new GoToReefCommand(TagOffset.LEFT, false).withTimeout(3));
+                        // path1Group.addCommands(new GoToReefCommand(TagOffset.LEFT, false).withTimeout(3));
                     }
 
                     path1Group.addCommands(Commands.print("Align Finished"));
@@ -594,7 +595,7 @@ public class Auto extends SubsystemBase {
             }
 
             /* ADDS AN INTAKING COMMAND */
-            autoCommand.addCommands(Commands.deadline(RobotContainer.rollers.intakeCoralJiggleCommand().withTimeout(1.1), Commands.run(() -> RobotContainer.drivetrain.drive(0.6,0,0,false,false))));
+            // autoCommand.addCommands(Commands.deadline(RobotContainer.rollers.intakeCoralJiggleCommand().withTimeout(1.8), Commands.run(() -> RobotContainer.drivetrain.drive(0.6,0,0,false,false))));
             timeSeconds += INTAKE_PREDICTED_TIME;
             // Bring elevator and arm to default position after scoring last coral
 
