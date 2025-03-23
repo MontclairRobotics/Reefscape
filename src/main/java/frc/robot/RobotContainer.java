@@ -198,8 +198,8 @@ public class RobotContainer {
 
     driverController.L1().whileTrue(new GoToReefCommand(TagOffset.LEFT, true)).onFalse(new GoToReefCommand(TagOffset.LEFT, false).until(() -> drivetrain.joystickInputDetected()));
     driverController.R1().whileTrue(new GoToReefCommand(TagOffset.RIGHT, true)).onFalse(new GoToReefCommand(TagOffset.RIGHT, false).until(() -> drivetrain.joystickInputDetected()));
-    driverController.circle().whileTrue(new GoToCoralStationCommand(TagOffset.CENTER, false, false)).onFalse(new GoToCoralStationCommand(TagOffset.CENTER, false, true));
-    driverController.square().whileTrue(new GoToCoralStationCommand(TagOffset.CENTER, true, false)).onFalse(new GoToCoralStationCommand(TagOffset.CENTER, true, true));
+    driverController.circle().whileTrue(new GoToCoralStationCommand(TagOffset.CENTER, false, false));
+    driverController.square().whileTrue(new GoToCoralStationCommand(TagOffset.CENTER, true, false));
     
     //Fine tuning buttons
     driverController.povRight()

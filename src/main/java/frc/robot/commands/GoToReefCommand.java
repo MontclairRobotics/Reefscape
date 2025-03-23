@@ -59,14 +59,15 @@ public class GoToReefCommand extends Command {
 
         targetPose = new Pose2d();
 
-        //}
+        int closetScoringPoseIndex = RobotContainer.drivetrain.getClosestScoringPoseIndex();
+        
         if(direction.isLeft()) {
-            targetPose = RobotContainer.drivetrain.getClosestTargetPose(Drivetrain.LEFT_BLUE_SCORING_POSES);
+            targetPose = PoseUtils.flipPoseAlliance(RobotContainer.drivetrain.LEFT_BLUE_SCORING_POSES[closetScoringPoseIndex]);
         } else if(direction.isRight()) {
-            targetPose = RobotContainer.drivetrain.getClosestTargetPose(Drivetrain.RIGHT_BLUE_SCORING_POSES);
+            targetPose = PoseUtils.flipPoseAlliance(RobotContainer.drivetrain.RIGHT_BLUE_SCORING_POSES[closetScoringPoseIndex]);
         } else {
             //defaults to center
-            targetPose = RobotContainer.drivetrain.getClosestTargetPose(Drivetrain.BLUE_SCORING_POSES);
+            targetPose = PoseUtils.flipPoseAlliance(RobotContainer.drivetrain.BLUE_SCORING_POSES[closetScoringPoseIndex]);
         }
         
         

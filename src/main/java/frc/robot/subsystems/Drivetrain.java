@@ -137,11 +137,11 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
             // new Pose2d(new Translation2d(1.091, 7.000), new Rotation2d(Math.toRadians(127.000))), // bottom coral
                                                                                                   // station
             new Pose2d(new Translation2d(3.16, 4.04), new Rotation2d(Math.toRadians(0))),
-            new Pose2d(new Translation2d(5.81, 4.04), new Rotation2d(Math.toRadians(180))),
-            new Pose2d(new Translation2d(3.83, 2.90), new Rotation2d(Math.toRadians(60.000))),
             new Pose2d(new Translation2d(3.84, 5.15), new Rotation2d(Math.toRadians(-60.000))),
+            new Pose2d(new Translation2d(5.15, 5.17), new Rotation2d(Math.toRadians(-120.000))),
+            new Pose2d(new Translation2d(5.81, 4.04), new Rotation2d(Math.toRadians(180))),
             new Pose2d(new Translation2d(5.13, 2.88), new Rotation2d(Math.toRadians(120.000))),
-            new Pose2d(new Translation2d(5.15, 5.17), new Rotation2d(Math.toRadians(-120.000)))
+            new Pose2d(new Translation2d(3.83, 2.90), new Rotation2d(Math.toRadians(60.000)))
     };
 
     public static final Pose2d[] LEFT_BLUE_SCORING_POSES = {
@@ -729,6 +729,24 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         }
         // System.out.println("Closest pose: " + closestPose);
         return closestPose;
+    }
+
+    public int getClosestScoringPoseIndex() {
+        Pose2d closestPose;
+        Pose2d currentPose;
+        int poseIndex = 0;
+        currentPose = this.getRobotPose();
+        closestPose = PoseUtils.flipPoseAlliance(BLUE_SCORING_POSES[0]);
+        for (int i=0; i<BLUE_SCORING_POSES.length; i++) {
+            Pose2d pos = PoseUtils.flipPoseAlliance(BLUE_SCORING_POSES[i]);
+            double distanceFromCurrentToPose = currentPose.getTranslation().getDistance(pos.getTranslation());
+            double distanceFromCurrentToClosest = currentPose.getTranslation().getDistance(closestPose.getTranslation());
+            if (distanceFromCurrentToPose < distanceFromCurrentToClosest) {
+                closestPose = pos;
+                poseIndex = i;
+            }
+        }
+        return poseIndex;
     }
 
     // TODO: input correct poses

@@ -9,6 +9,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.Drivetrain;
+import frc.robot.util.PoseUtils;
 import frc.robot.util.TagOffset;
 
 public class GoToCoralStationCommand extends Command {
@@ -28,9 +29,9 @@ public class GoToCoralStationCommand extends Command {
     public void initialize() {
         targetPose = new Pose2d();
         if(isLeft) {
-            targetPose = Drivetrain.BLUE_INTAKE_POSES[leftStation];
+            targetPose = PoseUtils.flipPoseAlliance(Drivetrain.BLUE_INTAKE_POSES[leftStation]);
         } else {
-            targetPose = Drivetrain.BLUE_INTAKE_POSES[rightStation];
+            targetPose = PoseUtils.flipPoseAlliance(Drivetrain.BLUE_INTAKE_POSES[rightStation]);
         }
 
 
