@@ -108,10 +108,8 @@ public class RobotContainer {
 
     // arm.setDefaultCommand(arm.joystickControlCommand());
 
-    // leds.setDefaultCommand(elevator.isVelociatated() ? leds.playPatternCommand(LEDs.progress()) : rollers.getHeldPiece() == GamePiece.Algae ? leds.playPatternCommand(LEDs.holding(GamePiece.Algae.getColor())) : rollers.getHeldPiece() == GamePiece.Coral ? leds.playPatternCommand(LEDs.holding(GamePiece.Coral.getColor())) : leds.playPatternCommand(LEDs.breathingPattern()));
+    leds.setDefaultCommand(elevator.isVelociatated() ? leds.playPatternCommand(LEDs.progress()) : rollers.getHeldPiece() == GamePiece.Algae ? leds.playPatternCommand(LEDs.holding(GamePiece.Algae.getColor())) : rollers.getHeldPiece() == GamePiece.Coral ? leds.playPatternCommand(LEDs.holding(GamePiece.Coral.getColor())) : leds.playPatternCommand(LEDs.AlliancePattern()));
 
-    leds.setDefaultCommand(leds.playPatternCommand(LEDs.m_scrollingRainbow));
-    // Intake
     operatorController.L1()
         .whileTrue(
             rollers.intakeCoralJiggleCommand()
@@ -201,6 +199,7 @@ public class RobotContainer {
     driverController.circle().whileTrue(new GoToCoralStationCommand(TagOffset.CENTER, false, false));
     driverController.square().whileTrue(new GoToCoralStationCommand(TagOffset.CENTER, true, false));
     
+    testingController.L2().onTrue(backLimelight.flashLEDs().ignoringDisable(true));
     //Fine tuning buttons
     driverController.povRight()
         .whileTrue(Commands.run(() -> RobotContainer.drivetrain.drive(new ChassisSpeeds(0, -0.15, 0), false, false),

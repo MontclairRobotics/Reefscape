@@ -5,7 +5,10 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.RobotContainer;
+import frc.robot.leds.LEDs;
 import edu.wpi.first.wpilibj.Servo;
+import edu.wpi.first.wpilibj.util.Color;
 
 public class Ratchet extends SubsystemBase {
     public  Servo leftServo;
@@ -46,7 +49,7 @@ public class Ratchet extends SubsystemBase {
             } catch (Exception e) {
                 DriverStation.reportError("Failed to engage servos: " + e.getMessage(), true);
             }
-        }, this);
+        }, this).alongWith(RobotContainer.leds.playPatternCommand(LEDs.holding(Color.kWhite)));
     }
 
     public Command disengageServos() {

@@ -149,7 +149,7 @@ public class Arm extends SubsystemBase {
         TrapezoidProfile.Constraints constraints = new
         TrapezoidProfile.Constraints(MAX_VELOCITY, MAX_ACCELERATION);
         armMotor = new SparkMax(29, MotorType.kBrushless);
-        elbowEncoder = new DutyCycleEncoder(6, 1 , ELBOW_ENCODER_OFFSET.getRotations());
+        elbowEncoder = new DutyCycleEncoder(5, 1 , ELBOW_ENCODER_OFFSET.getRotations());
         elbowEncoder.setInverted(true);
          // 1st number is port, 2nd is
                                                                                          // range in this case 1
@@ -423,7 +423,7 @@ public class Arm extends SubsystemBase {
         }
         Logger.recordOutput("Arm/Endpoint Degrees", getEndpointAngle().getDegrees());
         Logger.recordOutput("Arm/Encoder Connected", encoderConnected);
-        Logger.recordOutput("Arm/Motor Applied Outpu", armMotor.getAppliedOutput());
+        Logger.recordOutput("Arm/Motor Applied Output", armMotor.getAppliedOutput());
         Logger.recordOutput("Arm/AtSetpoint", pidController.atSetpoint());
         Logger.recordOutput("Arm/BackupEncoder", Drivetrain.wrapAngle(Rotation2d.fromRotations(relativeEncoder.getPosition() / ELBOW_TO_MOTOR)).getDegrees());
     }

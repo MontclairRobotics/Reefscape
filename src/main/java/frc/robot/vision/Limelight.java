@@ -22,6 +22,7 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.RobotContainer;
 import frc.robot.util.PoseUtils;
@@ -395,6 +396,16 @@ public class Limelight extends SubsystemBase {
             }
         }
     }
+
+    public Command flashLEDs() {
+        return Commands.sequence(
+            Commands.runOnce(() -> LimelightHelpers.setLEDMode_ForceBlink(cameraName)),
+            Commands.waitSeconds(0.6),
+            Commands.runOnce(() -> LimelightHelpers.setLEDMode_ForceOff(cameraName))
+        );
+    }
+
+
 
     public Command ifHasTarget(Command cmd) {
         return cmd.onlyWhile(this::hasValidTarget);

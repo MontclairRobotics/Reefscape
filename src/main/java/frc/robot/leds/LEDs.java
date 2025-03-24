@@ -28,10 +28,10 @@ import frc.robot.subsystems.Elevator;
 
 public class LEDs extends SubsystemBase {
     public static final int PORT = 4;
-    public static final int LENGTH =  14;
+    public static final int LENGTH = 40;
     public static final LEDPattern m_rainbow = LEDPattern.rainbow(255, 128);
     public static final Distance kLedSpacing = Units.Meters.of(1 / 100.0);
-    public static final LEDPattern m_scrollingRainbow = m_rainbow.scrollAtAbsoluteSpeed(Units.MetersPerSecond.of(1), kLedSpacing);
+    public static final LEDPattern m_scrollingRainbow = m_rainbow.scrollAtAbsoluteSpeed(Units.MetersPerSecond.of(0.2), kLedSpacing);
     // public static final LEDPattern m_progressbar = LEDs.progressBar(Color.kRed);
     static AddressableLED led;
     static AddressableLEDBuffer ledBuffer;
@@ -49,7 +49,7 @@ public class LEDs extends SubsystemBase {
         LEDPattern blinkingObj = object.blink(Seconds.of(0.1));
         return blinkingObj;
     }
-
+    
     // public static LEDPattern shot(Color color) {
     //     LEDPattern shotGamePiece;
     //     if (DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get() == Alliance.Red){
@@ -64,7 +64,7 @@ public class LEDs extends SubsystemBase {
     //     }
     //     return shotGamePiece;
     // }
-    public static LEDPattern breathingPattern() {
+    public static LEDPattern AlliancePattern() {
         LEDPattern base;
         if (DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get() == Alliance.Red) {
             base = LEDPattern.gradient(GradientType.kDiscontinuous,Color.kFirstRed, Color.kDarkRed);
@@ -95,7 +95,7 @@ public class LEDs extends SubsystemBase {
     public Command playPatternCommand(LEDPattern pattern) {
         return Commands.run(() -> pattern.applyTo(ledBuffer), this).ignoringDisable(true);
     }
-    public void periodic(){
+    public void periodic() {
         
         led.setData(ledBuffer); 
     }

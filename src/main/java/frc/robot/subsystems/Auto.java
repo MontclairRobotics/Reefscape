@@ -77,7 +77,7 @@ public class Auto extends SubsystemBase {
 
     // TODO: probably won't want a INTAKE timeout, we can just wait until piece is
     // intaked
-    private final double SCORING_TIMEOUT = 0.25;
+    private final double SCORING_TIMEOUT = 0.19;
     private final double INTAKE_PREDICTED_TIME = 0.3;
 
     private boolean prevIsPushAuto;
@@ -286,7 +286,7 @@ public class Auto extends SubsystemBase {
     }
 
     public Command buildAutoCommand(String autoString) {
-        boolean abePushAuto = true;
+        // boolean abePushAuto = true;
 
         timeSeconds = 0; // resets estimated time
 
@@ -372,7 +372,7 @@ public class Auto extends SubsystemBase {
                     // Store path to be drawn on dashboard
                     // Create a path following command using AutoBuilder. This will also trigger
                     // event markers.
-                    // path1Cmd = Commands.parallel(Commands.print("Running path 1"), AutoBuilder.followPath(path1));
+                    path1Cmd = Commands.parallel(Commands.print("Running path 1"), AutoBuilder.followPath(path1));
 
                     // resets pose to the starting pose if we are at the first path!
                     if (firstPath) { // TODO reset to something better? vision pose?
@@ -413,7 +413,6 @@ public class Auto extends SubsystemBase {
                             // RobotContainer.drivetrain.resetPose(pushPose);
                             // } else {
                             // stupid = false;
-                            RobotContainer.drivetrain.poseBuffer.clear();
                             System.out.println("Resetting Pose to: " + pose);
                             RobotContainer.drivetrain.resetPose(pose);
                             // }
@@ -470,7 +469,7 @@ public class Auto extends SubsystemBase {
                     // Store path to be drawn on dashboard
                     // Create a path following command using AutoBuilder. This will also trigger
                     // event markers.
-                    // path2Cmd = Commands.parallel(AutoBuilder.followPath(path2), Commands.print("Running path 2"));
+                    path2Cmd = Commands.parallel(AutoBuilder.followPath(path2), Commands.print("Running path 2"));
 
                     // TODO needs to be .generateTrajectory()? maybe only if the ideal one doesn't
                     // exist?
@@ -514,39 +513,45 @@ public class Auto extends SubsystemBase {
 
                     double pathTime = traj.getTotalTimeSeconds(); // time path will take
                     double raiseTime = RobotContainer.elevator.getRaiseTime(mechState);
-                    raiseTime = 0.5; // time elevator will take to rise
+                    raiseTime = 1.15; // time elevator will take to rise
                     double waitTime = pathTime - raiseTime; // how much time we should wait before raising elevator
                     timeSeconds += pathTime; // adds how long the path will take to the estimated time
                     // System.out.println("Path 1 Arm height: " + mechState.getHeight());
                     // System.out.println("Path 1 Raise Time: " + raiseTime);
                     // runs the path command along with a command that waits to raise the elevator
                     // if (pathName.charAt(0) == 'S') {
-                    // System.out.println("Trying to repath to pose: " +
-                    // opTraj.get().getEndState().pose);
-                    // path1Cmd = AutoBuilder.pathfindToPose(opTraj.get().getEndState().pose,
-                    // Drivetrain.DEFAULT_CONSTRAINTS);
-                    // opTraj = null;
+                    //     System.out.println("Trying to repath to pose: " + opTraj.get().getEndState().pose);
+                    //     path1Cmd = AutoBuilder.pathfindToPose(opTraj.get().getEndState().pose,
+                    //             Drivetrain.DEFAULT_CONSTRAINTS);
+                    //     opTraj = null;
                     // }
-                    SequentialCommandGroup path1Group = new SequentialCommandGroup();
-                    path1Group.addCommands(Commands.deadline(
-                            path1Cmd, RobotContainer.rollers.holdCoralCommand())
-                            .andThen(Commands.print("Path Over")));
+                    autoCommand.addCommands(Commands.parallel(
+                            Commands.deadline(path1Cmd, RobotContainer.rollers.holdCoralCommand())
+                                    .andThen(Commands.print("Path Over")),
+                            Commands.sequence(
+                                    Commands.print("Before parallel"),
+                                    Commands.waitSeconds(waitTime),
+                                    Commands.print("After waiting"),
+                                    Commands.parallel(
+                                            // Commands.print("Starting elevator command path 1"),
+                                            RobotContainer.elevator.setState(RobotState.L3), // TODO I removed this
+                                                                                             // timeout. You'd rather
+                                                                                             // wait then score at wrong
+                                                                                             // height
+                                            RobotContainer.arm.setState(RobotState.L4)),
+                                    Commands.print("Finished elevator command path 1"))));
 
-                    path1Group.addCommands(Commands.waitSeconds(0.3));
+                    autoCommand.addCommands(Commands.waitSeconds(.3));
                     if (Character.isLowerCase(first.charAt(0)) || Character.isLowerCase(second.charAt(0))) {
-                        // path1Group.addCommands(new GoToReefCommand(TagOffset.RIGHT, false).withTimeout(3));
+                        autoCommand.addCommands(new GoToReefCommand(TagOffset.RIGHT, false)
+                                .alongWith(RobotContainer.elevator.setState(mechState))
+                                .alongWith(RobotContainer.arm.setState(mechState)).withTimeout(3.5));
                     } else {
-                        // path1Group.addCommands(new GoToReefCommand(TagOffset.LEFT, false).withTimeout(3));
+                        autoCommand.addCommands(new GoToReefCommand(TagOffset.LEFT, false)
+                                .alongWith(RobotContainer.elevator.setState(mechState))
+                                .alongWith(RobotContainer.arm.setState(mechState)).withTimeout(3.5));
                     }
-
-                    path1Group.addCommands(Commands.print("Align Finished"));
-
-                    autoCommand.addCommands(Commands.parallel(path1Group, Commands.waitSeconds(0.5).andThen(RobotContainer.arm.setState(mechState)), Commands.sequence(
-                            Commands.waitSeconds(waitTime),
-                            Commands.print("Waiting Finished, raising elevator"),
-                            RobotContainer.elevator.setState(mechState),
-                            Commands.print("Elevator raised"))));
-                    autoCommand.addCommands(Commands.print("Mechanism Positioned, Robot Aligned"));
+                    autoCommand.addCommands(Commands.print("Align Finished"));
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -555,7 +560,7 @@ public class Auto extends SubsystemBase {
 
             // Command to shoot!!!
             // autoCommand.addCommands(new GoToPoseCommand(autoOffset, true));
-            autoCommand.addCommands(RobotContainer.arm.setState(mechState).withTimeout(1));
+            autoCommand.addCommands(RobotContainer.arm.setState(mechState).withTimeout(0.6));
             autoCommand.addCommands(RobotContainer.rollers.outtakeCoralCommand().withTimeout(SCORING_TIMEOUT));
             timeSeconds += SCORING_TIMEOUT; // adds how long it will take to shoot the the estimated time
 
@@ -595,7 +600,7 @@ public class Auto extends SubsystemBase {
             }
 
             /* ADDS AN INTAKING COMMAND */
-            // autoCommand.addCommands(Commands.deadline(RobotContainer.rollers.intakeCoralJiggleCommand().withTimeout(1.8), Commands.run(() -> RobotContainer.drivetrain.drive(0.6,0,0,false,false))));
+            autoCommand.addCommands(Commands.deadline(RobotContainer.rollers.intakeCoralJiggleCommand().withTimeout(3), Commands.run(() -> RobotContainer.drivetrain.drive(0.6,0,0,false,false))));
             timeSeconds += INTAKE_PREDICTED_TIME;
             // Bring elevator and arm to default position after scoring last coral
 
