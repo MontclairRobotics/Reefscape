@@ -25,6 +25,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.RobotContainer;
 import frc.robot.util.BreakBeam;
 import frc.robot.util.GamePiece;
+import edu.wpi.first.wpilibj.Timer;
 
 public class Rollers extends SubsystemBase {
     public SparkMax rightMotor;
@@ -138,6 +139,9 @@ public class Rollers extends SubsystemBase {
     public Command intakeCoralCommand() {
         return Commands.run(() -> setSpeed(CORAL_INTAKE_SPEED), this).until(this::hasPiece)
                 .finallyDo(() -> {
+                    Timer.delay(0.3);
+                    setSpeed(CORAL_OUTTAKE_SPEED);
+                    Timer.delay(0.5);
                     stopMotors();
                     // if(isStalled())
                     this.heldPiece = GamePiece.Coral;
