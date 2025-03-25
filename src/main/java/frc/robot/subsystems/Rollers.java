@@ -3,6 +3,8 @@ package frc.robot.subsystems;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 
+import java.util.function.BooleanSupplier;
+
 import org.littletonrobotics.junction.Logger;
 
 import com.revrobotics.spark.SparkBase.PersistMode;
@@ -21,6 +23,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.RobotContainer;
+import frc.robot.util.BreakBeam;
 import frc.robot.util.GamePiece;
 
 public class Rollers extends SubsystemBase {
@@ -36,6 +39,9 @@ public class Rollers extends SubsystemBase {
 
     private NetworkTableEntry entry;
 
+
+    private BreakBeam breakBeam = new BreakBeam(1,true);
+
     private Debouncer isStalledDebouncer = new Debouncer(0.05, DebounceType.kRising);
 
     private GamePiece heldPiece = GamePiece.Coral; // TODO init to Coral for auton? not needed?
@@ -43,6 +49,7 @@ public class Rollers extends SubsystemBase {
     public Rollers() {
         rightMotor = new SparkMax(31, MotorType.kBrushless);
         leftMotor = new SparkMax(30, MotorType.kBrushless);
+        
 
         var config = new SparkMaxConfig();
         config.smartCurrentLimit(20).idleMode(IdleMode.kBrake);
@@ -57,7 +64,10 @@ public class Rollers extends SubsystemBase {
     public GamePiece getHeldPiece() {
         return heldPiece;
     }
-
+    
+    public boolean hasPiece(){
+        return breakBeam.get();
+    }
     public boolean hasCoral() {
         if (getHeldPiece() == GamePiece.Coral){
             return true;
@@ -126,7 +136,7 @@ public class Rollers extends SubsystemBase {
     }
 
     public Command intakeCoralCommand() {
-        return Commands.run(() -> setSpeed(CORAL_INTAKE_SPEED), this)
+        return Commands.run(() -> setSpeed(CORAL_INTAKE_SPEED), this).until(this::hasPiece)
                 .finallyDo(() -> {
                     stopMotors();
                     // if(isStalled())
@@ -148,7 +158,7 @@ public class Rollers extends SubsystemBase {
     }
 
     public Command intakeCoralJiggleCommand() {
-        return Commands.run(() -> setSpeed(CORAL_INTAKE_SPEED), this)
+        return Commands.run(() -> setSpeed(CORAL_INTAKE_SPEED), this).until(this::hasPiece)
             .until(this::isStalled)
             .andThen(Commands.sequence(
                 Commands.run(() -> setSpeed(-0.1), this)
@@ -179,7 +189,7 @@ public class Rollers extends SubsystemBase {
         if(RobotContainer.debugMode && !DriverStation.isFMSAttached()) {
             entry.setBoolean(isHeld);
         }
-
+        Logger.recordOutput("Rollers/Beam Break", hasPiece());
         Logger.recordOutput("Rollers/Held Piece", heldPiece);
         Logger.recordOutput("Rollers/LeftSpeed", leftMotor.getAppliedOutput());
         Logger.recordOutput("Rollers/RightSpeed", rightMotor.getAppliedOutput());
