@@ -172,7 +172,11 @@ public class Rollers extends SubsystemBase {
                 .andThen(intakeCoralCommand())
             )).finallyDo(() -> {
                 this.heldPiece = GamePiece.Coral;
-            }).until(this::hasPiece).andThen(Commands.run(() -> setSpeed(CORAL_INTAKE_SPEED), this).withTimeout(0.1));
+            }).until(this::hasPiece).andThen(Commands.sequence(
+                Commands.run(() -> setSpeed(-0.1), this)
+                .withTimeout(0.1)
+                .andThen(intakeCoralCommand())
+            ));
             
     }
 

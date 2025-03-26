@@ -522,6 +522,18 @@ public class Arm extends SubsystemBase {
                         new Rotation3d(0, smallVisualizationAngle, 0)));
     }
 
+    // public RobotState getIntakeState() {
+    //     if(RobotContainer.operatorController.L2()) {
+    //         return RoboTState
+    //     }
+    // }
+
+    // public Command setIntakeAngleCommand() {
+    //     return Commands.run(() -> {
+    //         RobotState intakeState = RobotContainer.operatorController.L2().get
+    //     }, this);
+    // }
+
     public Command goToAngleCommand(Rotation2d angle) {
         return Commands.run(() -> setEndpointAngle(angle), this).until(this::atSetPoint).finallyDo(this::stopMotor);
     }
