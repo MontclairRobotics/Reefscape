@@ -5,6 +5,8 @@ import com.pathplanner.lib.util.swerve.SwerveSetpointGenerator;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -25,6 +27,13 @@ public class PoseUtils {
             return FlippingUtil.flipFieldPose(pose);
         }
         return pose;
+    }
+
+    public static Translation2d flipTranslationAlliance(Translation2d trans) {
+        if (DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get() == Alliance.Red) {
+            return FlippingUtil.flipFieldPosition(trans);
+        }
+        return trans;
     }
 
     public static Rotation2d flipRotAlliance(Rotation2d rot) {

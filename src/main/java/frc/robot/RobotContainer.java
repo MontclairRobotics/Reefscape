@@ -29,10 +29,12 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.commands.AlignToClosestReefTagOffset;
 import frc.robot.commands.DistanceAlign;
+import frc.robot.commands.FaceReefCommand;
 import frc.robot.commands.GoToReefCameraSpace;
 import frc.robot.commands.GoToCoralStationCommand;
 // import frc.robot.commands.GoToReefCameraSpace;
 import frc.robot.commands.GoToReefCommand;
+import frc.robot.commands.OrbitReefCommand;
 import frc.robot.commands.WheelRadiusCharacterization;
 import frc.robot.leds.LEDs;
 import frc.robot.subsystems.Ratchet;
@@ -193,6 +195,8 @@ public class RobotContainer {
     /*--------------------------------- DRIVER BINDINGS -------------------------------------------- */
 
     drivetrain.setDefaultCommand(drivetrain.driveJoystickInputCommand());
+    // drivetrain.setDefaultCommand(new OrbitReefCommand());
+    // drivetrain.setDefaultCommand(new FaceReefCommand());
 
     driverController.L1().whileTrue(new GoToReefCommand(TagOffset.LEFT, true)).onFalse(new GoToReefCommand(TagOffset.LEFT, false).until(() -> drivetrain.joystickInputDetected()));
     driverController.R1().whileTrue(new GoToReefCommand(TagOffset.RIGHT, true)).onFalse(new GoToReefCommand(TagOffset.RIGHT, false).until(() -> drivetrain.joystickInputDetected()));

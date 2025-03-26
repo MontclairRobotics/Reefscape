@@ -8,6 +8,7 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
+import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -41,6 +42,8 @@ public class GoToReefCameraSpace extends Command {
 
     private Pose2d targetPose;
     private TagOffset direction;
+
+    // private LinearFilter filter = new LinearFilter();
  
     double targetHeading;
     double offset = .3;
