@@ -198,6 +198,7 @@ public class RobotContainer {
     // drivetrain.setDefaultCommand(new OrbitReefCommand());
     // drivetrain.setDefaultCommand(new FaceReefCommand());
 
+    driverController.R2().whileTrue(new FaceReefCommand());
     driverController.L1().whileTrue(new GoToReefCommand(TagOffset.LEFT, true)).onFalse(new GoToReefCommand(TagOffset.LEFT, false).until(() -> drivetrain.joystickInputDetected()));
     driverController.R1().whileTrue(new GoToReefCommand(TagOffset.RIGHT, true)).onFalse(new GoToReefCommand(TagOffset.RIGHT, false).until(() -> drivetrain.joystickInputDetected()));
     driverController.circle().whileTrue(new GoToCoralStationCommand(TagOffset.CENTER, false, false));

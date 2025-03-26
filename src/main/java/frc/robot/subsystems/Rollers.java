@@ -138,13 +138,15 @@ public class Rollers extends SubsystemBase {
     }
 
     public Command intakeCoralCommand() {
-        return Commands.run(() -> setSpeed(CORAL_INTAKE_SPEED), this).until(this::hasPiece)
-                .andThen(Commands.runOnce(() -> setSpeed(CORAL_OUTTAKE_SPEED), this)
-                    .withTimeout(0.5))
-                .andThen(Commands.runOnce(() -> stopMotors(), this))
-                .finallyDo(() -> this.heldPiece = GamePiece.Coral)
+        return Commands.run(() -> setSpeed(CORAL_INTAKE_SPEED), this)
+                .finallyDo(() -> {
+                    stopMotors();
+                    // if(isStalled())
+                    this.heldPiece = GamePiece.Coral;
+                })
                 .until(this::isStalled);
     }
+
     public Command outtakeCoralCommand() {
         return Commands.sequence(
         // 
@@ -158,7 +160,7 @@ public class Rollers extends SubsystemBase {
     }
 
     public Command intakeCoralJiggleCommand() {
-        return Commands.run(() -> setSpeed(CORAL_INTAKE_SPEED), this).until(this::hasPiece)
+        return Commands.run(() -> setSpeed(CORAL_INTAKE_SPEED), this)
             .until(this::isStalled)
             .andThen(Commands.sequence(
                 Commands.run(() -> setSpeed(-0.1), this)
@@ -170,7 +172,7 @@ public class Rollers extends SubsystemBase {
                 .andThen(intakeCoralCommand())
             )).finallyDo(() -> {
                 this.heldPiece = GamePiece.Coral;
-            });
+            }).until(this::hasPiece).andThen(Commands.run(() -> setSpeed(CORAL_INTAKE_SPEED), this).withTimeout(0.1));
             
     }
 
