@@ -51,12 +51,17 @@ import frc.robot.util.PoseUtils;
 import frc.robot.util.RobotState;
 import frc.robot.util.TagOffset;
 import frc.robot.util.Tunable;
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.apriltag.AprilTagFields;
+import edu.wpi.first.apriltag.AprilTagFieldLayout.OriginPosition;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.interpolation.TimeInterpolatableBuffer;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -132,41 +137,12 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     // if(value == 0) IS_LIMITING_ACCEL = false;
     // });
 
-    public static final Pose2d[] BLUE_SCORING_POSES = {
-            // new Pose2d(new Translation2d(1.091, 1.060), new Rotation2d(Math.toRadians(-127.000))), // top coral station
-            // new Pose2d(new Translation2d(1.091, 7.000), new Rotation2d(Math.toRadians(127.000))), // bottom coral
-                                                                                                  // station
-            new Pose2d(new Translation2d(3.16, 4.04), new Rotation2d(Math.toRadians(0))),
-            new Pose2d(new Translation2d(3.84, 5.15), new Rotation2d(Math.toRadians(-60.000))),
-            new Pose2d(new Translation2d(5.15, 5.17), new Rotation2d(Math.toRadians(-120.000))),
-            new Pose2d(new Translation2d(5.81, 4.04), new Rotation2d(Math.toRadians(180))),
-            new Pose2d(new Translation2d(5.13, 2.88), new Rotation2d(Math.toRadians(120.000))),
-            new Pose2d(new Translation2d(3.83, 2.90), new Rotation2d(Math.toRadians(60.000)))
-    };
+    AprilTagFieldLayout tagLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded);
+    public static Pose2d[] BLUE_SCORING_POSES;
 
-    public static final Pose2d[] LEFT_BLUE_SCORING_POSES = {
-            // new Pose2d(new Translation2d(1.66, .67), new Rotation2d(Math.toRadians(-127.000))), // top coral station
-            // new Pose2d(new Translation2d(.67, 6.65), new Rotation2d(Math.toRadians(127.000))), // bottom coral
-             
-            new Pose2d(new Translation2d(3.178, 4.191), new Rotation2d(Math.toRadians(0))),
-            new Pose2d(new Translation2d(3.977, 5.244), new Rotation2d(Math.toRadians(-60))),
-            new Pose2d(new Translation2d(5.288, 5.079), new Rotation2d(Math.toRadians(-120))),
-            new Pose2d(new Translation2d(5.801, 3.861), new Rotation2d(Math.toRadians(180))),
-            new Pose2d(new Translation2d(5.002, 2.808), new Rotation2d(Math.toRadians(120))),
-            new Pose2d(new Translation2d(3.691, 2.973), new Rotation2d(Math.toRadians(60))),
-    };
+    public static Pose2d[] LEFT_BLUE_SCORING_POSES;
 
-    public static final Pose2d[] RIGHT_BLUE_SCORING_POSES = {
-            // new Pose2d(new Translation2d(.67, 1.39), new Rotation2d(Math.toRadians(-127.000))), // top coral station
-            // new Pose2d(new Translation2d(1.66, 7.36), new Rotation2d(Math.toRadians(127.000))), // bottom coral
-             
-            new Pose2d(new Translation2d(3.178, 3.861), new Rotation2d(Math.toRadians(0))),
-            new Pose2d(new Translation2d(3.691, 5.079), new Rotation2d(Math.toRadians(-60))),
-            new Pose2d(new Translation2d(5.002, 5.244), new Rotation2d(Math.toRadians(-120))),
-            new Pose2d(new Translation2d(5.801, 4.191), new Rotation2d(Math.toRadians(180))),
-            new Pose2d(new Translation2d(5.288, 2.973), new Rotation2d(Math.toRadians(120))),
-            new Pose2d(new Translation2d(3.977, 2.808), new Rotation2d(Math.toRadians(60))),
-    };
+    public static Pose2d[] RIGHT_BLUE_SCORING_POSES;
 
     public static final Pose2d[] BLUE_INTAKE_POSES = {
         new Pose2d(new Translation2d(0.985, 0.977), new Rotation2d(Math.toRadians(-127.000))), // top coral station
@@ -183,13 +159,9 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         new Pose2d(new Translation2d(1.66, 7.36), new Rotation2d(Math.toRadians(127.000))), // bottom coral
     };
 
-    private ProfiledPIDController xController;
-    private ProfiledPIDController yController;
-    private ProfiledPIDController PoseThetaController;
+    //used for driving with swerve setpoints, not used riht now
     private SwerveSetpointGenerator setpointGen;
     private SwerveSetpoint prevSetpoint;
-
-    private Pose2d targetPose;
 
     /* Heading PID Controller for things like automatic alignment buttons */
     public PIDController thetaController = new PIDController(5, 0, .1);
@@ -246,7 +218,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         thetaController.enableContinuousInput(-Math.PI, Math.PI);
         configurePathPlanner();
 
-        resetPose(new Pose2d(3, 3, Rotation2d.fromDegrees(0)));
+        resetPose(PoseUtils.flipPoseAlliance(new Pose2d(3, 3, Rotation2d.fromDegrees(0))));
 
         RobotConfig config = null;
         try {
@@ -264,6 +236,76 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         );
         prevSetpoint = new SwerveSetpoint(getCurrentSpeeds(), getState().ModuleStates,
                 DriveFeedforwards.zeros(config.numModules));
+
+            AprilTagFieldLayout field = AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded);
+            field.setOrigin(OriginPosition.kBlueAllianceWallRightSide);
+            BLUE_SCORING_POSES = new Pose2d[6];
+            LEFT_BLUE_SCORING_POSES = new Pose2d[6];
+            RIGHT_BLUE_SCORING_POSES = new Pose2d[6];
+            double parallelDistance = 0.165;
+            double perpendicularDistance = 0.48; // TODO set
+            for (int i = 17; i <= 22; i++) {
+                Pose3d tagPose = field.getTagPose(i).orElseGet(() -> new Pose3d()); // make better?
+                Pose2d tagPose2d = new Pose2d(tagPose.getX(), tagPose.getY(), (Rotation2d.fromRadians(tagPose.getRotation().getZ()).minus(Rotation2d.k180deg)));
+                
+                Pose2d backPose = new Pose2d(tagPose.getX() - perpendicularDistance * tagPose2d.getRotation().getCos(), tagPose.getY() - perpendicularDistance * tagPose2d.getRotation().getSin(), tagPose2d.getRotation());
+                BLUE_SCORING_POSES[i-17] = backPose;
+
+                Pose2d rightPose = new Pose2d(backPose.getX() + parallelDistance * Math.cos((Math.PI / 2.0) - tagPose2d.getRotation().getRadians()), (backPose.getY() - parallelDistance * Math.sin((Math.PI / 2.0) - tagPose2d.getRotation().getRadians())), tagPose2d.getRotation());
+                Pose2d leftPose = new Pose2d(backPose.getX() - (parallelDistance * Math.cos((Math.PI / 2.0) - tagPose2d.getRotation().getRadians())), backPose.getY() + parallelDistance * Math.sin((Math.PI / 2.0) - tagPose2d.getRotation().getRadians()), tagPose2d.getRotation());
+
+                LEFT_BLUE_SCORING_POSES[i-17] = leftPose;
+                RIGHT_BLUE_SCORING_POSES[i-17] = rightPose;
+
+                System.out.println("id: " + i + " left: " + leftPose + " right: " + rightPose + " center: " + backPose);
+                // double xTransform =  (parallelDistance * tagPose2d.getRotation().getCos());
+                // double yTransform =  (perpendicularDistance * tagPose2d.getRotation().getSin());
+                // double xTransform = parallelDistance * tagPose2d.getRotation().getCos() 
+                //     - perpendicularDistance * tagPose2d.getRotation().getSin();
+                // double yTransform = parallelDistance * tagPose2d.getRotation().getSin() 
+                //     + perpendicularDistance * tagPose2d.getRotation().getCos();
+
+                // System.out.println("xtransform: " + xTransform + " ytransform: " + yTransform);
+
+                // Pose2d transformedPose = tagPose2d.transformBy(new Transform2d(xTransform, yTransform, Rotation2d.kZero));
+                // System.out.println("tag pose: " + tagPose2d + " tag number: " + i + " Transformed pose: " + transformedPose);
+                
+            }
+            // BLUE_SCORING_POSES = new Pose2d[]{
+            //         // new Pose2d(new Translation2d(1.091, 1.060), new Rotation2d(Math.toRadians(-127.000))), // top coral station
+            //         // new Pose2d(new Translation2d(1.091, 7.000), new Rotation2d(Math.toRadians(127.000))), // bottom coral
+            //                                                                                               // station
+            //         new Pose2d(new Translation2d(3.16, 4.04), new Rotation2d(Math.toRadians(0))),
+            //         new Pose2d(new Translation2d(3.84, 5.15), new Rotation2d(Math.toRadians(-60.000))),
+            //         new Pose2d(new Translation2d(5.15, 5.17), new Rotation2d(Math.toRadians(-120.000))),
+            //         new Pose2d(new Translation2d(5.81, 4.04), new Rotation2d(Math.toRadians(180))),
+            //         new Pose2d(new Translation2d(5.13, 2.88), new Rotation2d(Math.toRadians(120.000))),
+            //         new Pose2d(new Translation2d(3.83, 2.90), new Rotation2d(Math.toRadians(60.000)))
+            // };
+
+        //     LEFT_BLUE_SCORING_POSES = new Pose2d[]{
+        //         // new Pose2d(new Translation2d(1.66, .67), new Rotation2d(Math.toRadians(-127.000))), // top coral station
+        //         // new Pose2d(new Translation2d(.67, 6.65), new Rotation2d(Math.toRadians(127.000))), // bottom coral
+                 
+        //         new Pose2d(new Translation2d(3.17, 4.19), new Rotation2d(Math.toRadians(0))),
+        //         new Pose2d(new Translation2d(3.98, 5.24), new Rotation2d(Math.toRadians(-60))),
+        //         new Pose2d(new Translation2d(5.27, 5.08), new Rotation2d(Math.toRadians(-120))),
+        //         new Pose2d(new Translation2d(5.8, 3.87), new Rotation2d(Math.toRadians(180))),
+        //         new Pose2d(new Translation2d(5.01, 2.775), new Rotation2d(Math.toRadians(120))),
+        //         new Pose2d(new Translation2d(3.69, 2.97), new Rotation2d(Math.toRadians(60))),
+        // };
+
+    //     RIGHT_BLUE_SCORING_POSES = new Pose2d[]{
+    //         // new Pose2d(new Translation2d(.67, 1.39), new Rotation2d(Math.toRadians(-127.000))), // top coral station
+    //         // new Pose2d(new Translation2d(1.66, 7.36), new Rotation2d(Math.toRadians(127.000))), // bottom coral
+             
+    //         new Pose2d(new Translation2d(3.17, 3.87), new Rotation2d(Math.toRadians(0))),
+    //         new Pose2d(new Translation2d(3.69, 5.09), new Rotation2d(Math.toRadians(-60))),
+    //         new Pose2d(new Translation2d(5.01, 5.26), new Rotation2d(Math.toRadians(-120))),
+    //         new Pose2d(new Translation2d(5.8, 4.19), new Rotation2d(Math.toRadians(180))),
+    //         new Pose2d(new Translation2d(5.28, 2.97), new Rotation2d(Math.toRadians(120))),
+    //         new Pose2d(new Translation2d(3.98, 2.8), new Rotation2d(Math.toRadians(60))),
+    // };
     }
 
     /*
