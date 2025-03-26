@@ -138,17 +138,12 @@ public class Rollers extends SubsystemBase {
 
     public Command intakeCoralCommand() {
         return Commands.run(() -> setSpeed(CORAL_INTAKE_SPEED), this).until(this::hasPiece)
-                .finallyDo(() -> {
-                    Timer.delay(0.3);
-                    setSpeed(CORAL_OUTTAKE_SPEED);
-                    Timer.delay(0.5);
-                    stopMotors();
-                    // if(isStalled())
-                    this.heldPiece = GamePiece.Coral;
-                })
+                .andThen(Commands.runOnce(() -> setSpeed(CORAL_OUTTAKE_SPEED), this)
+                    .withTimeout(0.5))
+                .andThen(Commands.runOnce(() -> stopMotors(), this))
+                .finallyDo(() -> this.heldPiece = GamePiece.Coral)
                 .until(this::isStalled);
     }
-
     public Command outtakeCoralCommand() {
         return Commands.sequence(
         // 
