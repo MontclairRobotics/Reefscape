@@ -527,6 +527,7 @@ public class Auto extends SubsystemBase {
                     // }
                     autoCommand.addCommands(Commands.parallel(
                             Commands.deadline(path1Cmd, RobotContainer.rollers.holdCoralCommand())
+                            // .withTimeout(pathTime)
                                     .andThen(Commands.print("Path Over")),
                             Commands.sequence(
                                     Commands.print("Before parallel"),
@@ -538,18 +539,33 @@ public class Auto extends SubsystemBase {
                                                                                              // timeout. You'd rather
                                                                                              // wait then score at wrong
                                                                                              // height
-                                            RobotContainer.arm.setState(RobotState.L4)),
+                                            RobotContainer.arm.setState(RobotState.L4)
+                                    )
+                                    .withTimeout(raiseTime-0.2),
                                     Commands.print("Finished elevator command path 1"))));
 
                     autoCommand.addCommands(Commands.waitSeconds(.3));
                     if (Character.isLowerCase(first.charAt(0)) || Character.isLowerCase(second.charAt(0))) {
-                        autoCommand.addCommands(new GoToReefCommand(TagOffset.RIGHT, false)
-                                .alongWith(RobotContainer.elevator.setState(mechState))
-                                .alongWith(RobotContainer.arm.setState(mechState)).withTimeout(3.5));
+                        autoCommand.addCommands(
+                            
+                            Commands.deadline(
+                                new GoToReefCommand(TagOffset.RIGHT, false),
+                                RobotContainer.elevator.setState(mechState),
+                                RobotContainer.arm.holdState(mechState)
+                            )
+                            .withTimeout(3)
+
+                        );
                     } else {
-                        autoCommand.addCommands(new GoToReefCommand(TagOffset.LEFT, false)
-                                .alongWith(RobotContainer.elevator.setState(mechState))
-                                .alongWith(RobotContainer.arm.setState(mechState)).withTimeout(3.5));
+                        autoCommand.addCommands(
+                            
+                            Commands.deadline(
+                                new GoToReefCommand(TagOffset.LEFT, false),
+                                RobotContainer.elevator.setState(mechState),
+                                RobotContainer.arm.holdState(mechState)
+                            )
+                            .withTimeout(3)
+                        );
                     }
                     autoCommand.addCommands(Commands.print("Align Finished"));
 
@@ -560,7 +576,7 @@ public class Auto extends SubsystemBase {
 
             // Command to shoot!!!
             // autoCommand.addCommands(new GoToPoseCommand(autoOffset, true));
-            autoCommand.addCommands(RobotContainer.arm.setState(mechState).withTimeout(0.6));
+            //autoCommand.addCommands(RobotContainer.arm.setState(mechState).withTimeout(0.6));
             autoCommand.addCommands(RobotContainer.rollers.outtakeCoralCommand().withTimeout(SCORING_TIMEOUT));
             timeSeconds += SCORING_TIMEOUT; // adds how long it will take to shoot the the estimated time
 
@@ -581,8 +597,8 @@ public class Auto extends SubsystemBase {
                                                                                             // elevator, for timeout
                         // System.out.println("Path 2 Raise Time: " + raiseTime);
                         autoCommand.addCommands(Commands.parallel(
-                                Commands.deadline(path2Cmd, RobotContainer.arm.setState(RobotState.Intake)),
-                                RobotContainer.elevator.setState(mechState).withTimeout(raiseTime)));
+                                Commands.deadline(path2Cmd, RobotContainer.arm.holdState(RobotState.Intake)),
+                                RobotContainer.elevator.setState(mechState).withTimeout(raiseTime + 1)));
                         // TagOffset offset = TagOffset.CENTER; //default to 0?
                         // if (fourth == "1") {
                         // offset = TagOffset.LEFT_INTAKE;
@@ -600,7 +616,7 @@ public class Auto extends SubsystemBase {
             }
 
             /* ADDS AN INTAKING COMMAND */
-            autoCommand.addCommands(Commands.deadline(RobotContainer.rollers.intakeCoralJiggleCommand().withTimeout(3), Commands.run(() -> RobotContainer.drivetrain.drive(0.6,0,0,false,false))));
+            autoCommand.addCommands(Commands.deadline(RobotContainer.rollers.intakeCoralJiggleCommand().withTimeout(1), Commands.run(() -> RobotContainer.drivetrain.drive(0.6,0,0,false,false))));
             timeSeconds += INTAKE_PREDICTED_TIME;
             // Bring elevator and arm to default position after scoring last coral
 

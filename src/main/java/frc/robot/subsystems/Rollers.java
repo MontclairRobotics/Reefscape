@@ -41,7 +41,7 @@ public class Rollers extends SubsystemBase {
     private NetworkTableEntry entry;
 
 
-    private BreakBeam breakBeam = new BreakBeam(1,true);
+    private BreakBeam breakBeam = new BreakBeam(3,true);
 
     private Debouncer isStalledDebouncer = new Debouncer(0.05, DebounceType.kRising);
 
@@ -69,6 +69,7 @@ public class Rollers extends SubsystemBase {
     public boolean hasPiece(){
         return breakBeam.get();
     }
+
     public boolean hasCoral() {
         if (getHeldPiece() == GamePiece.Coral){
             return true;
@@ -190,6 +191,7 @@ public class Rollers extends SubsystemBase {
         SmartDashboard.putNumber("Left Motor Current", leftMotor.getOutputCurrent());
         boolean isHeld = (heldPiece != GamePiece.None)&&!(DriverStation.isAutonomousEnabled());
         
+        System.out.println(breakBeam.get());
         if(RobotContainer.debugMode && !DriverStation.isFMSAttached()) {
             entry.setBoolean(isHeld);
         }
