@@ -217,7 +217,7 @@ public class Arm extends SubsystemBase {
         wristPosePub = armTable.getStructTopic("Joint2Pose", Pose3d.struct).publish();
     }
 
-    public boolean atSetPoint() {
+    public boolean atSetpoint() {
         return pidController.atSetpoint();
     }
 
@@ -395,7 +395,7 @@ public class Arm extends SubsystemBase {
     @Override
     public void periodic() {
         if(RobotContainer.debugMode && !DriverStation.isFMSAttached()) {
-            SmartDashboard.putBoolean("Arm/At Setpoint", atSetPoint());
+            SmartDashboard.putBoolean("Arm/At Setpoint", atSetpoint());
             percentRotPub.set(getPercentRotation());
 
             // These lines are for an actual physics simulator
@@ -535,11 +535,11 @@ public class Arm extends SubsystemBase {
     // }
 
     public Command goToAngleCommand(Rotation2d angle) {
-        return Commands.run(() -> setEndpointAngle(angle), this).until(this::atSetPoint).finallyDo(this::stopMotor);
+        return Commands.run(() -> setEndpointAngle(angle), this).until(this::atSetpoint).finallyDo(() -> {stopMotor(); pidController.reset();});
     }
 
     public Command goToAngleContinuousCommand(Rotation2d angle) {
-        return Commands.run(() -> setEndpointAngle(angle), this).finallyDo(this::stopMotor);
+        return Commands.run(() -> setEndpointAngle(angle), this).finallyDo(() -> {stopMotor(); pidController.reset();});
     }
 
     public Command joystickControlCommand() {

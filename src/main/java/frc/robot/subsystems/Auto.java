@@ -549,8 +549,11 @@ public class Auto extends SubsystemBase {
                         autoCommand.addCommands(
                             
                             Commands.deadline(
-                                new GoToReefCommand(TagOffset.RIGHT, false),
-                                RobotContainer.elevator.setState(mechState),
+                                Commands.parallel(
+                                    new GoToReefCommand(TagOffset.RIGHT, false),
+                                    RobotContainer.elevator.setState(mechState),
+                                    Commands.waitUntil(RobotContainer.arm::atSetpoint) //TODO does this terminate instantly because it's scheduled before the target set? - shouldn't?
+                                ),
                                 RobotContainer.arm.holdState(mechState)
                             )
                             .withTimeout(3)
@@ -559,7 +562,7 @@ public class Auto extends SubsystemBase {
                     } else {
                         autoCommand.addCommands(
                             
-                            Commands.deadline(
+                            Commands.parallel(
                                 new GoToReefCommand(TagOffset.LEFT, false),
                                 RobotContainer.elevator.setState(mechState),
                                 RobotContainer.arm.holdState(mechState)
