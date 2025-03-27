@@ -418,7 +418,7 @@ public class Elevator extends SubsystemBase {
     }
 
     public boolean atSetpoint() {
-        return Math.abs(extensionSetpointMeters - getExtension()) < Units.inchesToMeters(1); // TODO find threshold
+        return Math.abs(extensionSetpointMeters - getExtension()) < Units.inchesToMeters(0.5); // TODO find threshold
     }
 
     public double getExtensionRotations() {

@@ -172,7 +172,6 @@ public class Limelight extends SubsystemBase {
 
     public void poseEstimationMegatag2() {
 
-        // System.out.println(RobotContainer.drivetrain.getWrappedHeading().getDegrees());
         double angle = (RobotContainer.drivetrain.getWrappedHeading().getDegrees() + 360) % 360;
         LimelightHelpers.SetRobotOrientation(cameraName, angle, 0, 0, 0, 0, 0);
         LimelightHelpers.PoseEstimate mt2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(cameraName);
@@ -182,11 +181,10 @@ public class Limelight extends SubsystemBase {
                 || Math.abs(RobotContainer.drivetrain.getPigeon2().getRoll().getValueAsDouble()) > 2;
         Logger.recordOutput(cameraName + "/isTipping", isTipping);
 
-        // System.out.println(isTipping);
         if (hasTipped && !isTipping) {
             overrideReject = true;
         }
-        // System.out.println(Utils.getCurrentTimeSeconds());
+
         boolean shouldRejectUpdate = false;
         int rejectReason = 0;
         if (mt2 != null) {

@@ -562,12 +562,15 @@ public class Auto extends SubsystemBase {
                     } else {
                         autoCommand.addCommands(
                             
+                        Commands.deadline(
                             Commands.parallel(
                                 new GoToReefCommand(TagOffset.LEFT, false),
                                 RobotContainer.elevator.setState(mechState),
-                                RobotContainer.arm.holdState(mechState)
-                            )
-                            .withTimeout(3)
+                                Commands.waitUntil(RobotContainer.arm::atSetpoint) //TODO does this terminate instantly because it's scheduled before the target set? - shouldn't?
+                            ),
+                            RobotContainer.arm.holdState(mechState)
+                        )
+                        .withTimeout(3)
                         );
                     }
                     autoCommand.addCommands(Commands.print("Align Finished"));
@@ -577,6 +580,9 @@ public class Auto extends SubsystemBase {
                 }
             }
 
+            autoCommand.addCommands(Commands.runOnce(() -> {
+                RobotContainer.backLimelight.flashLEDs().schedule();
+            }));
             // Command to shoot!!!
             // autoCommand.addCommands(new GoToPoseCommand(autoOffset, true));
             //autoCommand.addCommands(RobotContainer.arm.setState(mechState).withTimeout(0.6));

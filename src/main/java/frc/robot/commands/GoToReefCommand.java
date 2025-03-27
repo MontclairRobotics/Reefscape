@@ -19,6 +19,7 @@ import edu.wpi.first.networktables.DoubleTopic;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.units.Units;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.Auto;
@@ -33,6 +34,8 @@ public class GoToReefCommand extends Command {
     private PIDController xController;
     private PIDController yController;
     private PIDController thetaController;
+
+    private Timer timer;
 
     private Pose2d targetPose;
     private TagOffset direction;
@@ -56,6 +59,9 @@ public class GoToReefCommand extends Command {
 
         //defaults to center
         // if(direction == ScoreDirection.CENTER) {
+
+        timer = new Timer();
+        timer.start();
 
         targetPose = new Pose2d();
 
@@ -181,7 +187,9 @@ public class GoToReefCommand extends Command {
     @Override
     public void end(boolean interrupted) {
         RobotContainer.drivetrain.drive(0, 0, 0, true, false);
-        RobotContainer.backLimelight.flashLEDs().schedule();
+        // RobotContainer.backLimelight.flashLEDs().schedule();
+        Logger.recordOutput("PoseCommand/timeElapsed", timer.get());
+        timer.stop();
         System.out.println("Align ended, cancelled: " + interrupted + "at setpoint: " + isFinished());
     }
 

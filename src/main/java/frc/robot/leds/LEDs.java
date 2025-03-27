@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.LEDPattern;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.LEDPattern.GradientType;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -27,8 +28,8 @@ import frc.robot.RobotContainer;
 import frc.robot.subsystems.Elevator;
 
 public class LEDs extends SubsystemBase {
-    public static final int PORT = 4;
-    public static final int LENGTH = 40;
+    public static final int PORT = 2;
+    public static final int LENGTH = 61;
     public static final LEDPattern m_rainbow = LEDPattern.rainbow(255, 128);
     public static final Distance kLedSpacing = Units.Meters.of(1 / 100.0);
     public static final LEDPattern m_scrollingRainbow = m_rainbow.scrollAtAbsoluteSpeed(Units.MetersPerSecond.of(0.2), kLedSpacing);
@@ -41,6 +42,7 @@ public class LEDs extends SubsystemBase {
             led.setLength(LENGTH);
             ledBuffer = new AddressableLEDBuffer(LENGTH);
             led.start();
+
         }
     // Usually Returns Blinking Synched with RSL, Currently Not For Testing Purposes 
     public static LEDPattern holding(Color color) {
