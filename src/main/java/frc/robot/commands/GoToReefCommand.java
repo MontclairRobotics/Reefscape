@@ -20,6 +20,7 @@ import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.Auto;
@@ -155,8 +156,15 @@ public class GoToReefCommand extends Command {
         this.direction = direction; //sets the direction
         addRequirements(RobotContainer.drivetrain); //requires the drivetrain
         xController = new PIDController(3.5, 0, .035); //creates the PIDControllers
+        // SmartDashboard.putData("Arm/xController", xController);
         yController = new PIDController(3.5, 0, .035); //TODO tolerances
+        // SmartDashboard.putData("Arm/yController", yController);
         thetaController = RobotContainer.drivetrain.thetaController;
+
+        // public Tunable xP = new Tunable("Arm Limit Voltage", 1, (val)->{
+        //     armLimitVoltage = val;
+        // });
+    
 
         // TODO I think I need to log the 1st pose2d in disabled to prevent overruns
         Logger.recordOutput("PoseCommand/TargetPose", targetPose);
