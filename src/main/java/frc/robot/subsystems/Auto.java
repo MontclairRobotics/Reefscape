@@ -77,7 +77,7 @@ public class Auto extends SubsystemBase {
 
     // TODO: probably won't want a INTAKE timeout, we can just wait until piece is
     // intaked
-    private final double SCORING_TIMEOUT = 0.19;
+    private final double SCORING_TIMEOUT = 0.12;
     private final double INTAKE_PREDICTED_TIME = 0.3;
 
     private boolean prevIsPushAuto;
@@ -421,12 +421,14 @@ public class Auto extends SubsystemBase {
                                     RobotContainer.leftLimelight.setGyroMode(1);
                                     RobotContainer.rightLimelight.setGyroMode(1);
                                 }),
-                                Commands.waitSeconds(0.1), // TODO enough?
+                                Commands.waitSeconds(0.05), // TODO enough?
                                 Commands.runOnce(() -> {
-                                    RobotContainer.leftLimelight.setGyroMode(1);
-                                    RobotContainer.rightLimelight.setGyroMode(1);
+                                    // RobotContainer.drivetrain.poseBuffer.clear();
+                                    RobotContainer.leftLimelight.setGyroMode(4);
+                                    RobotContainer.rightLimelight.setGyroMode(4);
                                 }))));
 
+                                // duck you fylan
                         if (isPushAuto) {
                             autoCommand.addCommands(Commands.run(() -> {
                                 RobotContainer.drivetrain.drive(-0.3, 0, 0, false, false);
@@ -544,7 +546,7 @@ public class Auto extends SubsystemBase {
                                     .withTimeout(raiseTime-0.2),
                                     Commands.print("Finished elevator command path 1"))));
 
-                    autoCommand.addCommands(Commands.waitSeconds(.3));
+                    autoCommand.addCommands(Commands.waitSeconds(.1));
                     if (Character.isLowerCase(first.charAt(0)) || Character.isLowerCase(second.charAt(0))) {
                         autoCommand.addCommands(
                             
