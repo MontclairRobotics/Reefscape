@@ -186,7 +186,7 @@ public class Rollers extends SubsystemBase {
     public void periodic() {
         SmartDashboard.putNumber("Right Motor Current", rightMotor.getOutputCurrent());
         SmartDashboard.putNumber("Left Motor Current", leftMotor.getOutputCurrent());
-        boolean isHeld = (heldPiece != GamePiece.None)&&!(DriverStation.isAutonomousEnabled());
+        boolean isHeld = (hasPiece())&&!(DriverStation.isAutonomousEnabled());
         
         // System.out.println(breakBeam.get());
         if(RobotContainer.debugMode && !DriverStation.isFMSAttached()) {
