@@ -80,7 +80,7 @@ public class Auto extends SubsystemBase {
 
     // TODO: probably won't want a INTAKE timeout, we can just wait until piece is
     // intaked
-    private final double SCORING_TIMEOUT = 0.12;
+    private final double SCORING_TIMEOUT = 0.16;
     private final double INTAKE_PREDICTED_TIME = 0.3;
 
     private boolean prevIsPushAuto;
@@ -549,7 +549,7 @@ public class Auto extends SubsystemBase {
                                     .withTimeout(raiseTime-0.2),
                                     Commands.print("Finished elevator command path 1"))));
 
-                    autoCommand.addCommands(Commands.waitSeconds(.1));
+                    // autoCommand.addCommands(Commands.waitSeconds(.1));
                     if (Character.isLowerCase(first.charAt(0)) || Character.isLowerCase(second.charAt(0))) {
                         autoCommand.addCommands(
                             
