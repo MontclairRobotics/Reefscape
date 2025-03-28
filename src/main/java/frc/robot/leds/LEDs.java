@@ -7,7 +7,10 @@ import static edu.wpi.first.units.Units.Percent;
 import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Seconds;
 
+import java.util.ArrayList;
 import java.util.Map;
+
+import com.fasterxml.jackson.databind.ser.std.StdKeySerializers.Default;
 
 import edu.wpi.first.units.TimeUnit;
 import edu.wpi.first.units.Units;
@@ -178,7 +181,7 @@ public class LEDs extends SubsystemBase {
     }
 
     public Command playPatternCommand(LEDPattern pattern) {
-        return Commands.run(() -> pattern.applyTo(ledBuffer), this).ignoringDisable(true);
+        return Commands.runOnce(() -> pattern.applyTo(ledBuffer), this).ignoringDisable(true);
     }
 
     public void periodic() {
