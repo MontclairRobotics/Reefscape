@@ -114,26 +114,31 @@ public class RobotContainer {
 
     // leds.setDefaultCommand(elevator.isVelociatated() ? leds.playPatternCommand(LEDs.progress()) : rollers.getHeldPiece() == GamePiece.Algae ? leds.playPatternCommand(LEDs.holding(GamePiece.Algae.getColor())) : rollers.getHeldPiece() == GamePiece.Coral ? leds.playPatternCommand(LEDs.holding(GamePiece.Coral.getColor())) : leds.playPatternCommand(LEDs.AlliancePattern()));
 
+    //חחח חשבת שזה באמת יגיד משהו
     leds.setDefaultCommand(leds.playPatternCommand(LEDPattern.solid(Color.kFirstRed)));
-    operatorController.L1().and(operatorController.L2().negate())
+    operatorController.L1()
+        .whileTrue(rollers.intakeCoralJiggleCommand())
+        .onFalse(rollers.stopCommand());
+
+    operatorController.L2().negate().and(operatorController.L1())
         .whileTrue(
-            rollers.intakeCoralJiggleCommand()
-                .alongWith(arm.setState(RobotState.Intake))
-                .alongWith(elevator.setState(RobotState.Intake)))
+            arm.setState(RobotState.Intake)
+            .alongWith(elevator.setState(RobotState.Intake))
+        )
         .onFalse(
-            rollers.stopCommand()
-                .alongWith(arm.stopCommand())
-                .alongWith(elevator.stopCommand()));
+            arm.stopCommand()
+            .alongWith(elevator.stopCommand())
+        );
 
     operatorController.L2().and(operatorController.L1())
         .whileTrue(
-            rollers.intakeCoralJiggleCommand()
-                .alongWith(arm.setState(RobotState.IntakeOverPiece))
-                .alongWith(elevator.setState(RobotState.IntakeOverPiece)))
+            arm.setState(RobotState.IntakeOverPiece)
+            .alongWith(elevator.setState(RobotState.IntakeOverPiece))
+        )
         .onFalse(
-            rollers.stopCommand()
-                .alongWith(arm.stopCommand())
-                .alongWith(elevator.stopCommand()));
+            arm.stopCommand()
+            .alongWith(elevator.stopCommand())
+        );
 
     // Scoring
     operatorController.R1().and(operatorController.cross().negate())
