@@ -36,6 +36,7 @@ import frc.robot.commands.GoToReefCameraSpace;
 import frc.robot.commands.GoToCoralStationCommand;
 // import frc.robot.commands.GoToReefCameraSpace;
 import frc.robot.commands.GoToReefCommand;
+import frc.robot.commands.GoToReefCommandProfiled;
 import frc.robot.commands.OrbitReefCommand;
 import frc.robot.commands.WheelRadiusCharacterization;
 import frc.robot.leds.LEDs;
@@ -115,7 +116,7 @@ public class RobotContainer {
     // leds.setDefaultCommand(elevator.isVelociatated() ? leds.playPatternCommand(LEDs.progress()) : rollers.getHeldPiece() == GamePiece.Algae ? leds.playPatternCommand(LEDs.holding(GamePiece.Algae.getColor())) : rollers.getHeldPiece() == GamePiece.Coral ? leds.playPatternCommand(LEDs.holding(GamePiece.Coral.getColor())) : leds.playPatternCommand(LEDs.AlliancePattern()));
 
     //חחח חשבת שזה באמת יגיד משהו
-    leds.setDefaultCommand(leds.playPatternCommand(LEDPattern.solid(Color.kFirstRed)));
+    leds.setDefaultCommand(leds.getDefaultCommand());
     operatorController.L1()
         .whileTrue(rollers.intakeCoralJiggleCommand())
         .onFalse(rollers.stopCommand());

@@ -16,13 +16,17 @@ import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.LEDPattern;
 import frc.robot.util.RobotState;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.RobotContainer;
+import frc.robot.leds.LEDs;
 import frc.robot.util.BreakBeam;
 import frc.robot.util.GamePiece;
 import edu.wpi.first.wpilibj.Timer;
@@ -156,6 +160,7 @@ public class Rollers extends SubsystemBase {
                 .finallyDo(() -> {
                     stopMotors();
                     this.heldPiece = GamePiece.None;
+                    RobotContainer.leds.playLEDPattern(LEDs.blink(Color.kYellow), 0.2);
                 }).withTimeout(2)); // TODO find timeout
     }
 
@@ -172,7 +177,7 @@ public class Rollers extends SubsystemBase {
                 .andThen(intakeCoralCommand())
             )).finallyDo(() -> {
                 this.heldPiece = GamePiece.Coral;
-            }).until(this::hasPiece);
+            }).until(this::hasPiece).finallyDo(() -> RobotContainer.leds.playLEDPattern(LEDs.blink(Color.kGreen), 1));
             
     }
 
