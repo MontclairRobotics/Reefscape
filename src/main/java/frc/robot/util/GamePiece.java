@@ -5,8 +5,8 @@ import edu.wpi.first.wpilibj.util.Color;
 
 public enum GamePiece {
  
-    Coral(Color.kSkyBlue),
-    Algae(Color.kWhite),
+    Coral(Color.kGreen),
+    Algae(Color.kTeal),
     None(Color.kFirstBlue);
 
     private Color color;

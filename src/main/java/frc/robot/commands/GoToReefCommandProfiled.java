@@ -21,10 +21,8 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.RobotContainer;
-import frc.robot.leds.LEDs;
 import frc.robot.subsystems.Auto;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.util.PoseUtils;
@@ -32,10 +30,10 @@ import frc.robot.util.TagOffset;
 import frc.robot.util.Tunable;
 import frc.robot.util.TunerConstants;
 
-public class GoToReefCommand extends Command {
+public class GoToReefCommandProfiled extends Command {
 
-    private PIDController xController;
-    private PIDController yController;
+    private ProfiledPIDController xController;
+    private ProfiledPIDController yController;
     private PIDController thetaController;
 
     private Timer timer;
@@ -148,18 +146,20 @@ public class GoToReefCommand extends Command {
         // rotPosePub = rotPoseTopic.publish();
         xController.setTolerance(0.02);
         yController.setTolerance(0.02);
-        xController.setSetpoint(targetPose.getX());
-        yController.setSetpoint(targetPose.getY());
+        xController.setGoal(targetPose.getX());
+        yController.setGoal(targetPose.getY());
         thetaController.setSetpoint(targetPose.getRotation().getRadians());
     }
 
-    public GoToReefCommand(TagOffset direction, boolean isOffset) {
+    public GoToReefCommandProfiled(TagOffset direction, boolean isOffset) {
         this.isOffset = isOffset;
         this.direction = direction; //sets the direction
+
+        var constraints = new TrapezoidProfile.Constraints(Drivetrain.MAX_SPEED, Drivetrain.FORWARD_ACCEL);
         addRequirements(RobotContainer.drivetrain); //requires the drivetrain
-        xController = new PIDController(3.5, 0, .035); //creates the PIDControllers
+        xController = new ProfiledPIDController(3.5, 0, .035, constraints); //creates the PIDControllers
         // SmartDashboard.putData("Arm/xController", xController);
-        yController = new PIDController(3.5, 0, .035); //TODO tolerances
+        yController = new ProfiledPIDController(3.5, 0, .035, constraints); //TODO tolerances
         // SmartDashboard.putData("Arm/yController", yController);
         thetaController = RobotContainer.drivetrain.thetaController;
 
@@ -179,6 +179,9 @@ public class GoToReefCommand extends Command {
     public void execute() {
         //current pose to PID from
         Pose2d currentPose = RobotContainer.drivetrain.getState().Pose;
+        var constraints = new TrapezoidProfile.Constraints(Drivetrain.MAX_SPEED, RobotContainer.drivetrain.getMaxForwardAccel());
+        xController.setConstraints(constraints);
+        yController.setConstraints(constraints);
 
         // //logging
         // xPosePub.set(currentPose.getX());
@@ -198,9 +201,6 @@ public class GoToReefCommand extends Command {
     public void end(boolean interrupted) {
         RobotContainer.drivetrain.drive(0, 0, 0, true, false);
         // RobotContainer.backLimelight.flashLEDs().schedule();
-        if (!isOffset) {
-            RobotContainer.leds.playLEDPattern(LEDs.blink(Color.kGreen), 1);
-        }
         Logger.recordOutput("PoseCommand/timeElapsed", timer.get());
         timer.stop();
         System.out.println("Align ended, cancelled: " + interrupted + "at setpoint: " + isFinished());
@@ -208,7 +208,7 @@ public class GoToReefCommand extends Command {
 
     @Override
     public boolean isFinished() {
-        return xController.atSetpoint() && yController.atSetpoint() && thetaController.atSetpoint();
+        return xController.atGoal() && yController.atGoal() && thetaController.atSetpoint();
     }
 
 }

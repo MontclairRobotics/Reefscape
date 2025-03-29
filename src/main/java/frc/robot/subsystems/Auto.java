@@ -54,6 +54,7 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
@@ -62,6 +63,8 @@ import frc.robot.RobotContainer;
 import frc.robot.commands.AlignToAprilTagCommandOffset;
 import frc.robot.commands.GoToPoseCommand;
 import frc.robot.commands.GoToReefCommand;
+import frc.robot.commands.GoToReefCommandProfiled;
+import frc.robot.leds.LEDs;
 import frc.robot.commands.GoToPoseInputCommand;
 import frc.robot.util.RobotState;
 import frc.robot.util.TagOffset;
@@ -77,7 +80,7 @@ public class Auto extends SubsystemBase {
 
     // TODO: probably won't want a INTAKE timeout, we can just wait until piece is
     // intaked
-    private final double SCORING_TIMEOUT = 0.19;
+    private final double SCORING_TIMEOUT = 0.16;
     private final double INTAKE_PREDICTED_TIME = 0.3;
 
     private boolean prevIsPushAuto;
@@ -421,12 +424,14 @@ public class Auto extends SubsystemBase {
                                     RobotContainer.leftLimelight.setGyroMode(1);
                                     RobotContainer.rightLimelight.setGyroMode(1);
                                 }),
-                                Commands.waitSeconds(0.1), // TODO enough?
+                                Commands.waitSeconds(0.05), // TODO enough?
                                 Commands.runOnce(() -> {
-                                    RobotContainer.leftLimelight.setGyroMode(1);
-                                    RobotContainer.rightLimelight.setGyroMode(1);
+                                    // RobotContainer.drivetrain.poseBuffer.clear();
+                                    RobotContainer.leftLimelight.setGyroMode(4);
+                                    RobotContainer.rightLimelight.setGyroMode(4);
                                 }))));
 
+                                // duck you fylan
                         if (isPushAuto) {
                             autoCommand.addCommands(Commands.run(() -> {
                                 RobotContainer.drivetrain.drive(-0.3, 0, 0, false, false);
@@ -544,7 +549,7 @@ public class Auto extends SubsystemBase {
                                     .withTimeout(raiseTime-0.2),
                                     Commands.print("Finished elevator command path 1"))));
 
-                    autoCommand.addCommands(Commands.waitSeconds(.3));
+                    // autoCommand.addCommands(Commands.waitSeconds(.1));
                     if (Character.isLowerCase(first.charAt(0)) || Character.isLowerCase(second.charAt(0))) {
                         autoCommand.addCommands(
                             
@@ -562,12 +567,15 @@ public class Auto extends SubsystemBase {
                     } else {
                         autoCommand.addCommands(
                             
+                        Commands.deadline(
                             Commands.parallel(
                                 new GoToReefCommand(TagOffset.LEFT, false),
                                 RobotContainer.elevator.setState(mechState),
-                                RobotContainer.arm.holdState(mechState)
-                            )
-                            .withTimeout(3)
+                                Commands.waitUntil(RobotContainer.arm::atSetpoint) //TODO does this terminate instantly because it's scheduled before the target set? - shouldn't?
+                            ),
+                            RobotContainer.arm.holdState(mechState)
+                        )
+                        .withTimeout(3)
                         );
                     }
                     autoCommand.addCommands(Commands.print("Align Finished"));
@@ -577,6 +585,10 @@ public class Auto extends SubsystemBase {
                 }
             }
 
+            autoCommand.addCommands(Commands.runOnce(() -> {
+                // RobotContainer.backLimelight.flashLEDs().schedule();
+                RobotContainer.leds.playLEDPattern(LEDs.blink(Color.kPurple), 0.5);
+            }));
             // Command to shoot!!!
             // autoCommand.addCommands(new GoToPoseCommand(autoOffset, true));
             //autoCommand.addCommands(RobotContainer.arm.setState(mechState).withTimeout(0.6));

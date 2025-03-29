@@ -29,6 +29,8 @@ import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
+import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.system.plant.DCMotor;
@@ -128,6 +130,8 @@ public class Elevator extends SubsystemBase {
     private ElevatorFeedforward elevatorFeedforward;
 
     private double extensionSetpointMeters = 0; // tracks extension setpoint, not from ground
+
+    private Debouncer velocityDebouncer = new Debouncer(0.1, DebounceType.kFalling);
 
     SlewRateLimiter accelerationLimiter;
     double sysIDVoltage = 0; // TODO delete
@@ -414,11 +418,11 @@ public class Elevator extends SubsystemBase {
     }
 
     public boolean isVelociatated() {
-        return Math.abs(getVelocity()) > 0.1;
+        return velocityDebouncer.calculate(Math.abs(getVelocity()) > 0.1);
     }
 
     public boolean atSetpoint() {
-        return Math.abs(extensionSetpointMeters - getExtension()) < Units.inchesToMeters(1); // TODO find threshold
+        return Math.abs(extensionSetpointMeters - getExtension()) < Units.inchesToMeters(0.5); // TODO find threshold
     }
 
     public double getExtensionRotations() {
