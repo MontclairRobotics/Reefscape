@@ -185,13 +185,18 @@ public class LEDs extends SubsystemBase {
     }
 
     public void periodic() {
-
         if (DriverStation.isDisabled()) {
             Alliance alliance = DriverStation.getAlliance().orElseGet(() -> Alliance.Blue);
             if (alliance != prevAlliance) {
                 alliancePattern = alliancePattern();
                 disabledAlliancePattern = disabledAlliancePattern();
             }
+        }
+        for (int i = 0; i < ledBuffer.getLength(); i++) {
+            int red = ledBuffer.getRed(i);
+            int green = ledBuffer.getGreen(i);
+            int blue = ledBuffer.getBlue(i);
+            ledBuffer.setRGB(i, green, red, blue); //RGB -> GBR
         }
         led.setData(ledBuffer);
     }
