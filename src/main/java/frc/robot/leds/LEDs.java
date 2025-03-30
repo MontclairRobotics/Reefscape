@@ -40,7 +40,7 @@ public class LEDs extends SubsystemBase {
             kLedSpacing);
     private static LEDPattern alliancePattern = alliancePattern();
     private static LEDPattern disabledAlliancePattern = disabledAlliancePattern();
-    private static Alliance prevAlliance = Alliance.Blue;
+    private static Alliance prevAlliance;
     // public static final LEDPattern m_progressbar = LEDs.progressBar(Color.kRed);
 
     private LEDPattern altPattern;
@@ -99,7 +99,7 @@ public class LEDs extends SubsystemBase {
     public static LEDPattern alliancePattern() {
         LEDPattern base;
         if (DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get() == Alliance.Red) {
-            base = LEDPattern.gradient(GradientType.kDiscontinuous, Color.kFirstRed, Color.kDarkRed);
+            base = LEDPattern.gradient(GradientType.kDiscontinuous, Color.kDarkRed, Color.kFirstRed);
         } else if (DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get() == Alliance.Blue) {
             base = LEDPattern.gradient(GradientType.kDiscontinuous, Color.kFirstBlue, Color.kDarkBlue);
         } else {
@@ -187,7 +187,9 @@ public class LEDs extends SubsystemBase {
     public void periodic() {
         if (DriverStation.isDisabled()) {
             Alliance alliance = DriverStation.getAlliance().orElseGet(() -> Alliance.Blue);
-            if (alliance != prevAlliance) {
+            if (alliance != prevAlliance || prevAlliance == null) {
+                System.out.println("Switchign");
+                prevAlliance = alliance;
                 alliancePattern = alliancePattern();
                 disabledAlliancePattern = disabledAlliancePattern();
             }
