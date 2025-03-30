@@ -48,6 +48,7 @@ public class Rollers extends SubsystemBase {
     private BreakBeam breakBeam = new BreakBeam(3,true);
 
     private Debouncer isStalledDebouncer = new Debouncer(0.05, DebounceType.kRising);
+    private Debouncer isHeldDebouncer = new Debouncer(0.5, DebounceType.kRising);
 
     private GamePiece heldPiece = GamePiece.Coral; // TODO init to Coral for auton? not needed?
 
@@ -93,6 +94,9 @@ public class Rollers extends SubsystemBase {
     public boolean isStalled() {
         return isStalledDebouncer.calculate(rightMotor.getOutputCurrent() > ROLLER_STALL_CURRENT
                 || leftMotor.getOutputCurrent() > ROLLER_STALL_CURRENT);
+    }
+    public boolean isHeld(){
+        return isStalledDebouncer.calculate(hasPiece())&&!(DriverStation.isAutonomousEnabled());
     }
 
     public void setSpeed(double speed) {
@@ -191,12 +195,9 @@ public class Rollers extends SubsystemBase {
     public void periodic() {
         SmartDashboard.putNumber("Right Motor Current", rightMotor.getOutputCurrent());
         SmartDashboard.putNumber("Left Motor Current", leftMotor.getOutputCurrent());
-        boolean isHeld = (hasPiece())&&!(DriverStation.isAutonomousEnabled());
-        
-        // System.out.println(breakBeam.get());
-        if(RobotContainer.debugMode && !DriverStation.isFMSAttached()) {
-            entry.setBoolean(isHeld);
-        }
+
+        System.out.println(breakBeam.get());
+        entry.setBoolean(isHeld());
         Logger.recordOutput("Rollers/Beam Break", hasPiece());
         Logger.recordOutput("Rollers/Held Piece", heldPiece);
         Logger.recordOutput("Rollers/LeftSpeed", leftMotor.getAppliedOutput());
