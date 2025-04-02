@@ -203,7 +203,11 @@ public class RobotContainer {
         .onFalse(elevator.climbDownCommand());
 
     // Ratchets
-    operatorController.povUp().onTrue(ratchet.engageServos());
+    operatorController.povUp().onTrue(
+        ratchet.engageServos()
+            .andThen(Commands.waitSeconds(.2))
+            .andThen(ratchet.afterEngageServos())
+    );
     operatorController.povDown().onTrue(ratchet.disengageServos());
 
     // Barge
