@@ -48,7 +48,7 @@ public class Rollers extends SubsystemBase {
     private BreakBeam breakBeam = new BreakBeam(3,true);
 
     private Debouncer isStalledDebouncer = new Debouncer(0.05, DebounceType.kRising);
-    private Debouncer isHeldDebouncer = new Debouncer(0.5, DebounceType.kRising);
+    private Debouncer isHeldDebouncer = new Debouncer(0.1, DebounceType.kRising);
 
     private GamePiece heldPiece = GamePiece.Coral; // TODO init to Coral for auton? not needed?
 
