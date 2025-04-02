@@ -137,7 +137,7 @@ public class Rollers extends SubsystemBase {
 
     public Command scoreL1() {
         return Commands.run(() -> {
-                setSpeed(0, CORAL_OUTTAKE_SPEED);
+                setSpeed(0, CORAL_OUTTAKE_SPEED/2);
         }, this)
                 .finallyDo(() -> {
                     stopMotors();

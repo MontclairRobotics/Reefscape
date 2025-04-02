@@ -427,8 +427,8 @@ public class Auto extends SubsystemBase {
                                 Commands.waitSeconds(0.05), // TODO enough?
                                 Commands.runOnce(() -> {
                                     // RobotContainer.drivetrain.poseBuffer.clear();
-                                    RobotContainer.leftLimelight.setGyroMode(4);
-                                    RobotContainer.rightLimelight.setGyroMode(4);
+                                    RobotContainer.leftLimelight.setGyroMode(1);
+                                    RobotContainer.rightLimelight.setGyroMode(1);
                                 }))));
 
                                 // duck you fylan
@@ -544,7 +544,7 @@ public class Auto extends SubsystemBase {
                                                                                              // timeout. You'd rather
                                                                                              // wait then score at wrong
                                                                                              // height
-                                            RobotContainer.arm.setState(RobotState.L4)
+                                            RobotContainer.arm.setState(mechState)
                                     )
                                     .withTimeout(raiseTime-0.2),
                                     Commands.print("Finished elevator command path 1"))));

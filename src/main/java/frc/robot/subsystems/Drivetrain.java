@@ -95,7 +95,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     public static double MIN_ROT_SPEED = Math.PI * (1.0 / 3.0);
     public static double FORWARD_ACCEL = 9; // m / s^2
     public static double SIDE_ACCEL = 12; // m / s^2
-    public static double ROT_ACCEL = 16; // radians / s^2
+    public static double ROT_ACCEL = 20; // radians / s^2
     public static double MIN_TRANSLATIONAL_ACCEL = 2;
     public static double MIN_ROT_ACCEL = 1.5;
     public static boolean IS_LIMITING_ACCEL = true; // TODO remove this, not needed w/ driveWithSetpoint
