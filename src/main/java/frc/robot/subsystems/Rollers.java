@@ -96,7 +96,7 @@ public class Rollers extends SubsystemBase {
                 || leftMotor.getOutputCurrent() > ROLLER_STALL_CURRENT);
     }
     public boolean isHeld(){
-        return isStalledDebouncer.calculate(hasPiece())&&!(DriverStation.isAutonomousEnabled());
+        return isHeldDebouncer.calculate(hasPiece())&&!(DriverStation.isAutonomousEnabled());
     }
 
     public void setSpeed(double speed) {
@@ -137,7 +137,7 @@ public class Rollers extends SubsystemBase {
 
     public Command scoreL1() {
         return Commands.run(() -> {
-                setSpeed(0, CORAL_OUTTAKE_SPEED);
+                setSpeed(0, CORAL_OUTTAKE_SPEED/2);
         }, this)
                 .finallyDo(() -> {
                     stopMotors();

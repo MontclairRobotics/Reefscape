@@ -202,6 +202,7 @@ public class GoToReefCommand extends Command {
             RobotContainer.leds.playLEDPattern(LEDs.blink(Color.kGreen), 1);
         }
         Logger.recordOutput("PoseCommand/timeElapsed", timer.get());
+        Logger.recordOutput("PoseCommand/endingSpeeds", RobotContainer.drivetrain.getState().Speeds);
         timer.stop();
         System.out.println("Align ended, cancelled: " + interrupted + "at setpoint: " + isFinished());
     }
