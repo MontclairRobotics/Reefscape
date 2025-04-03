@@ -196,7 +196,7 @@ public class Rollers extends SubsystemBase {
         SmartDashboard.putNumber("Right Motor Current", rightMotor.getOutputCurrent());
         SmartDashboard.putNumber("Left Motor Current", leftMotor.getOutputCurrent());
 
-        System.out.println(breakBeam.get());
+        // System.out.println(breakBeam.get());a
         entry.setBoolean(isHeld());
         Logger.recordOutput("Rollers/Beam Break", hasPiece());
         Logger.recordOutput("Rollers/Held Piece", heldPiece);
