@@ -149,9 +149,11 @@ public class LEDs extends SubsystemBase {
             }
             if (altTimer.isRunning()) {
                 pattern = altPattern;
-            } else if (RobotContainer.elevator.isVelociatated()) {
-                pattern = progress();
-            } else if (RobotContainer.rollers.getHeldPiece() != GamePiece.None && DriverStation.isEnabled()) {
+            }
+            // } else if (RobotContainer.elevator.isVelociatated()) {
+            //     pattern = progress();
+            // }
+             else if (RobotContainer.rollers.getHeldPiece() != GamePiece.None && DriverStation.isEnabled()) {
                 pattern = holding(RobotContainer.rollers.getHeldPiece().getColor());
             } else if (DriverStation.isDisabled()) {
                 pattern = disabledAlliancePattern;

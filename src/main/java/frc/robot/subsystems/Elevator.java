@@ -641,7 +641,7 @@ public class Elevator extends SubsystemBase {
         return Commands.runOnce(() -> {
             //RobotContainer.ratchet.engageServos();
         })
-        .andThen(setState(RobotState.ClimbDown));
+        .andThen(setState(RobotState.ClimbDown)).alongWith(RobotContainer.arm.setState(RobotState.ClimbDown));
     }
 
     // Commands
