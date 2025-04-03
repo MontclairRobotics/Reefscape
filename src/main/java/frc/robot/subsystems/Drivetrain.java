@@ -144,20 +144,20 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
     public static Pose2d[] RIGHT_BLUE_SCORING_POSES;
 
-    public static final Pose2d[] BLUE_INTAKE_POSES = {
-        new Pose2d(new Translation2d(0.985, 0.977), new Rotation2d(Math.toRadians(-127.000))), // top coral station
-        new Pose2d(new Translation2d(1.06, 7.11), new Rotation2d(Math.toRadians(127.000))), // bottom coral
+    public static final Pose2d[] BLUE_INTAKE_POSES = { // same as point 6 in pathplanner
+        new Pose2d(new Translation2d(1.440, 0.772), new Rotation2d(Math.toRadians(-127.000))), // top coral station
+        new Pose2d(new Translation2d(1.440, 7.2799016), new Rotation2d(Math.toRadians(127.000))), // bottom coral
     };
 
-    public static final Pose2d[] LEFT_BLUE_INTAKE_POSES = {
-        new Pose2d(new Translation2d(1.66, .67), new Rotation2d(Math.toRadians(-127.000))), // top coral station
-        new Pose2d(new Translation2d(.67, 6.65), new Rotation2d(Math.toRadians(127.000))), // bottom coral
-    };
+    // public static final Pose2d[] LEFT_BLUE_INTAKE_POSES = {
+    //     new Pose2d(new Translation2d(1.66, .67), new Rotation2d(Math.toRadians(-127.000))), // top coral station
+    //     new Pose2d(new Translation2d(.67, 6.65), new Rotation2d(Math.toRadians(127.000))), // bottom coral
+    // };
 
-    public static final Pose2d[] RIGHT_BLUE_INTAKE_POSES = {
-        new Pose2d(new Translation2d(.67, 1.39), new Rotation2d(Math.toRadians(-127.000))), // top coral station
-        new Pose2d(new Translation2d(1.66, 7.36), new Rotation2d(Math.toRadians(127.000))), // bottom coral
-    };
+    // public static final Pose2d[] RIGHT_BLUE_INTAKE_POSES = {
+    //     new Pose2d(new Translation2d(.67, 1.39), new Rotation2d(Math.toRadians(-127.000))), // top coral station
+    //     new Pose2d(new Translation2d(1.66, 7.36), new Rotation2d(Math.toRadians(127.000))), // bottom coral
+    // };
 
     //used for driving with swerve setpoints, not used riht now
     private SwerveSetpointGenerator setpointGen;
