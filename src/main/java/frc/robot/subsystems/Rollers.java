@@ -34,6 +34,7 @@ import edu.wpi.first.wpilibj.Timer;
 public class Rollers extends SubsystemBase {
     public SparkMax rightMotor;
     public SparkMax leftMotor;
+    public boolean isUsingBeamBreak;
     public final double CORAL_INTAKE_SPEED = 0.5;
     public final double CORAL_OUTTAKE_SPEED = -1;
     public final double ALGAE_INTAKE_SPEED = 0.2;
@@ -55,7 +56,7 @@ public class Rollers extends SubsystemBase {
     public Rollers() {
         rightMotor = new SparkMax(31, MotorType.kBrushless);
         leftMotor = new SparkMax(30, MotorType.kBrushless);
-        
+        isUsingBeamBreak = true;
 
         var config = new SparkMaxConfig();
         config.smartCurrentLimit(20).idleMode(IdleMode.kBrake);
@@ -72,6 +73,7 @@ public class Rollers extends SubsystemBase {
     }
     
     public boolean hasPiece(){
+        if(!isUsingBeamBreak && !DriverStation.isAutonomous()) return false;
         return breakBeam.get();
     }
 
@@ -137,7 +139,7 @@ public class Rollers extends SubsystemBase {
 
     public Command scoreL1() {
         return Commands.run(() -> {
-                setSpeed(0, CORAL_OUTTAKE_SPEED/2);
+                setSpeed(CORAL_OUTTAKE_SPEED/4);
         }, this)
                 .finallyDo(() -> {
                     stopMotors();
@@ -196,7 +198,7 @@ public class Rollers extends SubsystemBase {
         SmartDashboard.putNumber("Right Motor Current", rightMotor.getOutputCurrent());
         SmartDashboard.putNumber("Left Motor Current", leftMotor.getOutputCurrent());
 
-        // System.out.println(breakBeam.get());a
+      //  System.out.println(breakBeam.get());
         entry.setBoolean(isHeld());
         Logger.recordOutput("Rollers/Beam Break", hasPiece());
         Logger.recordOutput("Rollers/Held Piece", heldPiece);

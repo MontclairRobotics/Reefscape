@@ -313,7 +313,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
      * lemon
      */
     public double getVelocityXFromController() {
-        double xInput = -MathUtil.applyDeadband(RobotContainer.driverController.getLeftX(), 0.15);
+        double xInput = -MathUtil.applyDeadband(RobotContainer.driverController.getLeftX(), 0.06);
         return Math.pow(xInput, 3) * MAX_SPEED;
     }
 
@@ -461,7 +461,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
      * 
      */
     public double getVelocityYFromController() {
-        double yInput = -MathUtil.applyDeadband(RobotContainer.driverController.getLeftY(), 0.15);
+        double yInput = -MathUtil.applyDeadband(RobotContainer.driverController.getLeftY(), 0.06);
         return Math.pow(yInput, 3) * MAX_SPEED;
     }
 
@@ -479,7 +479,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
      * 
      */
     public void driveJoystick() {
-        double rotInput = -MathUtil.applyDeadband(RobotContainer.driverController.getRightX(), 0.15);
+        double rotInput = -MathUtil.applyDeadband(RobotContainer.driverController.getRightX(), 0.06);
         double rotVelocity = Math.pow(rotInput, 3) * MAX_ROT_SPEED;
 
         drive(getVelocityYFromController(), getVelocityXFromController(), rotVelocity, fieldRelative, true); // drives

@@ -592,6 +592,8 @@ public class Auto extends SubsystemBase {
             // Command to shoot!!!
             // autoCommand.addCommands(new GoToPoseCommand(autoOffset, true));
             //autoCommand.addCommands(RobotContainer.arm.setState(mechState).withTimeout(0.6));
+            autoCommand.addCommands(Commands.print("Starting secondary arm align"));
+            // autoCommand.addCommands(RobotContainer.arm.setState(mechState).onlyWhile(RobotContainer.arm::atSetpointJank));
             autoCommand.addCommands(RobotContainer.rollers.outtakeCoralCommand().withTimeout(SCORING_TIMEOUT));
             timeSeconds += SCORING_TIMEOUT; // adds how long it will take to shoot the the estimated time
 

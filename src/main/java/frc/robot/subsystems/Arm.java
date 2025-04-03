@@ -123,6 +123,8 @@ public class Arm extends SubsystemBase {
     private StructPublisher<Pose3d> elbowPosePub;
     private StructPublisher<Pose3d> wristPosePub;
 
+    private Rotation2d pidSetpoint = RobotState.DrivingNone.getAngle();
+
     public Tunable kG = new Tunable("Arm kG", 0.2, (val) -> {
         armFeedforward = new ArmFeedforward(armFeedforward.getKs(), val, armFeedforward.getKv());
     });
@@ -221,6 +223,10 @@ public class Arm extends SubsystemBase {
         return pidController.atSetpoint();
     }
 
+    public boolean atSetpointJank() {
+        return Math.abs(pidSetpoint.getDegrees() - getEndpointAngle().getDegrees()) <= 2;
+    }
+
     public void stopMotor(){
         armMotor.stopMotor();
     }
@@ -289,6 +295,7 @@ public class Arm extends SubsystemBase {
 
     public void setEndpointAngle(Rotation2d targetAngle) {
         double target = targetAngle.getRotations();
+        
 
         // if (target > MAX_ANGLE.getRotations()) {
         //     Elastic.sendNotification(new Notification(
@@ -309,6 +316,7 @@ public class Arm extends SubsystemBase {
         // SmartDashboard.putNumber("Arm/Clamped Target", target);
         double wristVoltage = pidController.calculate(getEndpointAngle().getRotations(), target) * 5;
         Logger.recordOutput("Arm/PID Setpoint", target * 360);
+        pidSetpoint = Rotation2d.fromRotations(target);
 
         setpointPub.set(target * 360);
         
@@ -367,7 +375,7 @@ public class Arm extends SubsystemBase {
         // if(RobotContainer.rollers.hasAlgae())
         //TODO check safeties after ff 
 
-        voltage = MathUtil.clamp(voltage, -1, 1);
+        voltage = MathUtil.clamp(voltage, -3, 3);
         // System.out.println(voltage);
         voltagePub.set(voltage);
         // voltage = MathUtil.clamp(voltage, -(12 * Math.pow((percentRot * (100.0 /
@@ -435,7 +443,7 @@ public class Arm extends SubsystemBase {
         // stateMatrix.set(0, 0, -getElbowAngle().getRadians());
         // stateMatrix.set(1, 0, getWristAngle().getRadians());
         // // double voltage = appliedVoltage;
-        // double voltage = Math.pow(-MathUtil.applyDeadband(RobotContainer.operatorController.getRightY(), 0.04), 3) * 12;
+        // double voltage = Math.pow(-MathUtil.applyDeadband(RobotContainer.ygetRightY(), 0.04), 3) * 12;
         // // double voltage2 = MathUtil.clamp((voltage * -30.0 / 14.0), -12, 12);
         // double voltage2 = 0;
         // // System.out.println(voltage);
@@ -535,7 +543,7 @@ public class Arm extends SubsystemBase {
     // }
 
     public Command goToAngleCommand(Rotation2d angle) {
-        return Commands.run(() -> setEndpointAngle(angle), this).until(this::atSetpoint).finallyDo(() -> {stopMotor(); pidController.reset();});
+        return Commands.run(() -> {setEndpointAngle(angle); System.out.println(atSetpoint());}, this).until(this::atSetpoint).finallyDo(() -> {stopMotor(); pidController.reset();});
     }
 
     public Command goToAngleContinuousCommand(Rotation2d angle) {

@@ -204,10 +204,10 @@ public class RobotContainer {
 
     // Ratchets
     operatorController.povUp().onTrue(
-        ratchet.engageServos()
-            .andThen(Commands.waitSeconds(.2))
-            .andThen(ratchet.afterEngageServos())
-    );
+        ratchet.engageServos());
+            //.andThen(Commands.waitSeconds(.2))
+            //.andThen(ratchet.afterEngageServos())
+    // );
     operatorController.povDown().onTrue(ratchet.disengageServos());
 
     // Barge
@@ -318,6 +318,7 @@ public class RobotContainer {
     
     operatorController.touchpad().onTrue(Commands.runOnce(() -> {
         // elevator.setDefaultCommand(elevator.joystickControlCommand());
+        rollers.isUsingBeamBreak = false;
         arm.setDefaultCommand(arm.joystickControlCommand());
     }));
 
