@@ -52,7 +52,7 @@ public class Ratchet extends SubsystemBase {
                 DriverStation.reportError("Failed to engage servos: " + e.getMessage(), true);
             }
         }, this)
-        .alongWith(RobotContainer.leds.playPatternCommand(LEDs.holding(Color.kWhite)));
+        .alongWith(RobotContainer.leds.playLEDPatternCommand(LEDs.blink(Color.kWhite), 0.5));
     }
 
     public Command afterEngageServos() {

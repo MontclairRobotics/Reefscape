@@ -21,10 +21,13 @@ import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Robot;
 import frc.robot.RobotContainer;
+import frc.robot.leds.LEDs;
 import frc.robot.util.PoseUtils;
 import frc.robot.vision.LimelightHelpers.RawFiducial;
 
@@ -240,6 +243,9 @@ public class Limelight extends SubsystemBase {
                         // VecBuilder.fill(0.000716, 0.0003, Double.POSITIVE_INFINITY));
                         VecBuilder.fill(Math.pow(0.5, mt2.tagCount) * 2 * mt2.avgTagDist,
                                 Math.pow(0.5, mt2.tagCount) * 2 * mt2.avgTagDist, Double.POSITIVE_INFINITY));
+                if (DriverStation.isTeleopEnabled()) {
+                    RobotContainer.leds.playLEDPattern(LEDs.holding(Color.kWhite), 0.2);
+                }
             } else {
                 Logger.recordOutput(cameraName + "/mt2PoseRejected", mt2.pose);
                 Logger.recordOutput(cameraName + "/rejectReason", rejectReason);

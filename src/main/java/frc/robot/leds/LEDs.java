@@ -1,6 +1,8 @@
 package frc.robot.leds;
 
 import frc.robot.util.GamePiece;
+import frc.robot.util.PoseUtils;
+import frc.robot.vision.LimelightHelpers;
 
 import static edu.wpi.first.units.Units.Meter;
 import static edu.wpi.first.units.Units.Percent;
@@ -11,7 +13,13 @@ import java.util.ArrayList;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.ser.std.StdKeySerializers.Default;
+import com.pathplanner.lib.util.FlippingUtil;
 
+import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.filter.Debouncer.DebounceType;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.units.TimeUnit;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Distance;
@@ -48,6 +56,11 @@ public class LEDs extends SubsystemBase {
     private double altTime = 0;
     static AddressableLED led;
     static AddressableLEDBuffer ledBuffer;
+    private Pose2d opponentReefCenter = FlippingUtil.flipFieldPose(new Pose2d(4.495, 3.995, Rotation2d.kZero)); // flip
+                                                                                                                // blue
+                                                                                                                // pose
+                                                                                                                // to
+                                                                                                                // red
 
     // static LEDPattern m_scrollingRainbowProgress =
     // m_progressBar.scrollingRainbowProgress();
@@ -147,13 +160,25 @@ public class LEDs extends SubsystemBase {
             if (altTimer.hasElapsed(altTime)) {
                 altTimer.stop();
             }
-            if (altTimer.isRunning()) {
+
+            Transform2d transformPose = RobotContainer.drivetrain.getRobotPose().minus(opponentReefCenter);
+
+            double currentDistance = transformPose.getTranslation().getNorm();
+
+            if (currentDistance <= 1.862) {
+                LimelightHelpers.setLEDMode_ForceBlink(RobotContainer.backLimelight.cameraName);
+            } else {
+                LimelightHelpers.setLEDMode_ForceOff(RobotContainer.backLimelight.cameraName);
+            }
+            if (currentDistance <= 1.862) {
+                pattern = blink(Color.kOrange);
+            } else if (altTimer.isRunning()) {
                 pattern = altPattern;
             }
             // } else if (RobotContainer.elevator.isVelociatated()) {
-            //     pattern = progress();
+            // pattern = progress();
             // }
-             else if (RobotContainer.rollers.getHeldPiece() != GamePiece.None && DriverStation.isEnabled()) {
+            else if (RobotContainer.rollers.isHeld() && DriverStation.isEnabled()) {
                 pattern = holding(RobotContainer.rollers.getHeldPiece().getColor());
             } else if (DriverStation.isDisabled()) {
                 pattern = disabledAlliancePattern;
@@ -188,19 +213,23 @@ public class LEDs extends SubsystemBase {
 
     public void periodic() {
         if (DriverStation.isDisabled()) {
-            Alliance alliance = DriverStation.getAlliance().orElseGet(() -> Alliance.Blue);
-            if (alliance != prevAlliance || prevAlliance == null) {
-                System.out.println("Switchign");
-                prevAlliance = alliance;
-                alliancePattern = alliancePattern();
-                disabledAlliancePattern = disabledAlliancePattern();
+            if (DriverStation.getAlliance().isPresent()) {
+                Alliance alliance = DriverStation.getAlliance().get();
+
+                if (alliance != prevAlliance || prevAlliance == null) {
+                    System.out.println("Switchign");
+                    prevAlliance = alliance;
+                    alliancePattern = alliancePattern();
+                    disabledAlliancePattern = disabledAlliancePattern();
+                    opponentReefCenter = new Pose2d(FlippingUtil.fieldSizeX - opponentReefCenter.getX(), opponentReefCenter.getY(), opponentReefCenter.getRotation());
+                }
             }
         }
         for (int i = 0; i < ledBuffer.getLength(); i++) {
             int red = ledBuffer.getRed(i);
             int green = ledBuffer.getGreen(i);
             int blue = ledBuffer.getBlue(i);
-            ledBuffer.setRGB(i, green, red, blue); //RGB -> GBR
+            ledBuffer.setRGB(i, green, red, blue); // RGB -> GBR
         }
         led.setData(ledBuffer);
     }
