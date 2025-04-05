@@ -145,8 +145,8 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     public static Pose2d[] RIGHT_BLUE_SCORING_POSES;
 
     public static final Pose2d[] BLUE_INTAKE_POSES = { // same as point 6 in pathplanner
-        new Pose2d(new Translation2d(1.440, 0.772), new Rotation2d(Math.toRadians(-127.000))), // top coral station
-        new Pose2d(new Translation2d(1.440, 7.2799016), new Rotation2d(Math.toRadians(127.000))), // bottom coral
+        new Pose2d(new Translation2d(1.030, 0.895), new Rotation2d(Math.toRadians(-127.000))), // top coral station
+        new Pose2d(new Translation2d(1.067, 7.118), new Rotation2d(Math.toRadians(127.000))), // bottom coral
     };
 
     // public static final Pose2d[] LEFT_BLUE_INTAKE_POSES = {

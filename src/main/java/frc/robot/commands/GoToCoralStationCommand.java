@@ -45,6 +45,8 @@ public class GoToCoralStationCommand extends Command {
         xController.setSetpoint(targetPose.getX());
         yController.setSetpoint(targetPose.getY());
         thetaController.setSetpoint(targetPose.getRotation().getRadians());
+        Logger.recordOutput("CoralStationCommand/targetPose", targetPose);
+        Logger.recordOutput("CoralStationCommand/currentPose", new Pose2d());
     }
 
     public GoToCoralStationCommand(TagOffset direction, boolean isLeft, boolean isOffset) {
@@ -52,22 +54,25 @@ public class GoToCoralStationCommand extends Command {
         this.isLeft = isLeft;
         this.isOffset = isOffset;
         addRequirements(RobotContainer.drivetrain); //requires the drivetrain
-        xController = new PIDController(3.5, 0, .035); //creates the PIDControllers
-        yController = new PIDController(3.5, 0, .035); //TODO tolerances
+        xController = new PIDController(2, 0, .035); //creates the PIDControllers
+        yController = new PIDController(2, 0, .035); //TODO tolerances
         thetaController = RobotContainer.drivetrain.thetaController;
+        Logger.recordOutput("CoralStationCommand/targetPose", new Pose2d());
     }
 
     public void execute() {
         //current pose to PID from
         Pose2d currentPose = RobotContainer.drivetrain.getState().Pose;
 
-        //calculating outputs
+        //calculating outputs\
         double xSpeed = xController.calculate(currentPose.getX());
         double ySpeed = yController.calculate(currentPose.getY());
         double omegaSpeed = thetaController.calculate(currentPose.getRotation().getRadians());
 
         //sets control output to the drivetrain
+        // Logger.recordOutput("PoseCommand/timeElapsed", timer.get());
         RobotContainer.drivetrain.driveWithSetpoint(xSpeed, ySpeed, omegaSpeed, true, false);
+        Logger.recordOutput("CoralStationCommand/currentPose", RobotContainer.drivetrain.getRobotPose());
     }
 
     @Override

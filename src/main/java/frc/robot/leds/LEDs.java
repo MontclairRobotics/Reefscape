@@ -161,18 +161,18 @@ public class LEDs extends SubsystemBase {
                 altTimer.stop();
             }
 
-            Transform2d transformPose = RobotContainer.drivetrain.getRobotPose().minus(opponentReefCenter);
+            // Transform2d transformPose = RobotContainer.drivetrain.getRobotPose().minus(opponentReefCenter);
 
-            double currentDistance = transformPose.getTranslation().getNorm();
+            // double currentDistance = transformPose.getTranslation().getNorm();
 
-            if (currentDistance <= 1.862) {
-                LimelightHelpers.setLEDMode_ForceBlink(RobotContainer.backLimelight.cameraName);
-            } else {
-                LimelightHelpers.setLEDMode_ForceOff(RobotContainer.backLimelight.cameraName);
-            }
-            if (currentDistance <= 1.862) {
-                pattern = blink(Color.kOrange);
-            } else if (altTimer.isRunning()) {
+            // if (currentDistance <= 1.862 && DriverStation.isTeleopEnabled()) {
+            //     LimelightHelpers.setLEDMode_ForceBlink(RobotContainer.backLimelight.cameraName);
+            // } else {
+            //     LimelightHelpers.setLEDMode_ForceOff(RobotContainer.backLimelight.cameraName);
+            // }
+            // if (currentDistance <= 1.862 && DriverStation.isTeleopEnabled()) {
+            //     pattern = blink(Color.kOrange);
+            if (altTimer.isRunning()) {
                 pattern = altPattern;
             }
             // } else if (RobotContainer.elevator.isVelociatated()) {
