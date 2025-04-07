@@ -225,12 +225,30 @@ public class LEDs extends SubsystemBase {
                 }
             }
         }
-        for (int i = 0; i < ledBuffer.getLength(); i++) {
+        // int length = ledBuffer.getLength();
+        // // if (length > )
+        // for (int i = 0; i < ledBuffer.getLength(); i++) {
+        //     int red = ledBuffer.getRed(i);
+        //     int green = ledBuffer.getGreen(i);
+        //     int blue = ledBuffer.getBlue(i);
+        //     ledBuffer.setRGB(i, green, red, blue); // RGB -> GBR
+        // }
+
+    
+        for (int i = 0; i < 22; i++) {
+            int red = ledBuffer.getRed(i);
+            int green = ledBuffer.getGreen(i);
+            int blue = ledBuffer.getBlue(i);
+            ledBuffer.setRGB(i, green, red, blue); // RGB -> GBR
+        }
+
+        for (int i = 37; i < ledBuffer.getLength(); i++) {
             int red = ledBuffer.getRed(i);
             int green = ledBuffer.getGreen(i);
             int blue = ledBuffer.getBlue(i);
             ledBuffer.setRGB(i, green, red, blue); // RGB -> GBR
         }
         led.setData(ledBuffer);
+        
     }
 }
