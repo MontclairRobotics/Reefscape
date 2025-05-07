@@ -1,0 +1,26 @@
+package frc.robot.subsystems;
+
+
+public class QuestNavSubsystem extends SubsystemBase {
+    public QuestNavSubsystem() {
+    }
+    QuestNav questNav = new QuestNav();
+    Transform2d QUEST_TO_ROBOT = new Transform2d( /*TODO: Put your x, y, rotational offsets here!*/ )
+
+    Pose2d questPose = questNav.getPose();
+
+    Pose2d robotPose = questPose.transformBy(QUEST_TO_ROBOT.inverse());
+
+    Pose2d robotPose = new Pose2d( /* Some pose data */ );
+
+    Pose2d questPose = questPose.transformBy(QUEST_TO_ROBOT);
+
+    questNav.setPose(questPose);
+
+@Override
+public void periodic() {
+   questNav.cleanupResponses();
+   questNav.processHeartbeat();
+}
+}
+
