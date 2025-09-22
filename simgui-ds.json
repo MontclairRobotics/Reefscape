@@ -13,9 +13,7 @@
         },
         {
           "decKey": 87,
-          "decayRate": 0.5,
-          "incKey": 83,
-          "keyRate": 0.5
+          "incKey": 83
         },
         {
           "decKey": 263,
@@ -90,7 +88,6 @@
     }
   ],
   "robotJoysticks": [
-    {},
     {
       "guid": "Keyboard0"
     }

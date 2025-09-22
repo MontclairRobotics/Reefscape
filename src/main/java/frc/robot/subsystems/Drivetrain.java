@@ -85,7 +85,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.util.DynamicSlewRateLimiter;
-import frc.robot.util.FieldPositionUtils;
+// import frc.robot.util.FieldPositionUtils;
 
 public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
@@ -105,6 +105,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     public static double MIN_ROT_ACCEL = 1.5;
     public static boolean IS_LIMITING_ACCEL = true; // TODO remove this, not needed w/ driveWithSetpoint
 
+    public AprilTagFieldLayout field;
     public TimeInterpolatableBuffer<Pose2d> poseBuffer = TimeInterpolatableBuffer.createBuffer(3);
 
     DoublePublisher driveCurrentPub;
@@ -223,7 +224,21 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         thetaController.enableContinuousInput(-Math.PI, Math.PI);
         configurePathPlanner();
 
-        resetPose(PoseUtils.flipPoseAlliance(new Pose2d(3, 3, Rotation2d.fromDegrees(0))));
+        AprilTagFieldLayout roboConField = null;
+            try {
+                roboConField = new AprilTagFieldLayout(Paths.get("C:/Users/rbair/Downloads/2025-reefscape-welded-robocon.json"));
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            //AprilTagFieldLayout field = AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded);
+            field = roboConField;
+            field.setOrigin(OriginPosition.kBlueAllianceWallRightSide);
+            BLUE_SCORING_POSES = new Pose2d[6];
+            LEFT_BLUE_SCORING_POSES = new Pose2d[6];
+            RIGHT_BLUE_SCORING_POSES = new Pose2d[6];
+
+        //resetPose(PoseUtils.flipPoseAlliance(new Pose2d(3, 3, Rotation2d.fromDegrees(0))));
 
         RobotConfig config = null;
         try {
@@ -241,19 +256,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         );
         prevSetpoint = new SwerveSetpoint(getCurrentSpeeds(), getState().ModuleStates,
                 DriveFeedforwards.zeros(config.numModules));
-            AprilTagFieldLayout roboConField = null;
-            try {
-                roboConField = new AprilTagFieldLayout(Paths.get("C:/Users/rbair/Downloads/2025-reefscape-welded-robocon.json"));
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-            //AprilTagFieldLayout field = AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded);
-            AprilTagFieldLayout field = roboConField;
-            field.setOrigin(OriginPosition.kBlueAllianceWallRightSide);
-            BLUE_SCORING_POSES = new Pose2d[6];
-            LEFT_BLUE_SCORING_POSES = new Pose2d[6];
-            RIGHT_BLUE_SCORING_POSES = new Pose2d[6];
+            
 
             
             double parallelDistance = 0.165;
