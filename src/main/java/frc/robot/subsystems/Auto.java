@@ -157,6 +157,7 @@ public class Auto extends SubsystemBase {
         feedbackPub.set("Enter auto string!");
         timeStampTopic.setRetained(true);
         timeStampPub.set(0);
+
     }
 
     /**

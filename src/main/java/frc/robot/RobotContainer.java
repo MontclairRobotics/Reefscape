@@ -11,6 +11,7 @@ import java.util.function.BooleanSupplier;
 import com.ctre.phoenix6.Orchestra;
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.pathplanner.lib.util.FlippingUtil;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 import edu.wpi.first.cameraserver.CameraServer;
@@ -85,6 +86,10 @@ public class RobotContainer {
   public static boolean isBlueAlliance;
 
   public RobotContainer() {
+
+    FlippingUtil.fieldSizeX = PoseUtils.ROBOCON_FIELD_LENGTH;
+    FlippingUtil.fieldSizeY = PoseUtils.ROBOCON_FIELD_WIDTH;
+    
     DriverStation.silenceJoystickConnectionWarning(true);
     configureBindings();
     // Enables limelights when tethered over USB
