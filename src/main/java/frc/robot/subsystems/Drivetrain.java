@@ -16,7 +16,11 @@ import static edu.wpi.first.units.Units.Rotation;
 import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Volts;
 
+import java.io.IOException;
+import java.nio.file.Paths;
 import java.text.FieldPosition;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
@@ -51,6 +55,7 @@ import frc.robot.util.PoseUtils;
 import frc.robot.util.RobotState;
 import frc.robot.util.TagOffset;
 import frc.robot.util.Tunable;
+import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.apriltag.AprilTagFieldLayout.OriginPosition;
@@ -236,12 +241,21 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         );
         prevSetpoint = new SwerveSetpoint(getCurrentSpeeds(), getState().ModuleStates,
                 DriveFeedforwards.zeros(config.numModules));
-
-            AprilTagFieldLayout field = AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded);
+            AprilTagFieldLayout roboConField = null;
+            try {
+                roboConField = new AprilTagFieldLayout(Paths.get("C:/Users/rbair/Downloads/2025-reefscape-welded-robocon.json"));
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            //AprilTagFieldLayout field = AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded);
+            AprilTagFieldLayout field = roboConField;
             field.setOrigin(OriginPosition.kBlueAllianceWallRightSide);
             BLUE_SCORING_POSES = new Pose2d[6];
             LEFT_BLUE_SCORING_POSES = new Pose2d[6];
             RIGHT_BLUE_SCORING_POSES = new Pose2d[6];
+
+            
             double parallelDistance = 0.165;
             double perpendicularDistance = 0.48; // TODO set
             for (int i = 17; i <= 22; i++) {
