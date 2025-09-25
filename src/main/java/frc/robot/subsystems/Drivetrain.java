@@ -226,7 +226,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
         AprilTagFieldLayout roboConField = null;
             try {
-                roboConField = new AprilTagFieldLayout(Paths.get("C:/Users/rbair/Downloads/2025-reefscape-welded-robocon.json"));
+                roboConField = new AprilTagFieldLayout(Paths.get("./2025-reefscape-welded-robocon.json"));
             } catch (IOException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
