@@ -17,6 +17,7 @@ import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Volts;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.FieldPosition;
 import java.util.ArrayList;
@@ -40,6 +41,7 @@ import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveModule.SteerRequestType;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants.ClosedLoopOutputType;
 import com.ctre.phoenix6.swerve.SwerveRequest.ForwardPerspectiveValue;
+import com.fasterxml.jackson.core.JsonpCharacterEscapes;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
@@ -78,6 +80,7 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -224,9 +227,10 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         thetaController.enableContinuousInput(-Math.PI, Math.PI);
         configurePathPlanner();
 
+        Path jsonPath = Paths.get(Filesystem.getDeployDirectory().getAbsolutePath(), "2025-reefscape-welded-robocon.json");
         AprilTagFieldLayout roboConField = null;
             try {
-                roboConField = new AprilTagFieldLayout(Paths.get("./2025-reefscape-welded-robocon.json"));
+                roboConField = new AprilTagFieldLayout(jsonPath);
             } catch (IOException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
