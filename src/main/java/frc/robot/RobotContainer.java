@@ -114,7 +114,7 @@ public class RobotContainer {
      * --------------------------------------------
      */
 
-    rollers.setDefaultCommand(rollers.getDefaultCommand());
+    //rollers.setDefaultCommand(rollers.getDefaultCommand());
     // elevator.setDefaultCommand(elevator.joystickControlCommand());
 
     // arm.setDefaultCommand(arm.joystickControlCommand());

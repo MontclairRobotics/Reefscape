@@ -237,7 +237,6 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
             }
             //AprilTagFieldLayout field = AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded);
             field = roboConField;
-            field.setOrigin(OriginPosition.kBlueAllianceWallRightSide);
             BLUE_SCORING_POSES = new Pose2d[6];
             LEFT_BLUE_SCORING_POSES = new Pose2d[6];
             RIGHT_BLUE_SCORING_POSES = new Pose2d[6];

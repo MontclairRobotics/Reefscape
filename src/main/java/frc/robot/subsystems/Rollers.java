@@ -211,13 +211,10 @@ public class Rollers extends SubsystemBase {
 
     public Command getDefaultCommand() {
         return Commands.run(() -> {
-            if(hasCoral()) {
+        
                 this.setSpeed(CORAL_HOLDING_SPEED);
-            }
+           
     
-            if(hasAlgae()) {
-                this.setSpeed(ALGAE_HOLDING_SPEED);
-            }
         }, this);
     }
 }
