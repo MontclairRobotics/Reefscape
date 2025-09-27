@@ -114,7 +114,7 @@ public class RobotContainer {
      * --------------------------------------------
      */
 
-    //rollers.setDefaultCommand(rollers.getDefaultCommand());
+    rollers.setDefaultCommand(rollers.getDefaultCommand());
     // elevator.setDefaultCommand(elevator.joystickControlCommand());
 
     // arm.setDefaultCommand(arm.joystickControlCommand());
@@ -124,7 +124,7 @@ public class RobotContainer {
     //חחח חשבת שזה באמת יגיד משהו
     leds.setDefaultCommand(leds.getDefaultCommand());
     operatorController.L1()
-        .whileTrue(rollers.intakeCoralJiggleCommand())
+        .whileTrue(rollers.intakeCoralAutoCommand())
         .onFalse(rollers.stopCommand());
 
     operatorController.L2().negate().and(operatorController.L1())
@@ -303,24 +303,24 @@ public class RobotContainer {
     operatorController.cross().and(operatorController.L2().negate())
         .whileTrue(arm.holdState(RobotState.L1))
         .onFalse(
-            elevator.setState(RobotState.L1)
+            (elevator.setState(RobotState.L1)
                 .alongWith(elevator.setTargetState(RobotState.L1))
-                .alongWith(arm.holdState(RobotState.L1)));
+                .alongWith(arm.holdState(RobotState.L1))).onlyIf(() -> !operatorController.R2().getAsBoolean()));
 
     // L2 Manual
     operatorController.square().and(operatorController.L2().negate())
     .whileTrue(arm.holdState(RobotState.L2))
     .onFalse(
-        elevator.setState(RobotState.L2)
+        (elevator.setState(RobotState.L2)
             .alongWith(elevator.setTargetState(RobotState.L2))
-            .alongWith(arm.holdState(RobotState.L2)));
+            .alongWith(arm.holdState(RobotState.L2))).onlyIf(() -> !operatorController.R2().getAsBoolean()));
     // L3 Manual
    operatorController.triangle().and(operatorController.L2().negate())
     .whileTrue((arm.holdState(RobotState.L3)))
     .onFalse(
-        elevator.setState(RobotState.L3)
+        (elevator.setState(RobotState.L3)
             .alongWith(elevator.setTargetState(RobotState.L3))
-            .alongWith(arm.holdState(RobotState.L3)));
+            .alongWith(arm.holdState(RobotState.L3))).onlyIf(() -> !operatorController.R2().getAsBoolean()));
     
     operatorController.touchpad().onTrue(Commands.runOnce(() -> {
         // elevator.setDefaultCommand(elevator.joystickControlCommand());
@@ -333,7 +333,7 @@ public class RobotContainer {
     .whileTrue(arm.holdState(RobotState.L4).alongWith(elevator.setState(RobotState.L3)))
     .onFalse(
         elevator.setState(RobotState.L4)
-            .alongWith(arm.holdState(RobotState.L4)));
+            .alongWith(arm.holdState(RobotState.L4)).onlyIf(() -> !operatorController.R2().getAsBoolean()));
 
     // Elevator down
     // testingController.R2()

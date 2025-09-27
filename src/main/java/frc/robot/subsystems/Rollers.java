@@ -56,7 +56,7 @@ public class Rollers extends SubsystemBase {
     public Rollers() {
         rightMotor = new SparkMax(31, MotorType.kBrushless);
         leftMotor = new SparkMax(30, MotorType.kBrushless);
-        isUsingBeamBreak = true;
+        isUsingBeamBreak = false;
 
         var config = new SparkMaxConfig();
         config.smartCurrentLimit(20).idleMode(IdleMode.kBrake);
@@ -157,6 +157,15 @@ public class Rollers extends SubsystemBase {
                 .until(this::isStalled);
     }
 
+    public Command intakeCoralAutoCommand() {
+        return Commands.run(() -> setSpeed(CORAL_INTAKE_SPEED), this)
+                .finallyDo(() -> {
+                    stopMotors();
+                    // if(isStalled())
+                    this.heldPiece = GamePiece.Coral;
+                });
+    }
+
     public Command outtakeCoralCommand() {
         return Commands.sequence(
         // 
@@ -206,6 +215,7 @@ public class Rollers extends SubsystemBase {
         Logger.recordOutput("Rollers/RightSpeed", rightMotor.getAppliedOutput());
         Logger.recordOutput("Rollers/RightCurrent", rightMotor.getOutputCurrent());
         Logger.recordOutput("Rollers/LeftCurrent", leftMotor.getOutputCurrent());
+        Logger.recordOutput("Rollers/isStalled", isStalled());
 
     }
 
