@@ -15,7 +15,7 @@ import frc.robot.RobotContainer;
     public class PoseUtils {
     
 
-        public static final double ROBOCON_FIELD_LENGTH = RobotContainer.drivetrain.field.getFieldLength(); // example
+        public static final double ROBOCON_FIELD_LENGTH = RobotContainer.drivetrain.field.getFieldLength(); 
         public static final double ROBOCON_FIELD_WIDTH = RobotContainer.drivetrain.field.getFieldWidth();
         /**
          * Returns a pose flipped for the appropriate alliance

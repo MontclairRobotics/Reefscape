@@ -87,7 +87,7 @@ public class RobotContainer {
 
   public RobotContainer() {
 
-    FlippingUtil.fieldSizeX = PoseUtils.ROBOCON_FIELD_LENGTH;
+    FlippingUtil.fieldSizeX = PoseUtils.ROBOCON_FIELD_LENGTH-.11; //adjust for fucking field
     FlippingUtil.fieldSizeY = PoseUtils.ROBOCON_FIELD_WIDTH;
     
     DriverStation.silenceJoystickConnectionWarning(true);
