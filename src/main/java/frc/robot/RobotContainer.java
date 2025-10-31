@@ -203,12 +203,12 @@ public class RobotContainer {
         .onFalse(elevator.climbDownCommand());
 
     // Ratchets
-    operatorController.povUp().onTrue(
-        ratchet.engageServos());
-            //.andThen(Commands.waitSeconds(.2))
-            //.andThen(ratchet.afterEngageServos())
-    // );
-    operatorController.povDown().onTrue(ratchet.disengageServos());
+    // operatorController.povUp().onTrue(
+    //     ratchet.engageServos());
+    //         //.andThen(Commands.waitSeconds(.2))
+    //         //.andThen(ratchet.afterEngageServos())
+    // // );
+    // operatorController.povDown().onTrue(ratchet.disengageServos());
 
     // Barge
     // operatorController.square().and(operatorController.L2())
@@ -221,49 +221,49 @@ public class RobotContainer {
     // drivetrain.setDefaultCommand(new OrbitReefCommand());
     // drivetrain.setDefaultCommand(new FaceReefCommand());
 
-    driverController.R2().whileTrue(new FaceReefCommand());
-    driverController.L1().whileTrue(new GoToReefCommand(TagOffset.LEFT, true)).onFalse(new GoToReefCommand(TagOffset.LEFT, false).until(() -> drivetrain.joystickInputDetected()));
-    driverController.R1().whileTrue(new GoToReefCommand(TagOffset.RIGHT, true)).onFalse(new GoToReefCommand(TagOffset.RIGHT, false).until(() -> drivetrain.joystickInputDetected()));
-    driverController.circle().whileTrue(new GoToCoralStationCommand(TagOffset.CENTER, false, false));
-    driverController.square().whileTrue(new GoToCoralStationCommand(TagOffset.CENTER, true, false));
+    // driverController.R2().whileTrue(new FaceReefCommand());
+    // driverController.L1().whileTrue(new GoToReefCommand(TagOffset.LEFT, true)).onFalse(new GoToReefCommand(TagOffset.LEFT, false).until(() -> drivetrain.joystickInputDetected()));
+    // driverController.R1().whileTrue(new GoToReefCommand(TagOffset.RIGHT, true)).onFalse(new GoToReefCommand(TagOffset.RIGHT, false).until(() -> drivetrain.joystickInputDetected()));
+    // driverController.circle().whileTrue(new GoToCoralStationCommand(TagOffset.CENTER, false, false));
+    // driverController.square().whileTrue(new GoToCoralStationCommand(TagOffset.CENTER, true, false));
     
     testingController.L2().onTrue(backLimelight.flashLEDs().ignoringDisable(true));
     //Fine tuning buttons
-    driverController.povRight()
-        .whileTrue(Commands.run(() -> RobotContainer.drivetrain.drive(new ChassisSpeeds(0, -0.15, 0), false, false),
-            RobotContainer.drivetrain))
-        .onFalse(Commands.runOnce(() -> RobotContainer.drivetrain.drive(new ChassisSpeeds(), false, false),
-            RobotContainer.drivetrain));
-    driverController.povLeft()
-        .whileTrue(Commands.run(() -> RobotContainer.drivetrain.drive(new ChassisSpeeds(0, 0.15, 0), false, false),
-            RobotContainer.drivetrain))
-        .onFalse(Commands.runOnce(() -> RobotContainer.drivetrain.drive(new ChassisSpeeds(), false, false),
-            RobotContainer.drivetrain));
-    driverController.povUp()
-        .whileTrue(Commands.run(() -> RobotContainer.drivetrain.drive(new ChassisSpeeds(.15, 0, 0), false, false),
-            RobotContainer.drivetrain))
-        .onFalse(Commands.runOnce(() -> RobotContainer.drivetrain.drive(new ChassisSpeeds(), false, false),
-            RobotContainer.drivetrain));
-    driverController.povDown()
-        .whileTrue(Commands.run(() -> RobotContainer.drivetrain.drive(new ChassisSpeeds(-0.15, 0, 0), false, false),
-            RobotContainer.drivetrain))
-        .onFalse(Commands.runOnce(() -> RobotContainer.drivetrain.drive(new ChassisSpeeds(), false, false),
-            RobotContainer.drivetrain));
+    // driverController.povRight()
+    //     .whileTrue(Commands.run(() -> RobotContainer.drivetrain.drive(new ChassisSpeeds(0, -0.15, 0), false, false),
+    //         RobotContainer.drivetrain))
+    //     .onFalse(Commands.runOnce(() -> RobotContainer.drivetrain.drive(new ChassisSpeeds(), false, false),
+    //         RobotContainer.drivetrain));
+    // driverController.povLeft()
+    //     .whileTrue(Commands.run(() -> RobotContainer.drivetrain.drive(new ChassisSpeeds(0, 0.15, 0), false, false),
+    //         RobotContainer.drivetrain))
+    //     .onFalse(Commands.runOnce(() -> RobotContainer.drivetrain.drive(new ChassisSpeeds(), false, false),
+    //         RobotContainer.drivetrain));
+    // driverController.povUp()
+    //     .whileTrue(Commands.run(() -> RobotContainer.drivetrain.drive(new ChassisSpeeds(.15, 0, 0), false, false),
+    //         RobotContainer.drivetrain))
+    //     .onFalse(Commands.runOnce(() -> RobotContainer.drivetrain.drive(new ChassisSpeeds(), false, false),
+    //         RobotContainer.drivetrain));
+    // driverController.povDown()
+    //     .whileTrue(Commands.run(() -> RobotContainer.drivetrain.drive(new ChassisSpeeds(-0.15, 0, 0), false, false),
+    //         RobotContainer.drivetrain))
+    //     .onFalse(Commands.runOnce(() -> RobotContainer.drivetrain.drive(new ChassisSpeeds(), false, false),
+    //         RobotContainer.drivetrain));
 
     // Robot relative
     driverController.L2()
         .onTrue(drivetrain.toRobotRelativeCommand())
         .onFalse(drivetrain.toFieldRelativeCommand());
 
-    // 90 degree buttons
-    driverController.triangle()
-        .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(0)), false));
-    // driverController.square()
-    //     .onTrue(drivetrain.alignToAngleFieldRelativeCommand((Rotation2d.fromDegrees(-54)), false));
-    driverController.cross()
-        .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(180)), false));
-    // driverController.circle()
-    //     .onTrue(drivetrain.alignToAngleFieldRelativeCommand(Rotation2d.fromDegrees(54), false));
+    // // 90 degree buttons
+    // driverController.triangle()
+    //     .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(0)), false));
+    // // driverController.square()
+    // //     .onTrue(drivetrain.alignToAngleFieldRelativeCommand((Rotation2d.fromDegrees(-54)), false));
+    // driverController.cross()
+    //     .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(180)), false));
+    // // driverController.circle()
+    // //     .onTrue(drivetrain.alignToAngleFieldRelativeCommand(Rotation2d.fromDegrees(54), false));
 
     // zeros gyro
     driverController.touchpad().onTrue(drivetrain.zeroGyroCommand());

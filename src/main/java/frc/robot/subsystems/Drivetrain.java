@@ -90,8 +90,8 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
      * owo :3
      */
 
-    public static final double MAX_SPEED = 5; // TODO: actually set this with units
-    public static double MAX_ROT_SPEED = 10;
+    public static final double MAX_SPEED = 1; // TODO: actually set this with units
+    public static double MAX_ROT_SPEED = 4;
     public static double MIN_ROT_SPEED = Math.PI * (1.0 / 3.0);
     public static double FORWARD_ACCEL = 9; // m / s^2
     public static double SIDE_ACCEL = 12; // m / s^2
