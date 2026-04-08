@@ -1,4 +1,4 @@
-package swervelib;
+package frc.swervelib;
 
 import static edu.wpi.first.hal.FRCNetComm.tInstances.kRobotDriveSwerve_YAGSL;
 import static edu.wpi.first.hal.FRCNetComm.tResourceType.kResourceType_RobotDrive;
@@ -68,7 +68,8 @@ import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity;
 /**
  * Swerve Drive class representing and controlling the swerve drive.
  */
-public class SwerveDrive implements AutoCloseable{
+public class SwerveDrive implements AutoCloseable
+{
 
   /**
    * Swerve Kinematics object.
@@ -1607,5 +1608,4 @@ public class SwerveDrive implements AutoCloseable{
     }
     return kinematics.toSwerveModuleStates(robotRelativeVelocity);
   }
-
-
+}
