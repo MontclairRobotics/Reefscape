@@ -5,397 +5,374 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.Rotations;
+import static edu.wpi.first.units.Units.RotationsPerSecond;
 
-import java.util.function.BooleanSupplier;
-
-import com.ctre.phoenix6.Orchestra;
-import com.ctre.phoenix6.SignalLogger;
-import com.ctre.phoenix6.signals.NeutralModeValue;
-import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
-
-import edu.wpi.first.cameraserver.CameraServer;
-import edu.wpi.first.math.controller.ElevatorFeedforward;
-import edu.wpi.first.math.controller.ProfiledPIDController;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.net.PortForwarder;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.LEDPattern;
-import edu.wpi.first.wpilibj.util.Color;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.wpilibj.Timer;
+
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Inches;
+
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
-import frc.robot.commands.AlignToClosestReefTagOffset;
-import frc.robot.commands.DistanceAlign;
-import frc.robot.commands.FaceReefCommand;
-import frc.robot.commands.GoToReefCameraSpace;
-import frc.robot.commands.GoToCoralStationCommand;
-// import frc.robot.commands.GoToReefCameraSpace;
-import frc.robot.commands.GoToReefCommand;
-import frc.robot.commands.GoToReefCommandProfiled;
-import frc.robot.commands.OrbitReefCommand;
+import frc.robot.commands.JoystickDriveCommand;
 import frc.robot.commands.WheelRadiusCharacterization;
-import frc.robot.leds.LEDs;
-import frc.robot.subsystems.Ratchet;
-import frc.robot.subsystems.Arm;
-import frc.robot.subsystems.Auto;
-import frc.robot.subsystems.Drivetrain;
-import frc.robot.subsystems.Elevator;
-import frc.robot.subsystems.Rollers;
-import frc.robot.util.RobotState;
-import frc.robot.util.Elastic;
-import frc.robot.util.Elastic.Notification;
-import frc.robot.util.Elastic.Notification.NotificationLevel;
-import frc.robot.util.GamePiece;
+import frc.robot.commands.WheelRadiusCharacterization.Direction;
+import frc.robot.constants.Constants;
+import frc.robot.constants.DriveConstants;
+import frc.robot.constants.RollersConstants;
+import frc.robot.constants.TurretConstants;
+import frc.robot.constants.Constants.Mode;
+import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
+import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.intake.pivot.Pivot;
+import frc.robot.subsystems.intake.pivot.PivotIOSim;
+import frc.robot.subsystems.intake.pivot.PivotIOTalonFX;
+import frc.robot.subsystems.intake.rollers.Rollers;
+import frc.robot.subsystems.intake.rollers.RollersIOSim;
+import frc.robot.subsystems.intake.rollers.RollersIOTalonFX;
+import frc.robot.subsystems.shooter.Shooter;
+import frc.robot.subsystems.shooter.flywheel.Flywheel;
+import frc.robot.subsystems.shooter.flywheel.FlywheelIOSim;
+import frc.robot.subsystems.shooter.flywheel.FlywheelIOTalonFX;
+import frc.robot.subsystems.shooter.spindexer.Spindexer;
+import frc.robot.subsystems.shooter.spindexer.indexer.Indexer;
+import frc.robot.subsystems.shooter.spindexer.indexer.IndexerIOSim;
+import frc.robot.subsystems.shooter.spindexer.indexer.IndexerIOTalonFX;
+import frc.robot.subsystems.shooter.spindexer.serializer.Serializer;
+import frc.robot.subsystems.shooter.spindexer.serializer.SerializerIOSim;
+import frc.robot.subsystems.shooter.spindexer.serializer.SerializerIOTalonFX;
+import frc.robot.subsystems.shooter.turret.Turret;
+import frc.robot.subsystems.shooter.turret.TurretIOSim;
+import frc.robot.subsystems.shooter.turret.TurretIOTalonFX;
+import frc.robot.subsystems.shooter.hood.Hood;
+import frc.robot.subsystems.shooter.hood.HoodIOSim;
+import frc.robot.subsystems.shooter.hood.HoodIOTalonFX;
+import frc.robot.subsystems.vision.Vision;
+import frc.robot.subsystems.vision.VisionIO;
+import frc.robot.subsystems.vision.VisionIOLimelight;
 import frc.robot.util.PoseUtils;
-import frc.robot.util.TagOffset;
+import frc.robot.util.Telemetry;
 import frc.robot.util.TunerConstants;
-import frc.robot.vision.Limelight;
+import frc.robot.util.sim.FuelSim;
+import frc.robot.util.tunables.LoggedTunableNumber;
+import frc.robot.util.tunables.Tunable;
+
+import static frc.robot.subsystems.vision.VisionConstants.*;
+
+import org.ironmaple.simulation.SimulatedArena;
+import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
+import org.littletonrobotics.junction.Logger;
+
+
+import frc.robot.subsystems.shooter.aiming.AimingConstants.SimShootingParameters;
 
 public class RobotContainer {
 
-  // Controllers
-  public static CommandPS5Controller driverController = new CommandPS5Controller(0);
-  public static CommandPS5Controller operatorController = new CommandPS5Controller(1);
-  public static CommandPS5Controller testingController = new CommandPS5Controller(2);
+	// Controllers
+	public static CommandPS5Controller driverController = new CommandPS5Controller(0);
+	public static CommandPS5Controller operatorController = new CommandPS5Controller(1);
+	public static CommandPS5Controller testController = new CommandPS5Controller(2);
 
-  public static final boolean debugMode = false;
-  public static final boolean logMode = true;
+	// Subsystems
+	public static Vision vision;
+	public static CommandSwerveDrivetrain drivetrain;
 
-  // Subsystems
-  public static Limelight leftLimelight = new Limelight("limelight-left", 0.38, 0, 0, 0, true);
-  public static Limelight rightLimelight = new Limelight("limelight-right", 0.38, 0, 0, 0, false);
-  public static Limelight backLimelight = new Limelight("limelight-back", 0.38, 0, 0, 0, false);
-  public static Ratchet ratchet = new Ratchet();
-  public static Drivetrain drivetrain = new Drivetrain();
-  public static Elevator elevator = new Elevator();
-  public static LEDs leds = new LEDs();
-  public static Rollers rollers = new Rollers();
-  public static Orchestra orchestra = new Orchestra();
-  public static Arm arm = new Arm();
-  public static Auto auto = new Auto();
-  public static Telemetry telemetryLogger = new Telemetry(TunerConstants.kSpeedAt12Volts.in(MetersPerSecond));
+	// shooter
+	public static Shooter shooter;
+	public static Turret turret;
+	public static Flywheel flywheel;
+	public static Hood hood;
 
-  // Alliance
-  public static boolean isBlueAlliance;
+	public static Spindexer spindexer;
+	public static Serializer serializer;
+	public static Indexer indexer;
 
-  public RobotContainer() {
-    DriverStation.silenceJoystickConnectionWarning(true);
-    configureBindings();
-    // Enables limelights when tethered over USB
+	// intake
+	public static Pivot pivot;
+	public static Rollers rollers;
+	public static Intake intake;
 
-    // https://docs.limelightvision.io/docs/docs-limelight/getting-started/FRC/best-practices
-    // http://roborio-555-FRC.local:5801 will now forward to
-    // limelight-left.local:5801
-    // http://roborio-555-FRC.local:5811 will now forward to
-    // limelight-right.local:5801
-    for (int i = 5800; i <= 5807; i++) {
-      PortForwarder.add(i, "10.5.55.11", i);
-      PortForwarder.add(i + 10, "10.5.55.12", i);
-    }
+	public static Superstructure superstructure;
 
-    CameraServer.startAutomaticCapture();
-  }
+	public static Auto auto;
 
-  private void configureBindings() {
+	public static SimShootingParameters simShootingParameters = new SimShootingParameters(Degrees.zero(), Degrees.zero(), MetersPerSecond.zero());
 
-    /*
-     * --------------------------------------------OPERATOR BINDINGS
-     * --------------------------------------------
-     */
+	private SwerveDriveSimulation driveSimulation;
+	private final Telemetry logger = new Telemetry(DriveConstants.MAX_SPEED.in(MetersPerSecond));
+	public static FuelSim fuelSim = new FuelSim("fuel");
 
-    rollers.setDefaultCommand(rollers.getDefaultCommand());
-    // elevator.setDefaultCommand(elevator.joystickControlCommand());
+	private boolean useConstantVelocityMap = false;
+	private boolean shootWhileMoving = true;
 
-    // arm.setDefaultCommand(arm.joystickControlCommand());
+	// debug, set to true to increase logging, set to false to increase performance and reduce loop overruns
+	public static boolean VISION_DEBUG = false;
+	public static boolean TURRET_DEBUG = false;
+	public static boolean FLYWHEEL_DEBUG = false;
+	public static boolean HOOD_DEBUG  = false;
+	public static boolean INDEXER_DEBUG = false;
+	public static boolean SERIALIZER_DEBUG = false;
+	public static boolean ROLLERS_DEBUG = false;
+	public static boolean PIVOT_DEBUG = false;
+	public static boolean DRIVETRAIN_DEBUG = false;
+	public static boolean SUPERSTRUCTURE_DEBUG = false;
 
-    // leds.setDefaultCommand(elevator.isVelociatated() ? leds.playPatternCommand(LEDs.progress()) : rollers.getHeldPiece() == GamePiece.Algae ? leds.playPatternCommand(LEDs.holding(GamePiece.Algae.getColor())) : rollers.getHeldPiece() == GamePiece.Coral ? leds.playPatternCommand(LEDs.holding(GamePiece.Coral.getColor())) : leds.playPatternCommand(LEDs.AlliancePattern()));
+	public double turretFudge = 0;
 
-    //חחח חשבת שזה באמת יגיד משהו
-    leds.setDefaultCommand(leds.getDefaultCommand());
-    operatorController.L1()
-        .whileTrue(rollers.intakeCoralJiggleCommand())
-        .onFalse(rollers.stopCommand());
+	public static boolean shouldShootAuto = false;
 
-    operatorController.L2().negate().and(operatorController.L1())
-        .whileTrue(
-            arm.setState(RobotState.Intake)
-            .alongWith(elevator.setState(RobotState.Intake))
-        )
-        .onFalse(
-            arm.stopCommand()
-            .alongWith(elevator.stopCommand())
-        );
+	public static Trigger shootButtonTrigger = operatorController.circle();
 
-    operatorController.L2().and(operatorController.L1())
-        .whileTrue(
-            arm.setState(RobotState.IntakeOverPiece)
-            .alongWith(elevator.setState(RobotState.IntakeOverPiece))
-        )
-        .onFalse(
-            arm.stopCommand()
-            .alongWith(elevator.stopCommand())
-        );
+	public static Trigger robotRelativeTrigger = driverController.L1();
+	public static Trigger xModeTrigger = driverController.R1();
+	public static Trigger turboTrigger = driverController.L2();
+	public static Trigger precisionTrigger = driverController.R2();
 
-    // Scoring
-    operatorController.R1().and(operatorController.cross().negate())
-        .onTrue(rollers.outtakeCoralCommand())
-        .onFalse(rollers.stopCommand());
+	public LoggedTunableNumber indexerCurrent = new LoggedTunableNumber("Spindexer/Index Current", 0);
+	public LoggedTunableNumber serializerCurrent = new LoggedTunableNumber("Spindexer/Serializer Current", 0);
 
-    operatorController.R2().onTrue(elevator.setState(RobotState.DrivingNone).alongWith(arm.setState(RobotState.DrivingNone)));
-    
-    // L1 scoring
-    operatorController.R1().and(operatorController.cross())
-        .whileTrue(rollers.scoreL1())
-        .onFalse(rollers.stopCommand());
+	public LoggedTunableNumber indexerVelocity = new LoggedTunableNumber("Spindexer/Index Velocity", 0);
+	public LoggedTunableNumber serializerVelocity = new LoggedTunableNumber("Spindexer/Serializer Velocity", 0);
 
-    // testingController.R1()
-    //     .whileTrue(new DistanceAlign(TagOffset.LEFT, false))
-    //     .onFalse(Commands.run(() -> drivetrain.drive(0, 0, 0, false, false)));
+	public LoggedTunableNumber intakeVoltage = new LoggedTunableNumber("Intake/Intake Voltage", RollersConstants.SPIN_VOLTAGE);
 
-    // Trigger autoAligning = RobotContainer.driverController.L1().or(RobotContainer.driverController.R1())
-    //     .or(RobotContainer.driverController.R2());
+	public RobotContainer() {
 
-    // L1 Automatic
-    // operatorController.cross().and(operatorController.L2().negate())
-    //     .onTrue(arm.holdState(RobotState.L1).alongWith(elevator.setTargetState(RobotState.L1)));
+		Tunable turretFudgeTunable = new Tunable("Turret Fudge", turretFudge, (value) -> TurretConstants.ANGLE_OFFSET = Rotations.of(0.375).plus(Degrees.of(value)));
 
-    // L2 Automatic
-    // operatorController.square().and(operatorController.L2().negate())
-    //     .onTrue(arm.holdState(RobotState.L2).alongWith(elevator.setTargetState(RobotState.L2)));
+		System.out.println("Constants.CURRENT_MODE: " + Constants.CURRENT_MODE);
 
-    // L2 Automatic
-    // operatorController.triangle().and(operatorController.L2().negate())
-    //     .onTrue(arm.holdState(RobotState.L3).alongWith(elevator.setTargetState(RobotState.L3)));
+		switch (Constants.CURRENT_MODE) {
+			case REAL:
+				drivetrain = TunerConstants.createDrivetrain();
 
-    // L4 Automatic
-    // operatorController.circle().and(operatorController.L2().negate())
-    //     .onTrue(arm.setState(RobotState.L4).alongWith(elevator.setState(RobotState.L3)).alongWith(elevator.setTargetState(RobotState.L4)));
+				hood = new Hood(new HoodIOTalonFX());
+				flywheel = new Flywheel(new FlywheelIOTalonFX());
+				turret = new Turret(new TurretIOTalonFX());
 
-    // operatorController.circle().and(operatorController.L2().negate())
-    // .whileTrue(arm.holdState(RobotState.L4).alongWith(elevator.setState(RobotState.L3)))
-    // .onFalse(
-    //     elevator.setState(RobotState.L4)
-    //         // .onlyIf(autoAligning.negate()).alongWith(elevator.setTargetState(RobotState.L4))
-    //         .alongWith(arm.holdState(RobotState.L4)));
+				serializer = new Serializer(new SerializerIOTalonFX());
+				indexer = new Indexer(new IndexerIOTalonFX());
+				spindexer = new Spindexer(serializer, indexer);
 
-    // Lower algae
-    operatorController.cross().and(operatorController.L2())
-        .whileTrue(
-            arm.setState(RobotState.L1Algae)
-                .alongWith(elevator.setState(RobotState.L1Algae))
-                .alongWith(rollers.outtakeAlgaeCommand()));
+				shooter = new Shooter(
+					hood, flywheel, turret, spindexer,
+					useConstantVelocityMap, shootWhileMoving
+				);
 
-    // Higher algae
-    operatorController.triangle().and(operatorController.L2())
-        .whileTrue(
-            arm.setState(RobotState.L2Algae)
-                .alongWith(elevator.setState(RobotState.L2Algae))
-                .alongWith(rollers.outtakeAlgaeCommand()));
+				pivot = new Pivot(new PivotIOTalonFX());
+				rollers = new Rollers(new RollersIOTalonFX());
+				intake = new Intake(pivot, rollers);
 
-    // Climb
-    operatorController.circle().and(operatorController.L2())
-        .whileTrue(Commands.runOnce(() -> {Elastic.selectTab(2);}).andThen(elevator.setCurrentLimitCommand(125)).andThen(elevator.climbUpCommand()))
-        .onFalse(elevator.climbDownCommand());
+				auto = new Auto();
 
-    // Ratchets
-    operatorController.povUp().onTrue(
-        ratchet.engageServos());
-            //.andThen(Commands.waitSeconds(.2))
-            //.andThen(ratchet.afterEngageServos())
-    // );
-    operatorController.povDown().onTrue(ratchet.disengageServos());
+				vision = new Vision(
+					drivetrain::addVisionMeasurement,
+					new VisionIOLimelight(camera0Name, () -> drivetrain.odometryHeading),
+					// new VisionIOLimelight(camera1Name, () -> drivetrain.odometryHeading),
+					new VisionIOLimelight(camera2Name, () -> drivetrain.odometryHeading)
+				);
 
-    // Barge
-    // operatorController.square().and(operatorController.L2())
-    //     .onTrue(arm.holdState(RobotState.Barge).alongWith(elevator.setState(RobotState.Barge).alongWith(Commands
-    //         .sequence(Commands.waitUntil(() -> elevator.getPercentHeight() > .9), rollers.outtakeAlgaeCommand()))));
+				superstructure = new Superstructure(drivetrain, intake, shooter, vision);
 
-    /*--------------------------------- DRIVER BINDINGS -------------------------------------------- */
+				break;
 
-    drivetrain.setDefaultCommand(drivetrain.driveJoystickInputCommand());
-    // drivetrain.setDefaultCommand(new OrbitReefCommand());
-    // drivetrain.setDefaultCommand(new FaceReefCommand());
+			case SIM:
+				drivetrain = TunerConstants.createDrivetrain();
+				driveSimulation = drivetrain.mapleSimSwerveDrivetrain.mapleSimDrive;
 
-    driverController.R2().whileTrue(new FaceReefCommand());
-    driverController.L1().whileTrue(new GoToReefCommand(TagOffset.LEFT, true)).onFalse(new GoToReefCommand(TagOffset.LEFT, false).until(() -> drivetrain.joystickInputDetected()));
-    driverController.R1().whileTrue(new GoToReefCommand(TagOffset.RIGHT, true)).onFalse(new GoToReefCommand(TagOffset.RIGHT, false).until(() -> drivetrain.joystickInputDetected()));
-    driverController.circle().whileTrue(new GoToCoralStationCommand(TagOffset.CENTER, false, false));
-    driverController.square().whileTrue(new GoToCoralStationCommand(TagOffset.CENTER, true, false));
-    
-    testingController.L2().onTrue(backLimelight.flashLEDs().ignoringDisable(true));
-    //Fine tuning buttons
-    driverController.povRight()
-        .whileTrue(Commands.run(() -> RobotContainer.drivetrain.drive(new ChassisSpeeds(0, -0.15, 0), false, false),
-            RobotContainer.drivetrain))
-        .onFalse(Commands.runOnce(() -> RobotContainer.drivetrain.drive(new ChassisSpeeds(), false, false),
-            RobotContainer.drivetrain));
-    driverController.povLeft()
-        .whileTrue(Commands.run(() -> RobotContainer.drivetrain.drive(new ChassisSpeeds(0, 0.15, 0), false, false),
-            RobotContainer.drivetrain))
-        .onFalse(Commands.runOnce(() -> RobotContainer.drivetrain.drive(new ChassisSpeeds(), false, false),
-            RobotContainer.drivetrain));
-    driverController.povUp()
-        .whileTrue(Commands.run(() -> RobotContainer.drivetrain.drive(new ChassisSpeeds(.15, 0, 0), false, false),
-            RobotContainer.drivetrain))
-        .onFalse(Commands.runOnce(() -> RobotContainer.drivetrain.drive(new ChassisSpeeds(), false, false),
-            RobotContainer.drivetrain));
-    driverController.povDown()
-        .whileTrue(Commands.run(() -> RobotContainer.drivetrain.drive(new ChassisSpeeds(-0.15, 0, 0), false, false),
-            RobotContainer.drivetrain))
-        .onFalse(Commands.runOnce(() -> RobotContainer.drivetrain.drive(new ChassisSpeeds(), false, false),
-            RobotContainer.drivetrain));
+				hood = new Hood(new HoodIOSim());
+				flywheel = new Flywheel(new FlywheelIOSim());
+				turret = new Turret(new TurretIOSim());
 
-    // Robot relative
-    driverController.L2()
-        .onTrue(drivetrain.toRobotRelativeCommand())
-        .onFalse(drivetrain.toFieldRelativeCommand());
+				serializer = new Serializer(new SerializerIOSim());
+				indexer = new Indexer(new IndexerIOSim());
+				spindexer = new Spindexer(serializer, indexer);
 
-    // 90 degree buttons
-    driverController.triangle()
-        .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(0)), false));
-    // driverController.square()
-    //     .onTrue(drivetrain.alignToAngleFieldRelativeCommand((Rotation2d.fromDegrees(-54)), false));
-    driverController.cross()
-        .onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(180)), false));
-    // driverController.circle()
-    //     .onTrue(drivetrain.alignToAngleFieldRelativeCommand(Rotation2d.fromDegrees(54), false));
+				shooter = new Shooter(
+					hood, flywheel, turret, spindexer,
+					useConstantVelocityMap, shootWhileMoving
+				);
 
-    // zeros gyro
-    driverController.touchpad().onTrue(drivetrain.zeroGyroCommand());
+				pivot = new Pivot(new PivotIOSim());
+				rollers = new Rollers(new RollersIOSim());
+				intake = new Intake(pivot, rollers);
 
-    // telemetry
-    drivetrain.registerTelemetry(telemetryLogger::telemeterize);
+				fuelSim.enableAirResistance();
+				fuelSim.start();
 
-    /*
-     * ---------------------------------------- TESTING BINDINGS ---------------------------------------
-     */
+				fuelSim.registerRobot(
+					Constants.BUMPER_WIDTH,
+					Constants.BUMPER_WIDTH,
+					Inches.of(6),
+					() -> drivetrain.getRobotPose(),
+					() -> drivetrain.getFieldRelativeSpeeds()
+				);
 
-    // alignment buttons
-    testingController.R2()
-        .whileTrue(new GoToReefCameraSpace(TagOffset.CENTER, true))
-        .onFalse(new GoToReefCameraSpace(TagOffset.CENTER, false).until(() -> drivetrain.joystickInputDetected()));
+				fuelSim.registerIntake(
+					Inches.of(15),
+					Inches.of(22),
+					Inches.of(-15),
+					Inches.of(15),
+					shooter::shouldIntake,
+					shooter::addBall
+				);
 
-    testingController.L1()
-        .whileTrue(new GoToReefCameraSpace(TagOffset.LEFT, true))
-        .onFalse(new GoToReefCameraSpace(TagOffset.LEFT, false).until(() -> drivetrain.joystickInputDetected()));
+				fuelSim.spawnStartingFuel();
 
-    testingController.R1()
-        .whileTrue(new GoToReefCameraSpace(TagOffset.RIGHT, true))
-        .onFalse(new GoToReefCameraSpace(TagOffset.RIGHT, false).until(() -> drivetrain.joystickInputDetected()));
+				auto = new Auto();
+				superstructure = new Superstructure(drivetrain, intake, shooter, vision);
 
-    testingController.touchpad().onTrue(Commands.runOnce(() -> elevator.resetEncoders(0)).ignoringDisable(true));
-    
+				break;
 
-    // TODO check
-    arm.setDefaultCommand(arm.joystickControlCommand().onlyWhile(() -> !arm.encoderConnected));
-    // L1 Manual
-    operatorController.cross().and(operatorController.L2().negate())
-        .whileTrue(arm.holdState(RobotState.L1))
-        .onFalse(
-            elevator.setState(RobotState.L1)
-                .alongWith(elevator.setTargetState(RobotState.L1))
-                .alongWith(arm.holdState(RobotState.L1)));
+				default:
+					vision = new Vision(drivetrain::addVisionMeasurement, new VisionIO() {}, new VisionIO() {});
+		}
 
-    // L2 Manual
-    operatorController.square().and(operatorController.L2().negate())
-    .whileTrue(arm.holdState(RobotState.L2))
-    .onFalse(
-        elevator.setState(RobotState.L2)
-            .alongWith(elevator.setTargetState(RobotState.L2))
-            .alongWith(arm.holdState(RobotState.L2)));
-    // L3 Manual
-   operatorController.triangle().and(operatorController.L2().negate())
-    .whileTrue((arm.holdState(RobotState.L3)))
-    .onFalse(
-        elevator.setState(RobotState.L3)
-            .alongWith(elevator.setTargetState(RobotState.L3))
-            .alongWith(arm.holdState(RobotState.L3)));
-    
-    operatorController.touchpad().onTrue(Commands.runOnce(() -> {
-        // elevator.setDefaultCommand(elevator.joystickControlCommand());
-        rollers.isUsingBeamBreak = false;
-        arm.setDefaultCommand(arm.joystickControlCommand());
-    }));
+		// configureBindings();
+		configureCompetitionBindings();
+		// configureTestingBindingsForMax();
 
-    // L4 Manual
-    operatorController.circle().and(operatorController.L2().negate())
-    .whileTrue(arm.holdState(RobotState.L4).alongWith(elevator.setState(RobotState.L3)))
-    .onFalse(
-        elevator.setState(RobotState.L4)
-            .alongWith(arm.holdState(RobotState.L4)));
+    	drivetrain.registerTelemetry(logger::telemeterize);
+	}
 
-    // Elevator down
-    // testingController.R2()
-    //     .onTrue(elevator.setState(RobotState.getDefaultForPiece(rollers.getHeldPiece())))
-    //     .onTrue(arm.holdState(RobotState.getDefaultForPiece(rollers.getHeldPiece())))
-    //     .onTrue(rollers.stopCommand());
+	private void configureTestingBindingsForMax() {
 
-    //Coast mode 
-    testingController.cross()
-        .onTrue(Commands.runOnce(() -> elevator.setNeutralMode(NeutralModeValue.Coast)).ignoringDisable(true))
-        .onFalse(Commands.runOnce(() -> elevator.setNeutralMode(NeutralModeValue.Brake)).ignoringDisable(true));
+		// runs the spindexer + indexer at max speed
 
-    // testingController.L1().onTrue(Commands.runOnce(() -> SignalLogger.start()));
-    // testingController.R1().onTrue(Commands.runOnce(() -> SignalLogger.stop()));
+		operatorController.circle()
+			.whileTrue(
+				spindexer.spinUpCommand()
+					.alongWith(
+						flywheel.setVelocityCommand(
+							RotationsPerSecond.of(20), () -> Timer.getFPGATimestamp()
+						)
+					)
+			)
+			.onFalse(
+				spindexer.spinDownCommand()
+					.alongWith(
+						flywheel.stopCommand()
+					)
+			);
 
-    // testingController.povLeft().whileTrue(new GoToReefCameraSpace(TagOffset.LEFT,
-    // true));
-    // testingController.povRight().whileTrue(new
-    // GoToReefCameraSpace(TagOffset.RIGHT, true));
-    // testingController.triangle().whileTrue(
-    // drivetrain.sysIdDynamic(Direction.kForward)
-    // );
-    // testingController.circle().whileTrue(
-    // drivetrain.sysIdDynamic(Direction.kReverse)
-    // );
-    // testingController.cross().whileTrue(
-    // drivetrain.sysIdQuasistatic(Direction.kForward)
-    // );
-    // testingController.square().whileTrue(
-    // drivetrain.sysIdQuasistatic(Direction.kReverse)
-    // );
-    // testingController.circle().onTrue(ratchet.engageServos()).onFalse(ratchet.disengageServos());
+	}
 
-    testingController.triangle().whileTrue(new
-    WheelRadiusCharacterization(WheelRadiusCharacterization.Direction.CLOCKWISE,
-    drivetrain));
-    testingController.circle().whileTrue(new
-    WheelRadiusCharacterization(WheelRadiusCharacterization.Direction.COUNTER_CLOCKWISE,
-    drivetrain));
-    
-}
+	private void configureCompetitionBindings() {
 
-  /* MUSIC */
-  public void loadMusic(String filepath) {
-    // attempt to load music
-    var status = orchestra.loadMusic(filepath);
-    // send error if it doesn't load
-    if (!status.isOK()) {
-      Elastic.sendNotification(new Notification(
-          NotificationLevel.WARNING, "Music not loading",
-          "",
-          5000));
-    }
-  }
+		driverController.povRight().whileTrue(new WheelRadiusCharacterization(Direction.CLOCKWISE, drivetrain));
+		driverController.povLeft().whileTrue(new WheelRadiusCharacterization(Direction.COUNTER_CLOCKWISE, drivetrain));
 
-  public Command playMusic(String filepath) {
-    return Commands.runOnce(() -> {
-      loadMusic(filepath);
-      orchestra.play();
-    });
-  }
+		// driver
+		drivetrain.setDefaultCommand(new JoystickDriveCommand(false));
+		driverController.touchpad().onTrue(drivetrain.zeroGyroCommand());
+		driverController.PS().onTrue(drivetrain.resetPoseCommand(new Pose2d(3.6, 4.035, new Rotation2d())));
+		precisionTrigger
+			.onTrue(drivetrain.setMaxSpeedsCommand(MetersPerSecond.of(1.5), RotationsPerSecond.of(0.3)))
+			.onFalse(drivetrain.setMaxSpeedsCommand(TunerConstants.kSpeedAt12Volts, RotationsPerSecond.of(1.624)));
 
-  public Command stopMusic() {
-    return Commands.runOnce(() -> orchestra.stop());
-  }
+		driverController.triangle()
+			.onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(0)), false));
+		driverController.square()
+			.onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(90)), false));
+		driverController.cross()
+			.onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(180)), false));
+		driverController.circle()
+			.onTrue(drivetrain.alignToAngleFieldRelativeCommand(PoseUtils.flipRotAlliance(Rotation2d.fromDegrees(-90)), false));
 
-  public Command getAutonomousCommand() {
-    // System.out.println(auto.getAutoCommand());
-    return auto.getAutoCommand();
-  }
+		// operator
+
+		operatorController.touchpad().whileTrue(spindexer.setVoltageCommand(-12)).onFalse(spindexer.spinDownCommand());
+		operatorController.PS().whileTrue(rollers.setVoltageCommand(-12)).onFalse(serializer.stopCommand());
+
+		operatorController.circle().onFalse(shooter.stowCommand());
+
+		operatorController.povLeft().onTrue(turret.increaseFudgeFactorCommand());
+		operatorController.povRight().onTrue(turret.decreaseFudgeFactorCommand());
+
+		operatorController.L1().whileTrue(pivot.deployCommand().alongWith(rollers.setVoltageCommand(() -> intakeVoltage.get()))).onFalse(pivot.stopCommand().alongWith(rollers.setVoltageCommand(() -> 0)));
+		operatorController.L2().whileTrue(spindexer.spinUpCommand()).onFalse(spindexer.spinDownCommand());
+
+		operatorController.povUp().onTrue(Commands.runOnce(() -> flywheel.increaseFudge()));
+		operatorController.povDown().onTrue(Commands.runOnce(() -> flywheel.decreaseFudge()));
+
+		operatorController.R1().whileTrue(pivot.stowCommand()).onFalse(pivot.stopCommand());
+		operatorController.R2()
+			.whileTrue(intake.jiggleCommand())
+			.onFalse(pivot.deployCommand());
+
+	}
+
+	private void configureBindings() {
+
+		driverController.povRight().whileTrue(new WheelRadiusCharacterization(Direction.CLOCKWISE, drivetrain));
+		driverController.povLeft().whileTrue(new WheelRadiusCharacterization(Direction.COUNTER_CLOCKWISE, drivetrain));
+
+		operatorController.circle().onFalse(shooter.stowCommand());
+		drivetrain.setDefaultCommand(new JoystickDriveCommand(false));
+		driverController.touchpad().onTrue(drivetrain.zeroGyroCommand());
+
+		driverController.triangle().whileTrue(
+			indexer.setVelocityCommand(() -> RotationsPerSecond.of(indexerVelocity.getAsDouble()))
+			.alongWith(serializer.setVelocityCommand(() -> RotationsPerSecond.of(serializerVelocity.getAsDouble())))
+		).onFalse(
+			spindexer.spinDownCommand()
+		);
+
+		operatorController.R1().whileTrue(pivot.stowCommand()).onFalse(pivot.stopCommand());
+		operatorController.L1().whileTrue(pivot.deployCommand().alongWith(rollers.spinUpCommand())).onFalse(pivot.stopCommand().alongWith(rollers.setVoltageCommand(() -> 0)));
+
+		operatorController.cross().onTrue(turret.lockForever());
+
+		driverController.R1().whileTrue(spindexer.spinUpCommand()).onFalse(spindexer.spinDownCommand());
+
+		driverController.square()
+			.whileTrue(hood.setAngleCommand(() -> Degrees.of(hood.tunableHoodAngle.get()), () -> Timer.getFPGATimestamp()))
+			.onFalse(hood.stopCommand());
+
+		driverController.circle()
+			.whileTrue(flywheel.setVelocityCommand(() -> RotationsPerSecond.of(flywheel.tuningFlywheelSpeed.get()), () -> Timer.getFPGATimestamp()))
+			.onFalse(flywheel.stopCommand());
+
+		if(Constants.CURRENT_MODE == Mode.SIM) driverController.PS().whileTrue(Commands.runOnce(() -> fuelSim.clearFuel()));
+
+	}
+
+	public Command getAutonomousCommand() {
+		// System.out.println(auto.getAutoCommand());
+		return auto.getAutoCommand();
+		// return Commands.none();
+	}
+
+	/**
+	 * Resets the simulation.
+	 *
+	 * <p>Borrowed from
+	 * https://github.com/Pearadox/2025RobotCode/blob/main/src/main/java/frc/robot/RobotContainer.java#L394.
+	 */
+	public void resetSimulation() {
+		if (Constants.CURRENT_MODE != Constants.Mode.SIM) return;
+		drivetrain.resetPose(new Pose2d(3, 3, new Rotation2d()));
+		SimulatedArena.getInstance().resetFieldForAuto();
+	}
+
+	/** Updates Simulated Arena; to be called from Robot.simulationPeriodic() */
+	public void displaySimFieldToAdvantageScope() {
+		if (Constants.CURRENT_MODE != Constants.Mode.SIM) return;
+
+		SimulatedArena.getInstance().simulationPeriodic();
+		// The pose by maplesim, including collisions with the field.
+		// See https://www.chiefdelphi.com/t/simulated-robot-goes-through-walls-with-maplesim/508663.
+		Logger.recordOutput(
+			"FieldSimulation/Pose", new Pose3d(driveSimulation.getSimulatedDriveTrainPose()));
+		Logger.recordOutput("ferry1",new Translation2d(2,7));
+		// Logger.recordOutput("ferry2",new Translation2d(2,1));
+		Logger.recordOutput("ferrydistance", turret.getDistanceToPoint(new Translation2d(2,7)));
+	}
 }
