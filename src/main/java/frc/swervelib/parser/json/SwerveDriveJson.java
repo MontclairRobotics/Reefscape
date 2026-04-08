@@ -1,4 +1,4 @@
-package swervelib.parser.json;
+package frc.swervelib.parser.json;
 
 /**
  * {@link swervelib.SwerveDrive} JSON parsed class. Used to access parsed data from the swervedrive.json file.

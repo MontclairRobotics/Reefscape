@@ -1,4 +1,4 @@
-package swervelib.simulation;
+package frc.swervelib.simulation;
 
 import static edu.wpi.first.units.Units.Amps;
 

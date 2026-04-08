@@ -1,4 +1,4 @@
-package swervelib.parser.json;
+package frc.swervelib.parser.json;
 
 import swervelib.parser.PIDFConfig;
 import swervelib.parser.SwerveControllerConfiguration;

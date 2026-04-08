@@ -1,4 +1,4 @@
-package swervelib.simulation.ironmaple.simulation.opponents;
+package frc.swervelib.simulation.ironmaple.simulation.opponents;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Pair;

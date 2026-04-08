@@ -1,4 +1,4 @@
-package swervelib.parser.deserializer;
+package frc.swervelib.parser.deserializer;
 
 /**
  * Class to hold the minimum and maximum input or output of the PIDF.

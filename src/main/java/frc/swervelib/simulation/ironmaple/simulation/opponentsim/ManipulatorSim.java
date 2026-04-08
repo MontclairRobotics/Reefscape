@@ -1,4 +1,4 @@
-package swervelib.simulation.ironmaple.simulation.opponentsim;
+package frc.swervelib.simulation.ironmaple.simulation.opponentsim;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;

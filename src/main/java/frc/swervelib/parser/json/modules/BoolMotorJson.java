@@ -1,4 +1,4 @@
-package swervelib.parser.json.modules;
+package frc.swervelib.parser.json.modules;
 
 /**
  * Inverted motor JSON parsed class. Used to access the JSON data.

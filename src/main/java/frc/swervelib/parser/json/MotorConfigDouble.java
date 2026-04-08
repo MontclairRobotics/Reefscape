@@ -1,4 +1,4 @@
-package swervelib.parser.json;
+package frc.swervelib.parser.json;
 
 /**
  * Used to store doubles for motor configuration.

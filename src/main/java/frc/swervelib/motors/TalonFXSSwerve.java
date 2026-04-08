@@ -1,4 +1,4 @@
-package swervelib.motors;
+package frc.swervelib.motors;
 
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Meters;

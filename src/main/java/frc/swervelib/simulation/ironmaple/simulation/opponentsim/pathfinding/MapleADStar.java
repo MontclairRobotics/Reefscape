@@ -1,4 +1,4 @@
-package swervelib.simulation.ironmaple.simulation.opponentsim.pathfinding;
+package frc.swervelib.simulation.ironmaple.simulation.opponentsim.pathfinding;
 
 import com.pathplanner.lib.path.GoalEndState;
 import com.pathplanner.lib.path.PathConstraints;

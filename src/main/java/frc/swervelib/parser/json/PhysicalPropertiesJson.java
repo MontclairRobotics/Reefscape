@@ -1,4 +1,4 @@
-package swervelib.parser.json;
+package frc.swervelib.parser.json;
 
 import static edu.wpi.first.units.Units.Kilogram;
 import static edu.wpi.first.units.Units.Pounds;

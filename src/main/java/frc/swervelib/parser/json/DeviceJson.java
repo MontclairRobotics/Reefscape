@@ -1,4 +1,4 @@
-package swervelib.parser.json;
+package frc.swervelib.parser.json;
 
 import static swervelib.telemetry.SwerveDriveTelemetry.canIdWarning;
 import static swervelib.telemetry.SwerveDriveTelemetry.i2cLockupWarning;

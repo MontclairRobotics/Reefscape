@@ -1,4 +1,4 @@
-package swervelib.motors;
+package frc.swervelib.motors;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.DemandType;

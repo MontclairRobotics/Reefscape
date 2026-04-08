@@ -1,4 +1,4 @@
-package swervelib.encoders;
+package frc.swervelib.encoders;
 
 import com.revrobotics.AbsoluteEncoder;
 import com.revrobotics.REVLibError;

@@ -1,4 +1,4 @@
-package swervelib.encoders;
+package frc.swervelib.encoders;
 
 
 import com.thethriftybot.devices.ThriftyNova;

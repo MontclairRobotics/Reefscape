@@ -1,4 +1,4 @@
-package swervelib.encoders;
+package frc.swervelib.encoders;
 
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Rotations;

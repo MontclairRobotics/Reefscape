@@ -1,4 +1,4 @@
-package swervelib.parser;
+package frc.swervelib.parser;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;

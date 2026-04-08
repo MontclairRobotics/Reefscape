@@ -1,4 +1,4 @@
-package swervelib.parser;
+package frc.swervelib.parser;
 
 import edu.wpi.first.math.geometry.Translation2d;
 import swervelib.encoders.SwerveAbsoluteEncoder;

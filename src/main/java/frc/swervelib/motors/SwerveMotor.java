@@ -1,4 +1,4 @@
-package swervelib.motors;
+package frc.swervelib.motors;
 
 import edu.wpi.first.math.system.plant.DCMotor;
 import swervelib.encoders.SwerveAbsoluteEncoder;

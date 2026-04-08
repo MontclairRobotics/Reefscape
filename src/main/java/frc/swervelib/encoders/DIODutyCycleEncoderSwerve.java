@@ -1,4 +1,4 @@
-package swervelib.encoders;
+package frc.swervelib.encoders;
 
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;

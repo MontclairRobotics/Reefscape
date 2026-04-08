@@ -1,4 +1,4 @@
-package swervelib.parser;
+package frc.swervelib.parser;
 
 import edu.wpi.first.math.controller.PIDController;
 import swervelib.parser.deserializer.PIDFRange;

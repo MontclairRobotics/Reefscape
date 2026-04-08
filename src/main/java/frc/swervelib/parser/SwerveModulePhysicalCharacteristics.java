@@ -1,4 +1,4 @@
-package swervelib.parser;
+package frc.swervelib.parser;
 
 import swervelib.parser.json.modules.ConversionFactorsJson;
 

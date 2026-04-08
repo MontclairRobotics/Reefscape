@@ -1,4 +1,4 @@
-package swervelib.simulation.ironmaple.simulation.seasonspecific.reefscape2025.opponentsim;
+package frc.swervelib.simulation.ironmaple.simulation.seasonspecific.reefscape2025.opponentsim;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Pair;

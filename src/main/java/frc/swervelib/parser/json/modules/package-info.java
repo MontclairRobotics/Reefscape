@@ -1,4 +1,4 @@
 /**
  * JSON Mapped Configuration types for modules.
  */
-package swervelib.parser.json.modules;
+package frc.swervelib.parser.json.modules;

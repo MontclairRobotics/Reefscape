@@ -1,4 +1,4 @@
-package swervelib.parser.deserializer;
+package frc.swervelib.parser.deserializer;
 
 /**
  * Create classes only if the vendor dep exists.

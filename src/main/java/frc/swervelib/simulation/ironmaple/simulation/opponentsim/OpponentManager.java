@@ -1,4 +1,4 @@
-package swervelib.simulation.ironmaple.simulation.opponentsim;
+package frc.swervelib.simulation.ironmaple.simulation.opponentsim;
 
 import com.pathplanner.lib.commands.PathfindingCommand;
 import edu.wpi.first.math.Pair;

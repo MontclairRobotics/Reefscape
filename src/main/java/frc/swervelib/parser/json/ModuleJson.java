@@ -1,4 +1,4 @@
-package swervelib.parser.json;
+package frc.swervelib.parser.json;
 
 import com.revrobotics.spark.SparkMax;
 import edu.wpi.first.math.util.Units;
